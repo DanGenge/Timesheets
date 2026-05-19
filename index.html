@@ -3797,8 +3797,7 @@ let _supabase = null;
 function getSupabase() {
   if(!_supabase) {
     _supabase = supabase.createClient(SUPA_URL, SUPA_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+      auth: { persistSession: false, autoRefreshToken: false }
     });
   }
   return _supabase;
