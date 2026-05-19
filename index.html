@@ -3318,10 +3318,11 @@ function handleUploadFile(input) {
 }
 
 function parseXLSXUpload(wb, filename) {
-  // Detect employee from filename — handle various formats
+  // ── Detect employee name from file (Row 1, Col D = index 3) ──
+  // Falls back to filename if not found in sheet
   let empGuess = filename
     .replace(/\.(xlsx|xls|csv)$/i,'')
-    .replace(/_2026$/,'').replace(/ 2026$/,'')
+    .replace(/_2026$/i,'').replace(/ 2026$/i,'')
     .replace(/_/g,' ').trim();
 
   const MONTHS_CHECK = ["January","February","March","April","May","June",
@@ -3329,118 +3330,146 @@ function parseXLSXUpload(wb, filename) {
   const results = [];
 
   wb.SheetNames.forEach(sheetName => {
-    const mName = MONTHS_CHECK.find(m=>sheetName.startsWith(m));
+    const mName = MONTHS_CHECK.find(m => sheetName.startsWith(m));
     if(!mName) return;
-    const ws = wb.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
 
-    // Find header row — look for row containing 'Task' AND ('Customer' OR 'Business Purpose')
-    let hdr = null, hdrIdx = -1;
-    for(let i=0;i<Math.min(12,data.length);i++){
-      const row = data[i];
-      if(!row) continue;
-      const vals = row.map(v=>v?String(v).trim():'');
-      if(vals.includes('Task') && (vals.includes('Customer') || vals.includes('Business Purpose'))){
-        hdr=vals; hdrIdx=i; break;
+    const ws = wb.Sheets[sheetName];
+
+    // ── Try to read employee name from Row 1 Col D (cell D1) ──
+    const nameCell = ws['D1'];
+    if(nameCell && nameCell.v && String(nameCell.v).trim()) {
+      empGuess = String(nameCell.v).trim();
+    }
+
+    // ── Parse sheet as 2D array (raw values for numbers, formatted for dates) ──
+    const dataRaw  = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+    const dataFmt  = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
+
+    // ── Find header row: contains 'Task' AND 'Business Purpose' ──
+    let hdrIdx = -1;
+    for(let i = 0; i < Math.min(12, dataRaw.length); i++) {
+      const row = dataFmt[i] || [];
+      const strs = row.map(v => v ? String(v).trim() : '');
+      if(strs.includes('Task') && strs.includes('Business Purpose')) {
+        hdrIdx = i; break;
       }
     }
-    if(!hdr) { console.log('No header found in sheet:', sheetName); return; }
+    if(hdrIdx < 0) { console.log('No header in', sheetName); return; }
 
+    const hdrFmt = (dataFmt[hdrIdx] || []).map(v => v ? String(v).trim() : '');
+    const hdrRaw = dataRaw[hdrIdx] || [];
+
+    // ── Map column names to indices ──
     const ci = {};
-    hdr.forEach((v,i)=>{
-      const s = String(v||'').trim();
-      if(s==='Customer')         ci.customer=i;
-      if(s==='Site')             ci.site=i;
-      if(s==='Orica Function')   ci.fn=i;
-      if(s==='Business Purpose') ci.bp=i;
-      if(s==='Task')             ci.task=i;
-      if(s==='Sub Task')         ci.subtask=i;
-      if(s==='Product')          ci.product=i;
-      if(s==='Product 2')        ci.product2=i;
-      if(s==='Comments')         ci.comments=i;
-      if(s==='Total')            ci.total=i;
+    hdrFmt.forEach((v,i) => {
+      if(v==='Customer')         ci.customer=i;
+      if(v==='Site')             ci.site=i;
+      if(v==='Orica Function')   ci.fn=i;
+      if(v==='Business Purpose') ci.bp=i;
+      if(v==='Task')             ci.task=i;
+      if(v==='Sub Task')         ci.subtask=i;
+      if(v==='Product')          ci.product=i;
+      if(v==='Product 2')        ci.product2=i;
+      if(v==='Comments')         ci.comments=i;
+      if(v==='Total')            ci.total=i;
     });
 
     if(ci.task===undefined || ci.bp===undefined) {
-      console.log('Missing task/bp columns in', sheetName, 'ci=', ci);
-      return;
+      console.log('Missing cols in', sheetName, ci); return;
     }
 
-    // Date columns: find cells in header row that are dates OR Excel serials
-    // Also re-read with raw:true to get serial numbers
-    const wsRaw = wb.Sheets[sheetName];
-    const dataRaw = XLSX.utils.sheet_to_json(wsRaw, {header:1, defval:null, raw:true});
-    const hdrRaw = dataRaw[hdrIdx] || [];
+    // ── Find date columns ──
+    // Dates are in the header row as Excel serial numbers or date strings
+    // They start after the Total column (usually col 12-13 onwards)
+    const dateCols = []; // [{colIdx, dateStr}]
+    const startCol = (ci.total || 12) + 1;
 
-    const dateCols = [];
-    hdrRaw.forEach((v,i)=>{
-      if(v===null||v===undefined) return;
-      // Check if it's a date serial (Excel dates are numbers 40000-50000 range for 2009-2036)
-      if(typeof v === 'number' && v > 40000 && v < 55000){
-        // Convert Excel serial to JS date
-        const jsDate = new Date(Math.round((v - 25569)*86400*1000));
-        // Adjust for timezone
-        const utc = new Date(jsDate.getTime() + jsDate.getTimezoneOffset()*60000);
-        dateCols.push([i, utc.toISOString().slice(0,10)]);
-      } else if(v instanceof Date){
-        dateCols.push([i, v.toISOString().slice(0,10)]);
+    hdrRaw.forEach((v, i) => {
+      if(i < startCol) return;
+      if(v === null || v === undefined) return;
+      let dateStr = null;
+
+      // Excel serial date (number between 40000-55000 = years 2009-2050)
+      if(typeof v === 'number' && v > 40000 && v < 55000) {
+        // Convert Excel serial to JS date (Excel epoch = Jan 1 1900, JS epoch = Jan 1 1970)
+        // Excel serial 44927 = 2023-01-01
+        const msPerDay = 86400000;
+        const excelEpoch = new Date(1899, 11, 30); // Dec 30 1899
+        const jsDate = new Date(excelEpoch.getTime() + v * msPerDay);
+        dateStr = jsDate.toISOString().slice(0,10);
       }
+      // Already a date string like "2026-01-01"
+      else if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+        dateStr = v.slice(0,10);
+      }
+      // Date object
+      else if(v instanceof Date) {
+        dateStr = v.toISOString().slice(0,10);
+      }
+      // Formatted date string from XLSX
+      else {
+        const fv = hdrFmt[i];
+        if(fv && typeof fv === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fv)) {
+          dateStr = fv.slice(0,10);
+        }
+      }
+
+      if(dateStr) dateCols.push({ci: i, date: dateStr});
     });
 
-    console.log(`Sheet ${sheetName}: hdrIdx=${hdrIdx}, dateCols=${dateCols.length}, ci=`, ci);
+    console.log(`${sheetName}: hdr=${hdrIdx}, dateCols=${dateCols.length}, emp=${empGuess}`);
+    if(dateCols.length === 0) { console.warn('No date cols found in', sheetName); return; }
 
-    const clean = v => (!v||String(v).trim()===''||String(v).toLowerCase()==='null'||String(v).toLowerCase()==='nan') ? '' : String(v).trim();
-    let uid = Date.now() + Math.random()*100000|0;
+    // ── Parse data rows ──
+    const clean = v => (!v || String(v).trim()==='' || String(v).toLowerCase()==='nan' || String(v).toLowerCase()==='null' || String(v)==='0') ? '' : String(v).trim();
+    let uid = Date.now() + Math.floor(Math.random()*100000);
 
-    for(let r=hdrIdx+1; r<data.length; r++){
-      const row = data[r];
+    for(let r = hdrIdx + 1; r < dataRaw.length; r++) {
       const rowRaw = dataRaw[r];
-      if(!row || !rowRaw) continue;
+      const rowFmt = dataFmt[r];
+      if(!rowRaw && !rowFmt) continue;
 
-      const task = clean(row[ci.task]);
-      const bp   = clean(row[ci.bp]);
-      if(!task || !bp || task==='0' || bp==='0') continue;
+      const task = clean((rowFmt||[])[ci.task]);
+      const bp   = clean((rowFmt||[])[ci.bp]);
+      if(!task || !bp) continue;
 
-      // Get total hours
-      let total = 0;
-      if(ci.total!==undefined && rowRaw[ci.total]!==null){
-        total = parseFloat(rowRaw[ci.total]) || 0;
-      }
-      if(total <= 0) continue;
-
-      // Get daily hours from date columns
+      // Get daily hours
       const dayEntries = [];
-      dateCols.forEach(([ci2, ds])=>{
-        const v = rowRaw[ci2];
-        if(v===null||v===undefined) return;
+      dateCols.forEach(({ci: colIdx, date}) => {
+        const v = (rowRaw||[])[colIdx];
+        if(v === null || v === undefined) return;
         const h = parseFloat(v);
-        if(h > 0) dayEntries.push({date:ds, hrs:h, start:'', end:'', note:''});
+        if(!isNaN(h) && h > 0) {
+          dayEntries.push({date, hrs: h, start:'', end:'', note:''});
+        }
       });
+
       if(!dayEntries.length) continue;
 
-      const actualTotal = dayEntries.reduce((s,d)=>s+d.hrs, 0);
+      const actualTotal = dayEntries.reduce((s,d) => s + d.hrs, 0);
+      if(actualTotal <= 0) continue;
 
       results.push({
         id: uid++,
         month: mName,
-        customer: clean(row[ci.customer]) || 'Orica',
-        site: clean(row[ci.site]),
-        orica_fn: clean(row[ci.fn]),
-        bp: bp,
-        task: task,
-        subtask: clean(row[ci.subtask]),
-        product: clean(row[ci.product]),
-        product2: clean(row[ci.product2]),
-        comments: clean(row[ci.comments]),
-        days: dayEntries,
-        total: actualTotal,
+        customer: clean((rowFmt||[])[ci.customer]) || 'Orica',
+        site:      clean((rowFmt||[])[ci.site]),
+        orica_fn:  clean((rowFmt||[])[ci.fn]),
+        bp:        bp,
+        task:      task,
+        subtask:   clean((rowFmt||[])[ci.subtask]),
+        product:   clean((rowFmt||[])[ci.product]),
+        product2:  clean((rowFmt||[])[ci.product2]),
+        comments:  clean((rowFmt||[])[ci.comments]),
+        days:      dayEntries,
+        total:     actualTotal,
         submitted: new Date().toISOString(),
         _empGuess: empGuess
       });
     }
   });
 
-  console.log(`Parsed ${results.length} entries from ${filename}`);
+  console.log(`Parsed ${results.length} entries from ${filename} (emp: ${empGuess})`);
   return results;
 }
 
@@ -3631,7 +3660,7 @@ function initUploadDropzone() {
 // Replaces localStorage with shared Supabase database
 // ════════════════════════════════════════════════════════════════════
 const SUPA_URL = 'https://dcwkcmmyfitaxqolvqlj.supabase.co';
-const SUPA_KEY = 'sb_publishable_DM3vfl21hT6563soCgDUVQ_amDdAq3f';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjd2tjbW15Zml0YXhxb2x2cWxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjcwODYsImV4cCI6MjA5NDcwMzA4Nn0.dIYaLzHobIx39eKOXbovkeUWQSH4JmTEG2nA2FCLjPA';
 
 let _supabase = null;
 
