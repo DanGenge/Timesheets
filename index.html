@@ -3318,158 +3318,169 @@ function handleUploadFile(input) {
 }
 
 function parseXLSXUpload(wb, filename) {
-  // ── Detect employee name from file (Row 1, Col D = index 3) ──
-  // Falls back to filename if not found in sheet
-  let empGuess = filename
-    .replace(/\.(xlsx|xls|csv)$/i,'')
-    .replace(/_2026$/i,'').replace(/ 2026$/i,'')
-    .replace(/_/g,' ').trim();
+  // Handles 2024 (.xlsm), 2025 (.xlsx), 2026 (.xlsx) formats
+  // All use same structure: dates in the row ABOVE the column-header row
+  // Employee name in R1C4 (2025/2026) or R2C3 (2024)
 
-  const MONTHS_CHECK = ["January","February","March","April","May","June",
+  const MONTHS_ALL = ["January","February","March","April","May","June",
     "July","August","September","October","November","December"];
   const results = [];
 
+  // Detect year from filename for fallback
+  const yearMatch = filename.match(/(\d{4})/);
+  const fileYear = yearMatch ? yearMatch[1] : '2026';
+
   wb.SheetNames.forEach(sheetName => {
-    const mName = MONTHS_CHECK.find(m => sheetName.startsWith(m));
+    // Accept any month-named sheet regardless of year
+    const mName = MONTHS_ALL.find(m => sheetName.startsWith(m));
     if(!mName) return;
 
     const ws = wb.Sheets[sheetName];
+    if(!ws) return;
 
-    // ── Try to read employee name from Row 1 Col D (cell D1) ──
-    const nameCell = ws['D1'];
-    if(nameCell && nameCell.v && String(nameCell.v).trim()) {
-      empGuess = String(nameCell.v).trim();
+    // ── Detect employee name ──────────────────────────────────────
+    // Try multiple locations: D1 (2025/2026), C2 (2024), filename
+    let empGuess = filename
+      .replace(/\.(xlsm|xlsx|xls|csv)$/i,'')
+      .replace(/[_\s]?(2024|2025|2026|2027|2028)$/,'')
+      .replace(/_/g,' ').trim();
+
+    const nameCells = ['D1','C2','D2'];
+    for(const addr of nameCells) {
+      const cell = ws[addr];
+      if(cell && cell.v && typeof cell.v === 'string') {
+        const v = cell.v.trim();
+        // Make sure it's actually a person's name (not a label like "Name" or a date)
+        if(v.length > 3 && v.length < 50 &&
+           !['Name','Date','Month','First','Last','Days','Monday','Tuesday'].includes(v) &&
+           !/^\d/.test(v)) {
+          empGuess = v;
+          break;
+        }
+      }
     }
 
-    // ── Parse sheet as 2D array (raw values for numbers, formatted for dates) ──
-    const dataRaw  = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-    const dataFmt  = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
+    // ── Get sheet as 2D array ─────────────────────────────────────
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+    const dataF = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
 
-    // ── Find header row: contains 'Task' AND 'Business Purpose' ──
+    // ── Find header row: has 'Task' AND ('Business Purpose' or 'Bussiness Purpose') ──
     let hdrIdx = -1;
-    for(let i = 0; i < Math.min(12, dataRaw.length); i++) {
-      const row = dataFmt[i] || [];
-      const strs = row.map(v => v ? String(v).trim() : '');
-      if(strs.includes('Task') && strs.includes('Business Purpose')) {
+    for(let i=0; i<Math.min(12, data.length); i++) {
+      const row = (dataF[i]||[]).map(v=>v?String(v).trim():'');
+      if(row.some(v=>v==='Task') && row.some(v=>v.toLowerCase().includes('business purpose'))) {
         hdrIdx = i; break;
       }
     }
-    if(hdrIdx < 0) { console.log('No header in', sheetName); return; }
+    if(hdrIdx < 0) { console.log('No header in '+sheetName); return; }
 
-    const hdrFmt = (dataFmt[hdrIdx] || []).map(v => v ? String(v).trim() : '');
-    const hdrRaw = dataRaw[hdrIdx] || [];
+    const hdr = (dataF[hdrIdx]||[]).map(v=>v?String(v).trim():'');
 
-    // ── Map column names to indices ──
+    // ── Column map ────────────────────────────────────────────────
     const ci = {};
-    hdrFmt.forEach((v,i) => {
-      if(v==='Customer')         ci.customer=i;
-      if(v==='Site')             ci.site=i;
-      if(v==='Orica Function')   ci.fn=i;
-      if(v==='Business Purpose') ci.bp=i;
-      if(v==='Task')             ci.task=i;
-      if(v==='Sub Task')         ci.subtask=i;
-      if(v==='Product')          ci.product=i;
-      if(v==='Product 2')        ci.product2=i;
-      if(v==='Comments')         ci.comments=i;
-      if(v==='Total')            ci.total=i;
+    hdr.forEach((v,i)=>{
+      if(v==='Customer')                          ci.customer=i;
+      if(v==='Site')                              ci.site=i;
+      if(v==='Orica Function')                    ci.fn=i;
+      if(v.toLowerCase().includes('business purpose')) ci.bp=i;
+      if(v==='Task')                              ci.task=i;
+      if(v==='Sub Task')                          ci.subtask=i;
+      if(v==='Product')                           ci.product=i;
+      if(v==='Product 2')                         ci.product2=i;
+      if(v==='Comments')                          ci.comments=i;
+      if(v==='Total')                             ci.total=i;
     });
+    if(ci.task===undefined || ci.bp===undefined) return;
 
-    if(ci.task===undefined || ci.bp===undefined) {
-      console.log('Missing cols in', sheetName, ci); return;
-    }
+    // ── Find date row: the row directly above the header ─────────
+    // For all formats (2024/2025/2026) actual dates are one row above header
+    // In 2026 format, dates also appear IN the header row itself
+    const colDate = {}; // colIndex → 'YYYY-MM-DD'
 
-    // ── Find date columns ──
-    // Dates are in the header row as Excel serial numbers or date strings
-    // They start after the Total column (usually col 12-13 onwards)
-    const dateCols = []; // [{colIdx, dateStr}]
-    const startCol = (ci.total || 12) + 1;
-
-    hdrRaw.forEach((v, i) => {
-      if(i < startCol) return;
-      if(v === null || v === undefined) return;
-      let dateStr = null;
-
-      // Excel serial date (number between 40000-55000 = years 2009-2050)
-      if(typeof v === 'number' && v > 40000 && v < 55000) {
-        // Convert Excel serial to JS date (Excel epoch = Jan 1 1900, JS epoch = Jan 1 1970)
-        // Excel serial 44927 = 2023-01-01
-        const msPerDay = 86400000;
-        const excelEpoch = new Date(1899, 11, 30); // Dec 30 1899
-        const jsDate = new Date(excelEpoch.getTime() + v * msPerDay);
-        dateStr = jsDate.toISOString().slice(0,10);
-      }
-      // Already a date string like "2026-01-01"
-      else if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
-        dateStr = v.slice(0,10);
-      }
-      // Date object
-      else if(v instanceof Date) {
-        dateStr = v.toISOString().slice(0,10);
-      }
-      // Formatted date string from XLSX
-      else {
-        const fv = hdrFmt[i];
-        if(fv && typeof fv === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fv)) {
-          dateStr = fv.slice(0,10);
+    const tryDateRow = (rowIdx) => {
+      if(rowIdx < 0) return;
+      const rowRaw = data[rowIdx] || [];
+      rowRaw.forEach((v, ci2) => {
+        if(ci2 in colDate) return; // already have a date for this col
+        let ds = null;
+        if(v instanceof Date) {
+          ds = v.toISOString().slice(0,10);
+        } else if(typeof v === 'number' && v > 40000 && v < 60000) {
+          // Excel serial → JS date
+          const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+          ds = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        } else if(typeof v === 'string') {
+          const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+          if(m) ds = m[1];
         }
-      }
+        if(ds) colDate[ci2] = ds;
+      });
+    };
 
-      if(dateStr) dateCols.push({ci: i, date: dateStr});
-    });
+    // Check row above header first (all formats), then header row itself (2026)
+    tryDateRow(hdrIdx - 1);
+    tryDateRow(hdrIdx);
+    // Also check 2 rows above (some older formats)
+    if(Object.keys(colDate).length < 5) tryDateRow(hdrIdx - 2);
 
-    console.log(`${sheetName}: hdr=${hdrIdx}, dateCols=${dateCols.length}, emp=${empGuess}`);
-    if(dateCols.length === 0) { console.warn('No date cols found in', sheetName); return; }
+    console.log(sheetName+': hdr='+hdrIdx+', dates='+Object.keys(colDate).length+', emp='+empGuess);
+    if(Object.keys(colDate).length === 0) { console.warn('No dates in '+sheetName); return; }
 
-    // ── Parse data rows ──
-    const clean = v => (!v || String(v).trim()==='' || String(v).toLowerCase()==='nan' || String(v).toLowerCase()==='null' || String(v)==='0') ? '' : String(v).trim();
+    // ── Parse data rows ───────────────────────────────────────────
+    const clean = v => {
+      if(v===null||v===undefined) return '';
+      const s = String(v).trim();
+      return ['nan','null','0','none',''].includes(s.toLowerCase()) ? '' : s;
+    };
     let uid = Date.now() + Math.floor(Math.random()*100000);
 
-    for(let r = hdrIdx + 1; r < dataRaw.length; r++) {
-      const rowRaw = dataRaw[r];
-      const rowFmt = dataFmt[r];
-      if(!rowRaw && !rowFmt) continue;
+    for(let r = hdrIdx+1; r < data.length; r++) {
+      const rowR = data[r] || [];
+      const rowF = dataF[r] || [];
 
-      const task = clean((rowFmt||[])[ci.task]);
-      const bp   = clean((rowFmt||[])[ci.bp]);
+      const task = clean(rowF[ci.task]);
+      const bp   = clean(rowF[ci.bp]);
       if(!task || !bp) continue;
 
-      // Get daily hours
+      // Skip summary/total rows
+      if(['total','subtotal','grand total'].includes(task.toLowerCase())) continue;
+
       const dayEntries = [];
-      dateCols.forEach(({ci: colIdx, date}) => {
-        const v = (rowRaw||[])[colIdx];
+      Object.entries(colDate).forEach(([colIdx, dateStr]) => {
+        const v = rowR[parseInt(colIdx)];
         if(v === null || v === undefined) return;
         const h = parseFloat(v);
-        if(!isNaN(h) && h > 0) {
-          dayEntries.push({date, hrs: h, start:'', end:'', note:''});
+        if(!isNaN(h) && h > 0 && h <= 24) {
+          dayEntries.push({date: dateStr, hrs: h, start:'', end:'', note:''});
         }
       });
 
       if(!dayEntries.length) continue;
-
-      const actualTotal = dayEntries.reduce((s,d) => s + d.hrs, 0);
-      if(actualTotal <= 0) continue;
+      const total = dayEntries.reduce((s,d)=>s+d.hrs, 0);
+      if(total <= 0) continue;
 
       results.push({
         id: uid++,
         month: mName,
-        customer: clean((rowFmt||[])[ci.customer]) || 'Orica',
-        site:      clean((rowFmt||[])[ci.site]),
-        orica_fn:  clean((rowFmt||[])[ci.fn]),
-        bp:        bp,
-        task:      task,
-        subtask:   clean((rowFmt||[])[ci.subtask]),
-        product:   clean((rowFmt||[])[ci.product]),
-        product2:  clean((rowFmt||[])[ci.product2]),
-        comments:  clean((rowFmt||[])[ci.comments]),
-        days:      dayEntries,
-        total:     actualTotal,
+        customer: clean(rowF[ci.customer]) || 'Orica',
+        site:     clean(rowF[ci.site]),
+        orica_fn: clean(rowF[ci.fn]),
+        bp,
+        task,
+        subtask:  clean(rowF[ci.subtask]),
+        product:  clean(rowF[ci.product]),
+        product2: clean(rowF[ci.product2]),
+        comments: clean(rowF[ci.comments]),
+        days: dayEntries,
+        total,
         submitted: new Date().toISOString(),
-        _empGuess: empGuess
+        _empGuess: empGuess,
+        _year: fileYear
       });
     }
   });
 
-  console.log(`Parsed ${results.length} entries from ${filename} (emp: ${empGuess})`);
+  console.log('Parsed '+results.length+' entries from '+filename);
   return results;
 }
 
@@ -3624,7 +3635,8 @@ function commitUpload() {
 
 function resolveEmployee(guess) {
   if(!guess) return null;
-  const g=guess.toLowerCase().trim().replace(/\s+/g,' ');
+  // Strip year suffix if present (e.g. "Barney Taylor 2024" -> "Barney Taylor")
+  let g = guess.replace(/\s*(20\d{2})\s*$/, '').toLowerCase().trim().replace(/\s+/g,' ');
   // 1. Exact match
   const exact=EMPLOYEES.find(e=>e.toLowerCase()===g);
   if(exact) return exact;
@@ -3666,7 +3678,10 @@ let _supabase = null;
 
 function getSupabase() {
   if(!_supabase) {
-    _supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+    _supabase = supabase.createClient(SUPA_URL, SUPA_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+    });
   }
   return _supabase;
 }
@@ -3677,9 +3692,14 @@ let isOnline = false;
 async function checkConnection() {
   try {
     const db = getSupabase();
-    const { error } = await db.from('timesheet_entries').select('id').limit(1);
+    const { data, error } = await db
+      .from('timesheet_entries')
+      .select('id')
+      .limit(1);
     isOnline = !error;
+    if(error) console.warn('Supabase check error:', error.message);
   } catch(e) {
+    console.warn('Supabase connection failed:', e.message);
     isOnline = false;
   }
   updateConnectionBadge();
