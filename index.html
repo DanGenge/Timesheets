@@ -210,6 +210,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .entry-days-panel { display: none; padding: 0 14px 12px; }
 .entry-days-panel.open { display: block; }
+.entry-block[data-editing="true"] .entry-days-panel { display: block; }
+.entry-block[data-editing="true"] .entry-block-header { background: #EBF4FF; }
 .entry-days-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .entry-days-table th { text-align: left; padding: 6px 10px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); background: var(--surface2); }
 .entry-days-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -1962,7 +1964,7 @@ function renderStagedDays() {
 
 function removeEntry(id) {
   if(!confirm('Remove this submitted entry?')) return;
-  const entries=loadEntries(curEmp,curMonth).filter(e=>e.id!==id);
+  const entries=loadEntries(curEmp,curMonth).filter(e=>String(e.id)!==String(id));
   saveEntries(curEmp,curMonth,entries);
   renderEntry(); toast('Entry removed');
 }
@@ -1980,7 +1982,7 @@ function renderEntriesTable() {
   }
   const tagClass={'Cost.of.Service':'tag-cos','Direct.Sales':'tag-ds','BD.and.Technology':'tag-bd','Administration':'tag-admin'};
   body.innerHTML=entries.map((e)=>{
-    const isOpen=openEntryId===e.id, isEditing=editingEntryId===e.id;
+    const isOpen=String(openEntryId)===String(e.id), isEditing=String(editingEntryId)===String(e.id);
     const days=e.days||[], dayCount=days.length;
     const datesSpan=dayCount>0?fmtDateDisp(days[0].date)+(dayCount>1?' – '+fmtDateDisp(days[dayCount-1].date):''):'';
     const dayRows=days.map((d,di)=>isEditing?
@@ -2009,13 +2011,13 @@ function renderEntriesTable() {
       +'</div></td><td></td></tr>':'';
     const editMeta=isEditing?
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 0 10px;margin-bottom:8px;border-bottom:1px solid var(--border)">'
-      +'<div class="field"><label>Customer</label><select onchange="updateEntryField('+e.id+',\'customer\',this.value)" style="height:30px;font-size:12px">'+CUSTOMERS.map(c=>'<option'+(c===e.customer?' selected':'')+'>'+c+'</option>').join('')+'</select></div>'
+      +'<div class="field"><label>Customer</label><select onchange="updateEntryField('+e.id+',\'customer\',this.value)" style="height:30px;font-size:12px">'+getCustomers().map(c=>'<option'+(c===e.customer?' selected':'')+'>'+c+'</option>').join('')+'</select></div>'
       +'<div class="field"><label>Business purpose</label><select onchange="updateEntryField('+e.id+',\'bp\',this.value)" style="height:30px;font-size:12px">'+BP.map(b=>'<option value="'+b+'"'+(b===e.bp?' selected':'')+'>'+BP_LABEL[b]+'</option>').join('')+'</select></div>'
       +'<div class="field"><label>Task</label><select onchange="updateEntryField('+e.id+',\'task\',this.value)" style="height:30px;font-size:12px">'+(getTasks(e.bp)).map(t=>'<option'+(t===e.task?' selected':'')+'>'+t+'</option>').join('')+'</select></div>'
       +'<div class="field"><label>Comments</label><input type="text" value="'+(e.comments||'')+'" onchange="updateEntryField('+e.id+',\'comments\',this.value)" style="height:30px;font-size:12px"></div>'
-      +'<div class="field"><label>Product</label><select onchange="updateEntryField('+e.id+',\'product\',this.value)" style="height:30px;font-size:12px"><option value="">None</option>'+PRODUCTS.map(p=>'<option'+(p===e.product?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'
+      +'<div class="field"><label>Product</label><select onchange="updateEntryField('+e.id+',\'product\',this.value)" style="height:30px;font-size:12px"><option value="">None</option>'+getProducts().map(p=>'<option'+(p===e.product?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'
       +'</div>':'';
-    return '<div class="entry-block" id="eb-'+e.id+'">'
+    return '<div class="entry-block" id="eb-'+e.id+'" data-editing="'+(isEditing?'true':'false')+'">'
       +'<div class="entry-block-header '+(isEditing?'editing':'')+'" onclick="toggleEntryPanel('+e.id+',event)">'
       +'<i class="ti ti-chevron-right entry-chevron '+(isOpen||isEditing?'open':'')+'"></i>'
       +'<div style="flex:1"><div class="entry-task-name">'+e.task+'</div>'
@@ -2037,44 +2039,99 @@ function renderEntriesTable() {
   +'<span class="hrs-badge" style="background:#003087;color:#fff;border-color:#003087;font-size:13px">'+totalHrs.toFixed(1)+'h</span></div>';
 }
 
-function toggleEntryPanel(id,e){if(editingEntryId===id)return;openEntryId=openEntryId===id?null:id;renderEntriesTable();}
-function toggleEdit(id){if(editingEntryId===id){editingEntryId=null;}else{editingEntryId=id;openEntryId=id;}renderEntriesTable();}
-function updateEntryField(id,field,val){const entries=loadEntries(curEmp,curMonth);const entry=entries.find(e=>e.id===id);if(!entry)return;entry[field]=val;saveEntries(curEmp,curMonth,entries);}
-function updateEntryDay(id,di,field,val){
-  const entries=loadEntries(curEmp,curMonth);const entry=entries.find(e=>e.id===id);
-  if(!entry||!entry.days[di])return;entry.days[di][field]=val;
-  entry.total=entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0),0);
-  saveEntries(curEmp,curMonth,entries);
-  const badge=document.querySelector('#eb-'+id+' .entry-total-badge');
-  if(badge)badge.textContent=entry.total.toFixed(1)+'h';
+// ── Helper: find entry by id (handles string/number mismatch) ──
+function findEntry(entries, id) {
+  return entries.find(e=>String(e.id)===String(id));
 }
-function removeDayFromEntry(id,di){
-  const entries=loadEntries(curEmp,curMonth);const entry=entries.find(e=>e.id===id);
-  if(!entry)return;entry.days.splice(di,1);entry.total=entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0),0);
-  saveEntries(curEmp,curMonth,entries);renderEntriesTable();
+
+function toggleEntryPanel(id, e) {
+  if(String(editingEntryId)===String(id)) return;
+  openEntryId = String(openEntryId)===String(id) ? null : id;
+  renderEntriesTable();
 }
-function addDayToEntry(id){
-  const dateEl=document.getElementById('eq-date-'+id);const hrsEl=document.getElementById('eq-hrs-'+id);
-  if(!dateEl||!dateEl.value){toast('Select a date','error');return;}
-  const hrs=parseFloat(hrsEl.value)||0;if(hrs<=0){toast('Enter hours > 0','error');return;}
-  const entries=loadEntries(curEmp,curMonth);const entry=entries.find(e=>e.id===id);if(!entry)return;
-  entry.days.push({date:dateEl.value,hrs,start:document.getElementById('eq-start-'+id).value,end:document.getElementById('eq-end-'+id).value,note:document.getElementById('eq-note-'+id).value});
-  entry.total=entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0),0);
-  saveEntries(curEmp,curMonth,entries);renderEntriesTable();toast('Day added to entry','success');
+
+function toggleEdit(id) {
+  if(String(editingEntryId)===String(id)) {
+    editingEntryId = null;
+    openEntryId = null;
+  } else {
+    editingEntryId = id;
+    openEntryId = id;
+  }
+  renderEntriesTable();
+  // Scroll the entry into view after render
+  setTimeout(()=>{
+    const el = document.getElementById('eb-'+id);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 50);
 }
+
+function updateEntryField(id, field, val) {
+  const entries = loadEntries(curEmp, curMonth);
+  const entry = findEntry(entries, id);
+  if(!entry) return;
+  entry[field] = val;
+  saveEntries(curEmp, curMonth, entries);
+}
+
+function updateEntryDay(id, di, field, val) {
+  const entries = loadEntries(curEmp, curMonth);
+  const entry = findEntry(entries, id);
+  if(!entry || !entry.days[di]) return;
+  entry.days[di][field] = val;
+  entry.total = entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0), 0);
+  saveEntries(curEmp, curMonth, entries);
+  // Update total badge live without full re-render
+  const badge = document.querySelector('#eb-'+id+' .entry-total-badge');
+  if(badge) badge.textContent = entry.total.toFixed(1)+'h';
+}
+
+function removeDayFromEntry(id, di) {
+  const entries = loadEntries(curEmp, curMonth);
+  const entry = findEntry(entries, id);
+  if(!entry) return;
+  entry.days.splice(di, 1);
+  entry.total = entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0), 0);
+  saveEntries(curEmp, curMonth, entries);
+  renderEntriesTable();
+  toast('Day removed', 'info');
+}
+
+function addDayToEntry(id) {
+  const dateEl = document.getElementById('eq-date-'+id);
+  const hrsEl  = document.getElementById('eq-hrs-'+id);
+  if(!dateEl || !dateEl.value) { toast('Select a date','error'); return; }
+  const hrs = parseFloat(hrsEl.value)||0;
+  if(hrs <= 0) { toast('Enter hours > 0','error'); return; }
+  const entries = loadEntries(curEmp, curMonth);
+  const entry = findEntry(entries, id);
+  if(!entry) return;
+  entry.days.push({
+    date:  dateEl.value,
+    hrs,
+    start: (document.getElementById('eq-start-'+id)||{}).value || '',
+    end:   (document.getElementById('eq-end-'+id)||{}).value || '',
+    note:  (document.getElementById('eq-note-'+id)||{}).value || ''
+  });
+  entry.total = entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0), 0);
+  saveEntries(curEmp, curMonth, entries);
+  renderEntriesTable();
+  toast('Day added', 'success');
+}
+
 function duplicateDay(entryId, di) {
   const entries = loadEntries(curEmp, curMonth);
-  const entry = entries.find(e=>e.id===entryId);
-  if(!entry||!entry.days[di]) return;
-  // Clone the day, advance date by 1
+  const entry = findEntry(entries, entryId);
+  if(!entry || !entry.days[di]) return;
   const src = entry.days[di];
   const srcDate = new Date(src.date+'T00:00:00');
   srcDate.setDate(srcDate.getDate()+1);
-  const newDay = { date: srcDate.toISOString().slice(0,10), hrs: src.hrs, start: src.start, end: src.end, note: src.note };
-  entry.days.splice(di+1,0,newDay);
-  entry.total = entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0),0);
-  saveEntries(curEmp,curMonth,entries);
-  editingEntryId = entryId; openEntryId = entryId;
+  const newDay = { date: srcDate.toISOString().slice(0,10), hrs: src.hrs, start: src.start||'', end: src.end||'', note: src.note||'' };
+  entry.days.splice(di+1, 0, newDay);
+  entry.total = entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0), 0);
+  saveEntries(curEmp, curMonth, entries);
+  editingEntryId = entryId;
+  openEntryId = entryId;
   renderEntriesTable();
   toast('Day duplicated — edit the date if needed','info');
 }
@@ -3881,9 +3938,11 @@ function loadEntries(emp, month) {
         _asyncRefreshInProgress.add(key);
         loadEntriesAsync(emp, month).then(fresh => {
           _asyncRefreshInProgress.delete(key);
-          // Only re-render if data actually changed
+          // Only re-render if data actually changed AND user is not editing
           if(JSON.stringify(fresh) !== JSON.stringify(cached)) {
-            if(curEmp === emp && curMonth === month) renderEntry();
+            if(curEmp === emp && curMonth === month && editingEntryId === null) {
+              renderEntry();
+            }
           }
         }).catch(()=>_asyncRefreshInProgress.delete(key));
       }
@@ -3982,6 +4041,394 @@ async function initSupabase() {
   } else {
     console.warn('⚠ Supabase offline — using local storage');
   }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// EDIT PAGE — full reference data management
+// mirrors admin panel functions but using edit- prefixed IDs
+// ════════════════════════════════════════════════════════════════════
+let editBPTab = 'Cost.of.Service';
+
+function switchEditTab(name, el) {
+  document.querySelectorAll('[id^=epanel-]').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('[id^=etab-]').forEach(t=>t.classList.remove('active'));
+  document.getElementById('epanel-'+name)?.classList.add('active');
+  el.classList.add('active');
+  const fns = {
+    customers: renderEditCustomers,
+    sites: renderEditSites,
+    tasks: renderEditTasksList,
+    products: renderEditProducts,
+    functions: renderEditFunctions,
+    users: renderEditUsers,
+  };
+  if(fns[name]) fns[name]();
+}
+
+function renderEditPage() {
+  renderEditCustomers();
+  // Populate site customer select
+  const sel = document.getElementById('edit-site-customer');
+  if(sel){
+    const sites = getCustomerSites();
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Select customer —</option>' +
+      Object.keys(sites).map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  }
+}
+
+// ── CUSTOMERS ───────────────────────────────────────────────────
+function renderEditCustomers() {
+  const sites = getCustomerSites();
+  const list = document.getElementById('edit-customers-list');
+  if(!list) return;
+  const customers = Object.keys(sites);
+  list.innerHTML = customers.length ? customers.map((c,i)=>`
+    <div class="ref-item" id="ecust-row-${i}">
+      <div class="ref-item-name" id="ecust-name-${i}"><strong>${c}</strong></div>
+      <div class="ref-item-meta">${(sites[c]||[]).length} site${(sites[c]||[]).length!==1?'s':''}</div>
+      <button class="ref-item-edit" onclick="editRenameCustomer(${i},'${c.replace(/'/g,"\\'")}')" title="Rename"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="ref-item-del" onclick="editRemoveCustomer('${c.replace(/'/g,"\\'")}',${i})" title="Remove"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div>`).join('') : '<div class="empty-list">No customers yet — add one below</div>';
+  // Refresh site customer select
+  const sel = document.getElementById('edit-site-customer');
+  if(sel){
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Select customer —</option>' +
+      customers.map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  }
+}
+
+function editRenameCustomer(idx, name) {
+  const row = document.getElementById('ecust-row-'+idx);
+  const nameDiv = document.getElementById('ecust-name-'+idx);
+  if(!row||!nameDiv) return;
+  nameDiv.innerHTML = `<input class="ref-item-input" id="ecust-edit-${idx}" value="${name}">`;
+  row.querySelectorAll('.ref-item-edit,.ref-item-del').forEach(b=>b.style.display='none');
+  const s=document.createElement('button'); s.className='ref-item-save';
+  s.innerHTML='<i class="ti ti-check"></i> Save'; s.onclick=()=>editSaveCustomer(idx,name);
+  const c=document.createElement('button'); c.className='ref-item-cancel';
+  c.textContent='Cancel'; c.onclick=()=>renderEditCustomers();
+  row.appendChild(s); row.appendChild(c);
+  document.getElementById('ecust-edit-'+idx)?.focus();
+}
+
+function editSaveCustomer(idx, oldName) {
+  const inp = document.getElementById('ecust-edit-'+idx);
+  const newName = inp?.value.trim();
+  if(!newName){toast('Name cannot be empty','error');return;}
+  if(newName===oldName){renderEditCustomers();return;}
+  const sites = getCustomerSites();
+  if(sites[newName]){toast('Customer already exists','error');return;}
+  sites[newName] = sites[oldName]; delete sites[oldName];
+  saveRefData('customer_sites',sites);
+  renderEditCustomers(); renderEditSites();
+  toast(`Renamed: ${oldName} → ${newName}`,'success');
+}
+
+function editAddCustomer() {
+  const name = document.getElementById('edit-new-customer').value.trim();
+  if(!name){toast('Enter a customer name','error');return;}
+  const sites = getCustomerSites();
+  if(sites[name]){toast('Customer already exists','error');return;}
+  sites[name]=[];
+  saveRefData('customer_sites',sites);
+  document.getElementById('edit-new-customer').value='';
+  renderEditCustomers(); toast('Customer added: '+name,'success');
+}
+
+function editRemoveCustomer(name, idx) {
+  if(!confirm(`Remove customer "${name}"?\n\nThis won't affect existing entries.`)) return;
+  const sites = getCustomerSites();
+  delete sites[name];
+  saveRefData('customer_sites',sites);
+  renderEditCustomers(); renderEditSites();
+  toast('Customer removed','info');
+}
+
+// ── SITES ────────────────────────────────────────────────────────
+function renderEditSites() {
+  const cust = document.getElementById('edit-site-customer')?.value;
+  const list = document.getElementById('edit-sites-list');
+  const countEl = document.getElementById('edit-site-count');
+  if(!list) return;
+  if(!cust){
+    list.innerHTML='<div class="empty-list">Select a customer above to see its sites</div>';
+    if(countEl) countEl.textContent=''; return;
+  }
+  const sites = getCustomerSites();
+  const custSites = sites[cust]||[];
+  if(countEl) countEl.textContent=`${custSites.length} site${custSites.length!==1?'s':''}`;
+  list.innerHTML = custSites.length ? custSites.map((s,i)=>`
+    <div class="ref-item" id="esite-row-${i}">
+      <div class="ref-item-name" id="esite-name-${i}">${s}</div>
+      <button class="ref-item-edit" onclick="editRenameSite(${i},'${s.replace(/'/g,"\\'")}')" title="Rename"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="ref-item-del" onclick="editRemoveSite('${cust.replace(/'/g,"\\'")}',${i})" title="Remove"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div>`).join('') : '<div class="empty-list">No sites yet — add one below</div>';
+}
+
+function editRenameSite(idx, name) {
+  const row=document.getElementById('esite-row-'+idx);
+  const nameDiv=document.getElementById('esite-name-'+idx);
+  if(!row||!nameDiv) return;
+  nameDiv.innerHTML=`<input class="ref-item-input" id="esite-edit-${idx}" value="${name}">`;
+  row.querySelectorAll('.ref-item-edit,.ref-item-del').forEach(b=>b.style.display='none');
+  const s=document.createElement('button'); s.className='ref-item-save';
+  s.innerHTML='<i class="ti ti-check"></i> Save'; s.onclick=()=>editSaveSite(idx,name);
+  const c=document.createElement('button'); c.className='ref-item-cancel';
+  c.textContent='Cancel'; c.onclick=()=>renderEditSites();
+  row.appendChild(s); row.appendChild(c);
+  document.getElementById('esite-edit-'+idx)?.focus();
+}
+
+function editSaveSite(idx, oldName) {
+  const cust=document.getElementById('edit-site-customer')?.value;
+  const inp=document.getElementById('esite-edit-'+idx);
+  const newName=inp?.value.trim();
+  if(!newName){toast('Name cannot be empty','error');return;}
+  if(newName===oldName){renderEditSites();return;}
+  const sites=getCustomerSites();
+  const arr=sites[cust]||[];
+  if(arr.includes(newName)){toast('Site already exists','error');return;}
+  arr[idx]=newName; sites[cust]=arr;
+  saveRefData('customer_sites',sites);
+  renderEditSites(); toast(`Renamed: ${oldName} → ${newName}`,'success');
+}
+
+function editAddSite() {
+  const cust=document.getElementById('edit-site-customer')?.value;
+  const name=document.getElementById('edit-new-site').value.trim();
+  if(!cust){toast('Select a customer first','error');return;}
+  if(!name){toast('Enter a site name','error');return;}
+  const sites=getCustomerSites();
+  if(!sites[cust]) sites[cust]=[];
+  if(sites[cust].includes(name)){toast('Site already exists','error');return;}
+  sites[cust].push(name);
+  saveRefData('customer_sites',sites);
+  document.getElementById('edit-new-site').value='';
+  renderEditSites(); toast('Site added: '+name,'success');
+}
+
+function editRemoveSite(cust, idx) {
+  const sites=getCustomerSites();
+  const siteName=(sites[cust]||[])[idx];
+  if(!confirm(`Remove site "${siteName}" from ${cust}?`)) return;
+  sites[cust].splice(idx,1);
+  saveRefData('customer_sites',sites);
+  renderEditSites(); toast('Site removed','info');
+}
+
+// ── TASKS ────────────────────────────────────────────────────────
+function switchEditBPTab(bp, el) {
+  editBPTab=bp;
+  document.querySelectorAll('#edit-bp-tabs .btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const labels={'Cost.of.Service':'Cost of Service','Direct.Sales':'Direct Sales','BD.and.Technology':'BD & Technology','Administration':'Administration'};
+  const lbl=document.getElementById('edit-tasks-bp-label');
+  if(lbl) lbl.textContent=labels[bp]||bp;
+  renderEditTasksList();
+}
+
+function renderEditTasksList() {
+  const tasks=getRefData('tasks',TASKS_DEFAULT);
+  const list=document.getElementById('edit-tasks-list');
+  if(!list) return;
+  const taskList=tasks[editBPTab]||[];
+  list.innerHTML=taskList.length ? taskList.map((t,i)=>`
+    <div class="ref-item" id="etask-row-${i}">
+      <div class="ref-item-name" id="etask-name-${i}">${t}</div>
+      <button class="ref-item-edit" onclick="editRenameTask(${i},'${t.replace(/'/g,"\\'")}')" title="Rename"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="ref-item-del" onclick="editRemoveTask(${i})" title="Remove"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div>`).join('') : '<div class="empty-list">No tasks yet — add one below</div>';
+}
+
+function editRenameTask(idx, name) {
+  const row=document.getElementById('etask-row-'+idx);
+  const nameDiv=document.getElementById('etask-name-'+idx);
+  if(!row||!nameDiv) return;
+  nameDiv.innerHTML=`<input class="ref-item-input" id="etask-edit-${idx}" value="${name}">`;
+  row.querySelectorAll('.ref-item-edit,.ref-item-del').forEach(b=>b.style.display='none');
+  const s=document.createElement('button'); s.className='ref-item-save';
+  s.innerHTML='<i class="ti ti-check"></i> Save'; s.onclick=()=>editSaveTask(idx,name);
+  const c=document.createElement('button'); c.className='ref-item-cancel';
+  c.textContent='Cancel'; c.onclick=()=>renderEditTasksList();
+  row.appendChild(s); row.appendChild(c);
+  document.getElementById('etask-edit-'+idx)?.focus();
+}
+
+function editSaveTask(idx, oldName) {
+  const inp=document.getElementById('etask-edit-'+idx);
+  const newName=inp?.value.trim();
+  if(!newName){toast('Name cannot be empty','error');return;}
+  const tasks=getRefData('tasks',TASKS_DEFAULT);
+  const arr=tasks[editBPTab]||[];
+  if(arr.includes(newName)&&newName!==oldName){toast('Task already exists','error');return;}
+  arr[idx]=newName; tasks[editBPTab]=arr;
+  saveRefData('tasks',tasks);
+  renderEditTasksList(); toast(`Task updated: ${oldName} → ${newName}`,'success');
+}
+
+function editAddTask() {
+  const name=document.getElementById('edit-new-task').value.trim();
+  if(!name){toast('Enter a task name','error');return;}
+  const tasks=getRefData('tasks',TASKS_DEFAULT);
+  if(!tasks[editBPTab]) tasks[editBPTab]=[];
+  if(tasks[editBPTab].includes(name)){toast('Task already exists','error');return;}
+  tasks[editBPTab].push(name);
+  saveRefData('tasks',tasks);
+  document.getElementById('edit-new-task').value='';
+  renderEditTasksList(); toast('Task added: '+name,'success');
+}
+
+function editRemoveTask(idx) {
+  const tasks=getRefData('tasks',TASKS_DEFAULT);
+  const taskName=(tasks[editBPTab]||[])[idx];
+  if(!confirm(`Remove task "${taskName}"?`)) return;
+  tasks[editBPTab].splice(idx,1);
+  saveRefData('tasks',tasks);
+  renderEditTasksList(); toast('Task removed','info');
+}
+
+// ── PRODUCTS ─────────────────────────────────────────────────────
+function renderEditProducts() {
+  const products=getProducts();
+  const list=document.getElementById('edit-products-list');
+  if(!list) return;
+  list.innerHTML=products.length ? products.map((p,i)=>`
+    <div class="ref-item" id="eprod-row-${i}">
+      <div class="ref-item-name" id="eprod-name-${i}">${p}</div>
+      <button class="ref-item-edit" onclick="editRenameProduct(${i},'${p.replace(/'/g,"\\'")}')" title="Rename"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="ref-item-del" onclick="editRemoveProduct(${i})" title="Remove"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div>`).join('') : '<div class="empty-list">No products yet</div>';
+}
+
+function editRenameProduct(idx, name) {
+  const row=document.getElementById('eprod-row-'+idx);
+  const nameDiv=document.getElementById('eprod-name-'+idx);
+  if(!row||!nameDiv) return;
+  nameDiv.innerHTML=`<input class="ref-item-input" id="eprod-edit-${idx}" value="${name}">`;
+  row.querySelectorAll('.ref-item-edit,.ref-item-del').forEach(b=>b.style.display='none');
+  const s=document.createElement('button'); s.className='ref-item-save';
+  s.innerHTML='<i class="ti ti-check"></i> Save'; s.onclick=()=>editSaveProduct(idx,name);
+  const c=document.createElement('button'); c.className='ref-item-cancel';
+  c.textContent='Cancel'; c.onclick=()=>renderEditProducts();
+  row.appendChild(s); row.appendChild(c);
+  document.getElementById('eprod-edit-'+idx)?.focus();
+}
+
+function editSaveProduct(idx, oldName) {
+  const inp=document.getElementById('eprod-edit-'+idx);
+  const newName=inp?.value.trim();
+  if(!newName){toast('Name cannot be empty','error');return;}
+  const products=getProducts();
+  products[idx]=newName;
+  saveRefData('products',products);
+  renderEditProducts(); toast(`Product updated: ${oldName} → ${newName}`,'success');
+}
+
+function editAddProduct() {
+  const name=document.getElementById('edit-new-product').value.trim();
+  if(!name){toast('Enter a product name','error');return;}
+  const products=getProducts();
+  if(products.includes(name)){toast('Product already exists','error');return;}
+  products.push(name);
+  saveRefData('products',products);
+  document.getElementById('edit-new-product').value='';
+  renderEditProducts(); toast('Product added: '+name,'success');
+}
+
+function editRemoveProduct(idx) {
+  const products=getProducts();
+  if(!confirm(`Remove product "${products[idx]}"?`)) return;
+  products.splice(idx,1);
+  saveRefData('products',products);
+  renderEditProducts(); toast('Product removed','info');
+}
+
+// ── ORICA FUNCTIONS ──────────────────────────────────────────────
+function renderEditFunctions() {
+  const fns=getOricaFunctions();
+  const list=document.getElementById('edit-functions-list');
+  if(!list) return;
+  list.innerHTML=fns.length ? fns.map((f,i)=>`
+    <div class="ref-item" id="efn-row-${i}">
+      <div class="ref-item-name" id="efn-name-${i}">${f}</div>
+      <button class="ref-item-edit" onclick="editRenameFunction(${i},'${f.replace(/'/g,"\\'")}')" title="Rename"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="ref-item-del" onclick="editRemoveFunction(${i})" title="Remove"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div>`).join('') : '<div class="empty-list">No functions yet</div>';
+}
+
+function editRenameFunction(idx, name) {
+  const row=document.getElementById('efn-row-'+idx);
+  const nameDiv=document.getElementById('efn-name-'+idx);
+  if(!row||!nameDiv) return;
+  nameDiv.innerHTML=`<input class="ref-item-input" id="efn-edit-${idx}" value="${name}">`;
+  row.querySelectorAll('.ref-item-edit,.ref-item-del').forEach(b=>b.style.display='none');
+  const s=document.createElement('button'); s.className='ref-item-save';
+  s.innerHTML='<i class="ti ti-check"></i> Save'; s.onclick=()=>editSaveFunction(idx,name);
+  const c=document.createElement('button'); c.className='ref-item-cancel';
+  c.textContent='Cancel'; c.onclick=()=>renderEditFunctions();
+  row.appendChild(s); row.appendChild(c);
+  document.getElementById('efn-edit-'+idx)?.focus();
+}
+
+function editSaveFunction(idx, oldName) {
+  const inp=document.getElementById('efn-edit-'+idx);
+  const newName=inp?.value.trim();
+  if(!newName){toast('Name cannot be empty','error');return;}
+  const fns=getOricaFunctions();
+  fns[idx]=newName;
+  saveRefData('orica_functions',fns);
+  renderEditFunctions(); toast(`Function updated: ${oldName} → ${newName}`,'success');
+}
+
+function editAddFunction() {
+  const name=document.getElementById('edit-new-function').value.trim();
+  if(!name){toast('Enter a function name','error');return;}
+  const fns=getOricaFunctions();
+  if(fns.includes(name)){toast('Function already exists','error');return;}
+  fns.push(name);
+  saveRefData('orica_functions',fns);
+  document.getElementById('edit-new-function').value='';
+  renderEditFunctions(); toast('Function added: '+name,'success');
+}
+
+function editRemoveFunction(idx) {
+  const fns=getOricaFunctions();
+  if(!confirm(`Remove function "${fns[idx]}"?`)) return;
+  fns.splice(idx,1);
+  saveRefData('orica_functions',fns);
+  renderEditFunctions(); toast('Function removed','info');
+}
+
+// ── USERS (EDIT PAGE) ────────────────────────────────────────────
+function renderEditUsers() {
+  const list=document.getElementById('edit-users-list');
+  if(!list) return;
+  const saved=getRefData('team_roles',{});
+  list.innerHTML=TEAM_REGISTRY.filter(t=>t.role!=='admin').map(t=>{
+    const role=saved[t.name]||t.role;
+    const color=EMP_COLORS[EMPLOYEES.indexOf(t.name)%EMP_COLORS.length]||'#003087';
+    const ini=t.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    return `<div class="ref-item">
+      <div style="width:30px;height:30px;border-radius:50%;background:${color}22;color:${color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${ini}</div>
+      <div class="ref-item-name">${t.name}</div>
+      <span class="login-state-badge badge-${t.state.toLowerCase()}" style="font-size:10px;padding:2px 7px">${t.state}</span>
+      <div class="user-role-toggle">
+        <span class="role-chip user ${role==='user'?'active':''}" onclick="editSetUserRole('${t.name}','user',this)">User</span>
+        <span class="role-chip admin ${role==='admin'?'active':''}" onclick="editSetUserRole('${t.name}','admin',this)">Admin</span>
+      </div>
+    </div>`;
+  }).join('')||'<div class="empty-list">No team members found</div>';
+}
+
+function editSetUserRole(name, role, el) {
+  const saved=getRefData('team_roles',{});
+  saved[name]=role;
+  saveRefData('team_roles',saved);
+  renderEditUsers();
+  toast(`${name} → ${role}`,'success');
 }
 
 
