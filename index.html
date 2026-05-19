@@ -2026,13 +2026,20 @@ function buildSidebar() {
 }
 
 function selectEmp(emp, idx) {
-  triggerPoll(emp, MONTHS[new Date().getMonth()]);
   curEmp=emp;
   document.querySelectorAll('.emp-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById(`eb-${idx}`).classList.add('active');
+  const btn=document.getElementById(`eb-${idx}`);
+  if(btn) btn.classList.add('active');
   document.getElementById('no-sel').style.display='none';
   updateHeaderAvatars(emp, idx);
+  // Render immediately from localStorage cache
   refreshView();
+  // Fetch fresh data from Supabase in background
+  if(isOnline) {
+    fetchEmployeeFromSupabase(emp).then(()=>{
+      if(curEmp===emp && editingEntryId===null) renderEntry();
+    }).catch(()=>{});
+  }
 }
 
 function updateHeaderAvatars(emp, idx) {
@@ -2083,7 +2090,12 @@ function showSection(name, el) {
       document.getElementById('user-reports-section').style.display='none';
       document.getElementById('admin-reports-section').style.display='block';
       initTabFilters();
-      renderAdminSummary();
+      // Fetch all employee data from Supabase first
+      if(isOnline) {
+        fetchAllFromSupabase().then(()=>renderAdminSummary());
+      } else {
+        renderAdminSummary();
+      }
     }
     return;
   }
@@ -2647,12 +2659,12 @@ function getTabEntries(tid){
   const custF=(document.getElementById('tf-cust-'+tid)?.value)||'ALL';
   const siteF=(document.getElementById('tf-site-'+tid)?.value)||'ALL';
   const bpF  =(document.getElementById('tf-bp-'+tid)?.value)||'ALL';
-  const stateF=s.state||'ALL';
-  const emps=[...s.emps];
+  const stateF=s?.state||'ALL';
+  const emps=s?.emps ? [...s.emps] : getEmployees();
 
   let all=[];
   emps.forEach(emp=>{
-    const empRec=TEAM_REGISTRY.find(t=>t.name===emp);
+    const empRec=getTeamRegistry().find(t=>t.name===emp);
     if(!empRec) return;
     if(stateF!=='ALL'&&empRec.state!==stateF) return;
     for(let mi=mFrom;mi<=mTo;mi++){
@@ -3988,13 +4000,14 @@ function initUploadDropzone() {
 // LOGIN SYSTEM
 // ════════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════════
-// SUPABASE DATA LAYER
-// Replaces localStorage with shared Supabase database
+// SUPABASE DATA LAYER v2 — clean, reliable, minimal API calls
 // ════════════════════════════════════════════════════════════════════
 const SUPA_URL = 'https://dcwkcmmyfitaxqolvqlj.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjd2tjbW15Zml0YXhxb2x2cWxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjcwODYsImV4cCI6MjA5NDcwMzA4Nn0.dIYaLzHobIx39eKOXbovkeUWQSH4JmTEG2nA2FCLjPA';
 
 let _supabase = null;
+let isOnline = false;
+let _pollTimer = null;
 
 function getSupabase() {
   if(!_supabase) {
@@ -4005,318 +4018,325 @@ function getSupabase() {
   return _supabase;
 }
 
-// ── Connection status indicator ──────────────────────────────────
-let isOnline = false;
-
+// ── Connection badge ─────────────────────────────────────────────
 async function checkConnection() {
   try {
-    const db = getSupabase();
-    const { data, error } = await db
-      .from('timesheet_entries')
-      .select('id')
-      .limit(1);
+    const { error } = await getSupabase().from('timesheet_entries').select('id').limit(1);
     isOnline = !error;
     if(error) console.warn('Supabase check error:', error.message);
   } catch(e) {
-    console.warn('Supabase connection failed:', e.message);
     isOnline = false;
+    console.warn('Supabase offline:', e.message);
   }
-  updateConnectionBadge();
+  ['conn-badge','dash-conn-badge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.textContent = isOnline ? '● Live' : '● Offline';
+    el.style.color  = isOnline ? '#1D9E75' : '#E24B4A';
+  });
   return isOnline;
 }
 
-function updateConnectionBadge() {
-  const badge = document.getElementById('conn-badge');
-  if(!badge) return;
-  badge.textContent = isOnline ? '● Live' : '● Offline';
-  badge.style.color = isOnline ? '#1D9E75' : '#E24B4A';
-  badge.title = isOnline ? 'Connected to Supabase — data syncs in real time' : 'Offline — using local cache';
+function updateConnectionBadge() { checkConnection(); }
+
+// ── Row → entry conversion ───────────────────────────────────────
+function rowToEntry(row) {
+  return {
+    id: row.entry_id || String(row.id),
+    customer: row.customer || '',
+    site: row.site || '',
+    orica_fn: row.orica_fn || '',
+    bp: row.bp || '',
+    task: row.task || '',
+    product: row.product || '',
+    product2: '',
+    comments: row.comments || '',
+    days: typeof row.days === 'string' ? JSON.parse(row.days||'[]') : (row.days||[]),
+    total: row.total || 0,
+    month: row.month || '',
+    submitted: row.submitted || '',
+    _dbId: row.id
+  };
 }
 
-// ── LOAD ENTRIES (Supabase first, localStorage fallback) ─────────
-async function loadEntriesAsync(emp, month) {
-  // Always check Supabase first
-  if(isOnline) {
-    try {
-      const db = getSupabase();
-      const { data, error } = await db
-        .from('timesheet_entries')
-        .select('*')
-        .eq('employee', emp)
-        .eq('month', month);
-      if(!error && data) {
-        // Parse days from jsonb
-        const entries = data.map(row => ({
-          id: row.entry_id || row.id,
-          customer: row.customer,
-          site: row.site,
-          orica_fn: row.orica_fn,
-          bp: row.bp,
-          task: row.task,
-          product: row.product,
-          product2: '',
-          comments: row.comments,
-          days: typeof row.days === 'string' ? JSON.parse(row.days) : (row.days || []),
-          total: row.total,
-          month: row.month,
-          submitted: row.submitted,
-          _dbId: row.id
-        }));
-        // Cache locally too
-        try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
-        return entries;
-      }
-    } catch(e) {
-      console.warn('Supabase load failed, using cache:', e.message);
-    }
+function entryToRow(emp, month, entry) {
+  return {
+    entry_id: String(entry.id),
+    employee: emp,
+    month: month,
+    customer: entry.customer || '',
+    site: entry.site || '',
+    orica_fn: entry.orica_fn || '',
+    bp: entry.bp || '',
+    task: entry.task || '',
+    product: [entry.product, entry.product2].filter(Boolean).join(', '),
+    comments: entry.comments || '',
+    days: JSON.stringify(entry.days || []),
+    total: entry.total || 0,
+    submitted: entry.submitted || new Date().toISOString()
+  };
+}
+
+// ── Fetch ALL entries for one employee in one query ──────────────
+async function fetchEmployeeFromSupabase(emp) {
+  if(!isOnline) return null;
+  try {
+    const db = getSupabase();
+    // Fetch all months for this employee in a single query
+    const { data, error } = await db
+      .from('timesheet_entries')
+      .select('*')
+      .eq('employee', emp);
+
+    if(error) { console.warn('Fetch error:', error.message); return null; }
+    if(!data || !data.length) return {};
+
+    // Group by month
+    const byMonth = {};
+    data.forEach(row => {
+      const m = row.month;
+      if(!m) return;
+      if(!byMonth[m]) byMonth[m] = [];
+      byMonth[m].push(rowToEntry(row));
+    });
+
+    // Cache each month to localStorage
+    Object.entries(byMonth).forEach(([month, entries]) => {
+      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
+    });
+
+    console.log(`Fetched ${data.length} entries for ${emp} from Supabase`);
+    return byMonth;
+  } catch(e) {
+    console.warn('fetchEmployeeFromSupabase failed:', e.message);
+    return null;
   }
-  // Fallback to localStorage
+}
+
+// ── Fetch ALL entries for ALL employees in one query ─────────────
+async function fetchAllFromSupabase() {
+  if(!isOnline) return false;
+  try {
+    const db = getSupabase();
+    // Single query for everything
+    const { data, error } = await db
+      .from('timesheet_entries')
+      .select('*');
+
+    if(error) { console.warn('Fetch all error:', error.message); return false; }
+    if(!data || !data.length) return true;
+
+    // Group by employee + month and cache
+    const counts = {};
+    data.forEach(row => {
+      const key = `nsw26|${row.employee}|${row.month}`;
+      const cached = JSON.parse(localStorage.getItem(key)||'[]');
+      // Replace if Supabase has data (Supabase is source of truth)
+      counts[key] = counts[key] || [];
+      counts[key].push(rowToEntry(row));
+    });
+    Object.entries(counts).forEach(([key, entries]) => {
+      try { localStorage.setItem(key, JSON.stringify(entries)); } catch(e){}
+    });
+
+    console.log(`Fetched ${data.length} total entries from Supabase`);
+    return true;
+  } catch(e) {
+    console.warn('fetchAllFromSupabase failed:', e.message);
+    return false;
+  }
+}
+
+// ── loadEntries: read from localStorage cache ────────────────────
+function loadEntries(emp, month) {
   try {
     const v = localStorage.getItem(`nsw26|${emp}|${month}`);
     return v ? JSON.parse(v) : [];
   } catch(e) { return []; }
 }
 
-// ── SAVE ENTRY (Supabase + localStorage) ────────────────────────
-async function saveEntryAsync(emp, month, entry) {
-  // Always save to localStorage immediately
-  const existing = loadEntries(emp, month);
-  const idx = existing.findIndex(e => String(e.id) === String(entry.id));
-  if(idx >= 0) existing[idx] = entry;
-  else existing.push(entry);
-  try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(existing)); } catch(e){}
-
-  // Then sync to Supabase
-  if(isOnline) {
-    try {
-      const db = getSupabase();
-      const row = {
-        entry_id: String(entry.id),
-        employee: emp,
-        month: month,
-        customer: entry.customer || '',
-        site: entry.site || '',
-        orica_fn: entry.orica_fn || '',
-        bp: entry.bp || '',
-        task: entry.task || '',
-        product: [entry.product, entry.product2].filter(Boolean).join(', '),
-        comments: entry.comments || '',
-        days: JSON.stringify(entry.days || []),
-        total: entry.total || 0,
-        submitted: entry.submitted || new Date().toISOString()
-      };
-      const { error } = await db
-        .from('timesheet_entries')
-        .upsert(row, { onConflict: 'entry_id' });
-      if(error) console.warn('Supabase save error:', error.message);
-    } catch(e) {
-      console.warn('Supabase save failed:', e.message);
-    }
-  }
-}
-
-// ── DELETE ENTRY (Supabase + localStorage) ───────────────────────
-async function deleteEntryAsync(emp, month, entryId) {
-  // Remove from localStorage
-  const existing = loadEntries(emp, month).filter(e => String(e.id) !== String(entryId));
-  try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(existing)); } catch(e){}
-
-  // Remove from Supabase
-  if(isOnline) {
-    try {
-      const db = getSupabase();
-      await db.from('timesheet_entries').delete().eq('entry_id', String(entryId));
-    } catch(e) {
-      console.warn('Supabase delete failed:', e.message);
-    }
-  }
-}
-
-// ── BULK IMPORT TO SUPABASE (for upload function) ────────────────
-async function bulkImportToSupabase(emp, month, entries) {
-  if(!isOnline) return;
-  try {
-    const db = getSupabase();
-    const rows = entries.map(e => ({
-      entry_id: String(e.id),
-      employee: emp,
-      month: month,
-      customer: e.customer || '',
-      site: e.site || '',
-      orica_fn: e.orica_fn || '',
-      bp: e.bp || '',
-      task: e.task || '',
-      product: [e.product, e.product2].filter(Boolean).join(', '),
-      comments: e.comments || '',
-      days: JSON.stringify(e.days || []),
-      total: e.total || 0,
-      submitted: e.submitted || new Date().toISOString()
-    }));
-    // Batch in groups of 100
-    for(let i=0; i<rows.length; i+=100) {
-      const batch = rows.slice(i, i+100);
-      const { error } = await db
-        .from('timesheet_entries')
-        .upsert(batch, { onConflict: 'entry_id' });
-      if(error) console.warn('Batch import error:', error.message);
-    }
-  } catch(e) {
-    console.warn('Bulk import failed:', e.message);
-  }
-}
-
-// ── SYNC ALL LOCAL DATA TO SUPABASE (run once to migrate) ────────
-async function syncLocalToSupabase() {
-  if(!isOnline) { toast('Not connected to database','error'); return; }
-  toast('Syncing all local data to cloud…','info');
-  let count = 0;
-  for(const emp of getEmployees()) {
-    for(const month of MONTHS) {
-      const entries = loadEntries(emp, month);
-      if(entries.length) {
-        await bulkImportToSupabase(emp, month, entries);
-        count += entries.length;
-      }
-    }
-  }
-  toast(`✓ Synced ${count} entries to cloud database`,'success');
-}
-
-// ── OVERRIDE loadEntries to be sync but also trigger async refresh
-// We keep the sync version for immediate UI rendering
-// and fire an async refresh that updates the UI when Supabase responds
-
-const _asyncRefreshInProgress = new Set();
-
-// ── Background poll: refresh from Supabase every 30s ────────────
-let _lastPollTime = {};
-
-function loadEntries(emp, month) {
-  try {
-    const v = localStorage.getItem(`nsw26|${emp}|${month}`);
-    const cached = v ? JSON.parse(v) : [];
-    return cached;
-  } catch(e) { return []; }
-}
-
-// Separate function for background sync — called on a timer, not on every load
-async function pollSupabaseIfNeeded(emp, month) {
-  if(!isOnline || editingEntryId !== null) return;
-  const key = `${emp}|${month}`;
-  const now = Date.now();
-  if(_lastPollTime[key] && now - _lastPollTime[key] < 30000) return; // poll max every 30s
-  _lastPollTime[key] = now;
-
-  try {
-    const fresh = await loadEntriesAsync(emp, month);
-    const cached = loadEntries(emp, month);
-    if(JSON.stringify(fresh) !== JSON.stringify(cached)) {
-      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(fresh)); } catch(e){}
-      if(curEmp === emp && curMonth === month && editingEntryId === null) {
-        renderEntry();
-      }
-    }
-  } catch(e) { console.warn('Poll failed:', e.message); }
-}
-
-// Call poll when switching to an employee/month
-function triggerPoll(emp, month) {
-  if(isOnline) pollSupabaseIfNeeded(emp, month);
-}
-
-// ── saveEntries: localStorage only (fast, no Supabase) ───────────
+// ── saveEntries: localStorage only (no Supabase) ─────────────────
 function saveEntries(emp, month, entries) {
   try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
-  // DO NOT sync to Supabase here — use saveEntriesAndSync for that
 }
 
-// ── saveEntriesAndSync: localStorage + Supabase ──────────────────
-// Use this when the user explicitly commits data (submit, done editing)
+// ── saveEntriesAndSync: localStorage + push to Supabase ──────────
 function saveEntriesAndSync(emp, month, entries) {
-  try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
-  if(isOnline) {
-    entries.forEach(entry => {
-      saveEntryAsync(emp, month, entry).catch(e=>console.warn('Sync failed:',e));
-    });
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════
-// UPDATED commitUpload — syncs to Supabase after import
-// ════════════════════════════════════════════════════════════════════
-async function commitUploadAsync() {
-  if(!uploadParsed||!uploadParsed.length){ toast('No data to import','error'); return; }
-  const log=document.getElementById('upload-log');
-  let imported=0, skipped=0, dupes=0;
-
-  const grouped={};
-  uploadParsed.forEach(e=>{
-    const empName=resolveEmployee(e._empGuess);
-    if(!empName){ skipped++; return; }
-    const key=empName+'||'+(e.month||'');
-    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,entries:[]};
-    grouped[key].entries.push({...e, _emp:empName});
-  });
-
-  // Show progress
-  if(log) log.innerHTML='<span style="color:#003087">Importing… please wait</span>';
-
-  for(const {emp,month,entries} of Object.values(grouped)) {
-    if(!month||!MONTHS.includes(month)) continue;
-    // Load fresh from Supabase to check for dupes
-    const existing = isOnline ? await loadEntriesAsync(emp, month) : loadEntries(emp, month);
-
-    const existingKeys=new Set();
-    existing.forEach(e=>{
-      (e.days||[]).forEach(d=>existingKeys.add(`${e.task}|${d.date}|${d.hrs}`));
-    });
-
-    const toAdd=[];
-    entries.forEach(e=>{
-      const newDays=(e.days||[]).filter(d=>{
-        const key=`${e.task}|${d.date}|${d.hrs}`;
-        if(existingKeys.has(key)){ dupes++; return false; }
-        existingKeys.add(key); return true;
-      });
-      if(newDays.length){
-        toAdd.push({...e, days:newDays, total:newDays.reduce((s,d)=>s+d.hrs,0)});
-        imported+=newDays.length;
-      }
-    });
-
-    if(toAdd.length) {
-      const combined = [...existing, ...toAdd];
-      // Save to localStorage
-      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(combined)); } catch(e){}
-      // Sync to Supabase
-      if(isOnline) await bulkImportToSupabase(emp, month, toAdd);
+  saveEntries(emp, month, entries);
+  if(!isOnline) return;
+  const db = getSupabase();
+  const rows = entries.map(e => entryToRow(emp, month, e));
+  if(!rows.length) return;
+  // Batch upsert
+  const batchUpsert = async () => {
+    for(let i=0; i<rows.length; i+=50) {
+      const {error} = await db.from('timesheet_entries')
+        .upsert(rows.slice(i,i+50), {onConflict:'entry_id'});
+      if(error) console.warn('saveEntriesAndSync error:', error.message);
     }
-  }
+  };
+  batchUpsert().catch(e=>console.warn('Sync failed:', e));
+}
 
-  if(log) log.innerHTML=`<span style="color:#1D9E75">✓ Imported ${imported} entries`+
-    (dupes?` · ${dupes} duplicates skipped`:'')+(skipped?` · ${skipped} unmatched`:'')+'</span>';
-
-  cancelUpload();
-  toast(`✓ Imported ${imported} entries to cloud`,'success');
-  if(curEmp) renderEntry();
-  if(curSection==='reports'){
-    const activeTab=document.querySelector('#admin-reports-section .report-tab.active');
-    if(activeTab) activeTab.click();
+// ── bulkImportToSupabase: batch upsert entries ───────────────────
+async function bulkImportToSupabase(emp, month, entries) {
+  if(!isOnline || !entries.length) return;
+  const db = getSupabase();
+  const rows = entries.map(e => entryToRow(emp, month, e));
+  for(let i=0; i<rows.length; i+=50) {
+    const {error} = await db.from('timesheet_entries')
+      .upsert(rows.slice(i,i+50), {onConflict:'entry_id'});
+    if(error) { console.warn('bulkImport error:', error.message); }
   }
 }
 
-// Override commitUpload to use async version
+// ── deleteEntryAsync: remove from Supabase ───────────────────────
+async function deleteEntryAsync(emp, month, entryId) {
+  saveEntries(emp, month, loadEntries(emp,month).filter(e=>String(e.id)!==String(entryId)));
+  if(!isOnline) return;
+  try {
+    await getSupabase().from('timesheet_entries').delete().eq('entry_id', String(entryId));
+  } catch(e) { console.warn('Delete failed:', e); }
+}
 
+// ── loadEntriesAsync: kept for compat ────────────────────────────
+async function loadEntriesAsync(emp, month) {
+  const result = await fetchEmployeeFromSupabase(emp);
+  return loadEntries(emp, month);
+}
 
-// ════════════════════════════════════════════════════════════════════
-// INIT — connect to Supabase on load
-// ════════════════════════════════════════════════════════════════════
+// ── refreshFromSupabase: fetch this employee's data ──────────────
+async function refreshFromSupabase(emp, month) {
+  if(!isOnline || !emp) return;
+  await fetchEmployeeFromSupabase(emp);
+  if(curEmp===emp && editingEntryId===null) renderEntry();
+}
+
+// ── Polling: refresh current employee every 60s ──────────────────
+function startPolling() {
+  if(_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(async ()=>{
+    if(!isOnline) { await checkConnection(); return; }
+    if(curEmp && editingEntryId===null) {
+      await refreshFromSupabase(curEmp, curMonth);
+    }
+  }, 60000);
+}
+
+// ── SYNC TO CLOUD — push ALL local data, pull ALL cloud data ─────
+async function syncLocalToSupabase() {
+  if(!isOnline) {
+    // Try to reconnect first
+    await checkConnection();
+    if(!isOnline) { toast('Cannot connect to cloud database','error'); return; }
+  }
+
+  const syncBtn = document.getElementById('sync-btn');
+  const updateBtn = (txt, disabled=false) => {
+    if(syncBtn) {
+      syncBtn.innerHTML = `<i class="ti ti-${disabled?'loader ti-spin':'cloud-upload'}"></i> ${txt}`;
+      syncBtn.disabled = disabled;
+    }
+  };
+
+  updateBtn('Pushing…', true);
+  toast('Syncing with cloud — please wait…','info');
+
+  let pushed=0, pulled=0, errors=0;
+
+  try {
+    const db = getSupabase();
+    const emps = getEmployees();
+
+    // ── STEP 1: Collect ALL local entries ──────────────────────
+    updateBtn('Collecting…', true);
+    const allRows = [];
+    emps.forEach(emp => {
+      MONTHS.forEach(month => {
+        const entries = loadEntries(emp, month);
+        entries.forEach(e => {
+          allRows.push(entryToRow(emp, month, e));
+          pushed++;
+        });
+      });
+    });
+
+    // ── STEP 2: Bulk upsert to Supabase in batches of 100 ──────
+    updateBtn(`Pushing ${pushed} entries…`, true);
+    for(let i=0; i<allRows.length; i+=100) {
+      const batch = allRows.slice(i, i+100);
+      const { error } = await db.from('timesheet_entries')
+        .upsert(batch, { onConflict: 'entry_id' });
+      if(error) {
+        errors++;
+        console.warn(`Batch ${i}-${i+100} error:`, error.message);
+      }
+    }
+
+    // ── STEP 3: Pull ALL cloud data back ───────────────────────
+    updateBtn('Pulling from cloud…', true);
+    const ok = await fetchAllFromSupabase();
+    if(ok) {
+      // Count what came back
+      emps.forEach(emp => MONTHS.forEach(month => {
+        pulled += loadEntries(emp, month).length;
+      }));
+    }
+
+    const msg = `✓ Sync complete: ${pushed} pushed · ${pulled} pulled${errors?' · '+errors+' errors':''}`;
+    toast(msg, 'success');
+
+    // Refresh current view
+    if(curEmp && editingEntryId===null) renderEntry();
+    if(curSection==='reports'){
+      const activeTab = document.querySelector('#admin-reports-section .report-tab.active');
+      const tabName = activeTab?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1]||'summary';
+      renderAdminTab(tabName);
+    }
+
+  } catch(e) {
+    toast('Sync error: '+e.message, 'error');
+    console.error('syncLocalToSupabase:', e);
+  } finally {
+    updateBtn('Sync to cloud', false);
+  }
+}
+
+// ── saveCurrentMonthToCloud: push current employee's month ───────
+async function saveCurrentMonthToCloud() {
+  const btn = document.getElementById('save-cloud-btn');
+  if(btn) { btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite;display:inline-block"></i> Saving…'; btn.disabled=true; }
+  try {
+    if(!isOnline) { toast('Not connected — saved locally only','info'); dismissSaveBar(); return; }
+    const entries = loadEntries(curEmp, curMonth);
+    if(!entries.length) { toast('No entries to save','info'); dismissSaveBar(); return; }
+    await bulkImportToSupabase(curEmp, curMonth, entries);
+    toast(`✓ ${entries.length} entries saved to cloud`,'success');
+    dismissSaveBar();
+    _lastPollTime = {};
+  } catch(e) {
+    toast('Save failed: '+e.message,'error');
+  } finally {
+    if(btn){ btn.innerHTML='<i class="ti ti-cloud-upload"></i> Save to cloud'; btn.disabled=false; }
+  }
+}
+
+// ── Init Supabase ─────────────────────────────────────────────────
 async function initSupabase() {
   await checkConnection();
-  // Check connection every 30 seconds
-  setInterval(checkConnection, 30000);
+  startPolling();
   if(isOnline) {
     console.log('✓ Connected to Supabase');
+    // Pull ALL cloud data on startup so reports are immediately accurate
+    fetchAllFromSupabase().then(()=>{
+      console.log('✓ Initial data pull complete');
+      // If reports are open, refresh them
+      if(curSection==='reports'){
+        const activeTab=document.querySelector('#admin-reports-section .report-tab.active');
+        const tabName=activeTab?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1]||'summary';
+        renderAdminTab(tabName);
+      }
+    });
   } else {
     console.warn('⚠ Supabase offline — using local storage');
   }
@@ -4866,8 +4886,15 @@ function initDashboard() {
   const cb = document.getElementById('dash-conn-badge');
   if(cb) { cb.textContent = isOnline ? '● Live' : '● Offline'; cb.style.color = isOnline ? '#1D9E75' : '#E24B4A'; }
 
-  if(dashInited) { renderDashboard(); return; }
+  if(dashInited) {
+    // Still refresh data on re-open
+    if(isOnline) fetchAllFromSupabase().then(()=>renderDashboard());
+    else renderDashboard();
+    return;
+  }
   dashInited = true;
+  // Fetch all data first
+  if(isOnline) fetchAllFromSupabase().then(()=>{
 
   // Month selects
   ['dash-mfrom','dash-mto'].forEach((id, isTo) => {
@@ -4901,7 +4928,9 @@ function initDashboard() {
 
   // Load saved views
   renderSavedViewsList();
-  renderDashboard();
+  // fetchAllFromSupabase already called above
+  if(!isOnline) renderDashboard();
+    }).catch(()=>renderDashboard());
 }
 
 function buildDashEmpDrop() {
@@ -5378,6 +5407,43 @@ document.addEventListener('click', e=>{
 });
 
 
+
+// ── Fetch ALL employee data from Supabase into local cache ───────
+async function fetchAllFromSupabase() {
+  if(!isOnline) return;
+  try {
+    const db = getSupabase();
+    // Single query to get ALL entries at once (much faster than per-employee)
+    const { data, error } = await db
+      .from('timesheet_entries')
+      .select('*')
+      .order('employee');
+    if(error) throw new Error(error.message);
+    if(!data || !data.length) return;
+    // Group by employee + month and cache locally
+    const grouped = {};
+    data.forEach(row => {
+      const key = (row.employee||'')+'|'+(row.month||'');
+      if(!grouped[key]) grouped[key] = {emp:row.employee, month:row.month, entries:[]};
+      grouped[key].entries.push({
+        id: row.entry_id || String(row.id),
+        customer: row.customer||'', site: row.site||'',
+        orica_fn: row.orica_fn||'', bp: row.bp||'', task: row.task||'',
+        product: row.product||'', product2: '', comments: row.comments||'',
+        days: typeof row.days==='string' ? JSON.parse(row.days||'[]') : (row.days||[]),
+        total: row.total||0, month: row.month||'',
+        submitted: row.submitted||'', _dbId: row.id
+      });
+    });
+    Object.values(grouped).forEach(({emp, month, entries}) => {
+      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
+    });
+    console.log(`Fetched ${data.length} entries from Supabase for all employees`);
+  } catch(e) {
+    console.warn('fetchAllFromSupabase failed:', e.message);
+  }
+}
+
 let loginSelected = null;
 
 function buildLoginList() {
@@ -5483,14 +5549,17 @@ function doLogin() {
   buildSidebar();
   initFormDropdowns();
   initReportFilters();
+  // Fetch ALL data from Supabase on login (so reports are always current)
+  if(isOnline) {
+    fetchAllFromSupabase().then(()=>{
+      if(curEmp) renderEntry();
+    });
+  }
   // Auto-select user if not admin
   if(currentUser.role!=='admin'){
     const idx=EMPLOYEES.indexOf(currentUser.name);
-    if(idx>=0) selectEmp(currentUser.name,idx);
-    else {
-      // Custom member — find by name directly
-      selectEmp(currentUser.name, EMPLOYEES.length-1);
-    }
+    const empIdx = idx>=0 ? idx : EMPLOYEES.length-1;
+    selectEmp(currentUser.name, empIdx);
   }
 }
 
