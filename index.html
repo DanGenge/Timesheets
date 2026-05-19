@@ -212,6 +212,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 .entry-days-panel.open { display: block; }
 .entry-block[data-editing="true"] .entry-days-panel { display: block; }
 .entry-block[data-editing="true"] .entry-block-header { background: #EBF4FF; }
+.save-cloud-bar-pulse { animation: pulse-border 1.5s ease-in-out 3; }
+@keyframes pulse-border { 0%,100%{border-color:rgba(0,48,135,0.2)} 50%{border-color:#003087;box-shadow:0 0 0 3px rgba(0,48,135,0.1)} }
 .entry-days-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .entry-days-table th { text-align: left; padding: 6px 10px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); background: var(--surface2); }
 .entry-days-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -603,7 +605,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
       <div class="nav-link" id="nav-admin" onclick="showSection('admin',this)"><i class="ti ti-shield-cog"></i> Admin <span class="admin-badge">ADMIN</span></div>
     </div>
     <button class="btn btn-sm" onclick="openExport()"><i class="ti ti-download"></i> Export CSV</button>
-    <button class="btn btn-sm btn-primary" onclick="saveAll()"><i class="ti ti-device-floppy"></i> Save</button>
+    <button class="btn btn-sm btn-primary" onclick="saveCurrentMonthToCloud()" title="Save all entries for this month to cloud"><i class="ti ti-device-floppy"></i> Save</button>
     <button class="btn btn-sm" id="sync-btn" style="display:none" onclick="syncLocalToSupabase()" title="Push all local data to cloud"><i class="ti ti-cloud-upload"></i> Sync to cloud</button>
     <button class="btn btn-sm btn-ghost" onclick="doLogout()" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2)"><i class="ti ti-logout"></i></button>
   </div>
@@ -824,6 +826,23 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           <div class="entries-meta" id="etable-meta"></div>
         </div>
         <div id="etable-body"></div>
+      </div>
+
+      <!-- SAVE TO CLOUD BUTTON -->
+      <div id="save-cloud-bar" style="display:none;background:#EBF4FF;border:1px solid rgba(0,48,135,0.2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#003087">
+          <i class="ti ti-cloud-upload" style="font-size:18px"></i>
+          <div>
+            <div style="font-weight:600">You have unsaved changes</div>
+            <div style="font-size:11px;color:#0057A8" id="save-cloud-info">Push your entries to the shared database so everyone can see them</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-sm" onclick="dismissSaveBar()" style="color:var(--muted)"><i class="ti ti-x"></i></button>
+          <button class="btn btn-primary btn-sm" onclick="saveCurrentMonthToCloud()" id="save-cloud-btn">
+            <i class="ti ti-cloud-upload"></i> Save to cloud
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1805,6 +1824,7 @@ function buildSidebar() {
 }
 
 function selectEmp(emp, idx) {
+  triggerPoll(emp, MONTHS[new Date().getMonth()]);
   curEmp=emp;
   document.querySelectorAll('.emp-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(`eb-${idx}`).classList.add('active');
@@ -1996,7 +2016,9 @@ function renderStagedDays() {
 function removeEntry(id) {
   if(!confirm('Remove this submitted entry?')) return;
   const entries=loadEntries(curEmp,curMonth).filter(e=>String(e.id)!==String(id));
-  saveEntries(curEmp,curMonth,entries);
+  saveEntriesAndSync(curEmp,curMonth,entries);
+  // Also delete from Supabase
+  if(isOnline) deleteEntryAsync(curEmp, curMonth, id).catch(e=>console.warn(e));
   renderEntry(); toast('Entry removed');
 }
 
@@ -2083,14 +2105,18 @@ function toggleEntryPanel(id, e) {
 
 function toggleEdit(id) {
   if(String(editingEntryId)===String(id)) {
+    // Closing edit — sync current state to Supabase
     editingEntryId = null;
     openEntryId = null;
+    const entries = loadEntries(curEmp, curMonth);
+    saveEntriesAndSync(curEmp, curMonth, entries);
+    dismissSaveBar();
+    toast('Changes saved to cloud ✓', 'success');
   } else {
     editingEntryId = id;
     openEntryId = id;
   }
   renderEntriesTable();
-  // Scroll the entry into view after render
   setTimeout(()=>{
     const el = document.getElementById('eb-'+id);
     if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -2115,6 +2141,7 @@ function updateEntryDay(id, di, field, val) {
   // Update total badge live without full re-render
   const badge = document.querySelector('#eb-'+id+' .entry-total-badge');
   if(badge) badge.textContent = entry.total.toFixed(1)+'h';
+  markUnsaved();
 }
 
 function removeDayFromEntry(id, di) {
@@ -2145,7 +2172,7 @@ function addDayToEntry(id) {
     note:  (document.getElementById('eq-note-'+id)||{}).value || ''
   });
   entry.total = entry.days.reduce((s,d)=>s+(parseFloat(d.hrs)||0), 0);
-  saveEntries(curEmp, curMonth, entries);
+  saveEntriesAndSync(curEmp, curMonth, entries);
   renderEntriesTable();
   toast('Day added', 'success');
 }
@@ -3232,9 +3259,10 @@ function submitEntry() {
     });
   });
 
-  saveEntries(curEmp, curMonth, entries);
+  saveEntriesAndSync(curEmp, curMonth, entries);
   clearForm();
   renderEntry();
+  markUnsaved();
   toast(`${addedCount} entr${addedCount===1?'y':'ies'} submitted`, 'success');
 }
 
@@ -3959,38 +3987,55 @@ async function syncLocalToSupabase() {
 
 const _asyncRefreshInProgress = new Set();
 
+// ── Background poll: refresh from Supabase every 30s ────────────
+let _lastPollTime = {};
+
 function loadEntries(emp, month) {
-  // Return from localStorage immediately (for sync rendering)
   try {
     const v = localStorage.getItem(`nsw26|${emp}|${month}`);
     const cached = v ? JSON.parse(v) : [];
-    // Trigger async refresh in background if online and not already refreshing
-    if(isOnline && curEmp === emp && curMonth === month) {
-      const key = `${emp}|${month}`;
-      if(!_asyncRefreshInProgress.has(key)) {
-        _asyncRefreshInProgress.add(key);
-        loadEntriesAsync(emp, month).then(fresh => {
-          _asyncRefreshInProgress.delete(key);
-          // Only re-render if data actually changed AND user is not editing
-          if(JSON.stringify(fresh) !== JSON.stringify(cached)) {
-            if(curEmp === emp && curMonth === month && editingEntryId === null) {
-              renderEntry();
-            }
-          }
-        }).catch(()=>_asyncRefreshInProgress.delete(key));
-      }
-    }
     return cached;
   } catch(e) { return []; }
 }
 
+// Separate function for background sync — called on a timer, not on every load
+async function pollSupabaseIfNeeded(emp, month) {
+  if(!isOnline || editingEntryId !== null) return;
+  const key = `${emp}|${month}`;
+  const now = Date.now();
+  if(_lastPollTime[key] && now - _lastPollTime[key] < 30000) return; // poll max every 30s
+  _lastPollTime[key] = now;
+
+  try {
+    const fresh = await loadEntriesAsync(emp, month);
+    const cached = loadEntries(emp, month);
+    if(JSON.stringify(fresh) !== JSON.stringify(cached)) {
+      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(fresh)); } catch(e){}
+      if(curEmp === emp && curMonth === month && editingEntryId === null) {
+        renderEntry();
+      }
+    }
+  } catch(e) { console.warn('Poll failed:', e.message); }
+}
+
+// Call poll when switching to an employee/month
+function triggerPoll(emp, month) {
+  if(isOnline) pollSupabaseIfNeeded(emp, month);
+}
+
+// ── saveEntries: localStorage only (fast, no Supabase) ───────────
 function saveEntries(emp, month, entries) {
-  // Save to localStorage immediately
   try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
-  // Sync each new/changed entry to Supabase in background
+  // DO NOT sync to Supabase here — use saveEntriesAndSync for that
+}
+
+// ── saveEntriesAndSync: localStorage + Supabase ──────────────────
+// Use this when the user explicitly commits data (submit, done editing)
+function saveEntriesAndSync(emp, month, entries) {
+  try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
   if(isOnline) {
     entries.forEach(entry => {
-      saveEntryAsync(emp, month, entry).catch(e=>console.warn('Bg save failed:',e));
+      saveEntryAsync(emp, month, entry).catch(e=>console.warn('Sync failed:',e));
     });
   }
 }
@@ -4522,6 +4567,75 @@ function removeTeamMember(name) {
   toast('Team member removed','info');
 }
 
+
+// ════════════════════════════════════════════════════════════════════
+// SAVE TO CLOUD — mass upload current month entries
+// ════════════════════════════════════════════════════════════════════
+let _unsavedChanges = false;
+
+function markUnsaved() {
+  _unsavedChanges = true;
+  const bar = document.getElementById('save-cloud-bar');
+  if(bar) {
+    bar.style.display = 'flex';
+    bar.classList.remove('save-cloud-bar-pulse');
+    void bar.offsetWidth; // reflow to restart animation
+    bar.classList.add('save-cloud-bar-pulse');
+  }
+}
+
+function dismissSaveBar() {
+  _unsavedChanges = false;
+  const bar = document.getElementById('save-cloud-bar');
+  if(bar) bar.style.display = 'none';
+}
+
+async function saveCurrentMonthToCloud() {
+  const btn = document.getElementById('save-cloud-btn');
+  if(btn) { btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Saving…'; btn.disabled = true; }
+
+  try {
+    if(!isOnline) {
+      toast('Not connected to cloud — saved locally only', 'info');
+      dismissSaveBar();
+      return;
+    }
+    // Get all entries for current employee + month
+    const entries = loadEntries(curEmp, curMonth);
+    if(!entries.length) {
+      toast('No entries to save', 'info');
+      dismissSaveBar();
+      return;
+    }
+    // Batch upsert to Supabase
+    await bulkImportToSupabase(curEmp, curMonth, entries);
+    toast('✓ ' + entries.length + ' entries saved to cloud', 'success');
+    dismissSaveBar();
+    // Update last poll time so we don't immediately re-fetch
+    _lastPollTime[curEmp + '|' + curMonth] = Date.now();
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+    console.error(e);
+  } finally {
+    if(btn) { btn.innerHTML = '<i class="ti ti-cloud-upload"></i> Save to cloud'; btn.disabled = false; }
+  }
+}
+
+async function saveAll() {
+  // Save ALL months for current employee
+  if(!isOnline) { toast('Not connected to cloud', 'error'); return; }
+  toast('Saving all months…', 'info');
+  let total = 0;
+  for(const month of MONTHS) {
+    const entries = loadEntries(curEmp, month);
+    if(entries.length) {
+      await bulkImportToSupabase(curEmp, month, entries);
+      total += entries.length;
+    }
+  }
+  toast('✓ ' + total + ' entries saved to cloud', 'success');
+  dismissSaveBar();
+}
 
 let loginSelected = null;
 
