@@ -925,6 +925,18 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="admin-section-title"><i class="ti ti-users"></i> Team members &amp; roles</div>
         <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Toggle between User (sees own data only) and Admin (sees all data + admin panel).</p>
         <div class="ref-list" id="edit-users-list"></div>
+        <div class="add-ref-row" style="flex-wrap:wrap;gap:8px">
+          <input type="text" id="new-member-name" placeholder="Full name (e.g. John Smith)…" style="flex:2;min-width:160px">
+          <select id="new-member-state" style="flex:1;min-width:100px;height:32px">
+            <option value="NSW">NSW</option>
+            <option value="QLD">QLD</option>
+          </select>
+          <select id="new-member-role" style="flex:1;min-width:90px;height:32px">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button class="add-ref-btn" onclick="addTeamMember()"><i class="ti ti-user-plus"></i> Add member</button>
+        </div>
       </div>
 
     </div>
@@ -4403,22 +4415,39 @@ function editRemoveFunction(idx) {
 }
 
 // ── USERS (EDIT PAGE) ────────────────────────────────────────────
+function getCustomMembers() {
+  return getRefData('custom_members', []);
+}
+
+function getAllTeamMembers() {
+  // Combine hardcoded registry with custom members added via admin
+  const custom = getCustomMembers();
+  const existing = new Set(TEAM_REGISTRY.map(t=>t.name));
+  const extras = custom.filter(m=>!existing.has(m.name));
+  return [...TEAM_REGISTRY.filter(t=>t.role!=='admin'), ...extras];
+}
+
 function renderEditUsers() {
   const list=document.getElementById('edit-users-list');
   if(!list) return;
   const saved=getRefData('team_roles',{});
-  list.innerHTML=TEAM_REGISTRY.filter(t=>t.role!=='admin').map(t=>{
-    const role=saved[t.name]||t.role;
+  const allMembers = getAllTeamMembers();
+  const custom = new Set(getCustomMembers().map(m=>m.name));
+
+  list.innerHTML=allMembers.map(t=>{
+    const role=saved[t.name]||t.role||'user';
     const color=EMP_COLORS[EMPLOYEES.indexOf(t.name)%EMP_COLORS.length]||'#003087';
     const ini=t.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const isCustom = custom.has(t.name);
     return `<div class="ref-item">
       <div style="width:30px;height:30px;border-radius:50%;background:${color}22;color:${color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${ini}</div>
-      <div class="ref-item-name">${t.name}</div>
-      <span class="login-state-badge badge-${t.state.toLowerCase()}" style="font-size:10px;padding:2px 7px">${t.state}</span>
+      <div class="ref-item-name">${t.name} ${isCustom?'<span style="font-size:10px;color:var(--muted)">(added)</span>':''}</div>
+      <span class="login-state-badge badge-${(t.state||'NSW').toLowerCase()}" style="font-size:10px;padding:2px 7px">${t.state||'NSW'}</span>
       <div class="user-role-toggle">
         <span class="role-chip user ${role==='user'?'active':''}" onclick="editSetUserRole('${t.name}','user',this)">User</span>
         <span class="role-chip admin ${role==='admin'?'active':''}" onclick="editSetUserRole('${t.name}','admin',this)">Admin</span>
       </div>
+      ${isCustom?`<button class="ref-item-del" onclick="removeTeamMember('${t.name.replace(/'/g,"\'")}')"><i class="ti ti-trash" style="font-size:12px"></i></button>`:''}
     </div>`;
   }).join('')||'<div class="empty-list">No team members found</div>';
 }
@@ -4428,7 +4457,43 @@ function editSetUserRole(name, role, el) {
   saved[name]=role;
   saveRefData('team_roles',saved);
   renderEditUsers();
-  toast(`${name} → ${role}`,'success');
+  toast(name+' → '+role,'success');
+}
+
+function addTeamMember() {
+  const nameEl = document.getElementById('new-member-name');
+  const stateEl = document.getElementById('new-member-state');
+  const roleEl  = document.getElementById('new-member-role');
+  const name = nameEl.value.trim();
+  if(!name) { toast('Enter a name','error'); return; }
+  if(name.split(' ').length < 2) { toast('Please enter first and last name','error'); return; }
+
+  // Check not already in team
+  const all = getAllTeamMembers();
+  if(all.find(t=>t.name.toLowerCase()===name.toLowerCase())) {
+    toast('Team member already exists','error'); return;
+  }
+
+  const custom = getCustomMembers();
+  const newMember = { name, state: stateEl.value, role: roleEl.value };
+  custom.push(newMember);
+  saveRefData('custom_members', custom);
+
+  // Also add to the login dropdown
+  buildLoginList();
+
+  nameEl.value = '';
+  renderEditUsers();
+  toast('Team member added: '+name,'success');
+}
+
+function removeTeamMember(name) {
+  if(!confirm('Remove '+name+' from the team?\n\nThis will not delete their timesheet data.')) return;
+  const custom = getCustomMembers().filter(m=>m.name!==name);
+  saveRefData('custom_members', custom);
+  buildLoginList();
+  renderEditUsers();
+  toast('Team member removed','info');
 }
 
 
@@ -4458,6 +4523,16 @@ function buildLoginList() {
     const o=document.createElement('option'); o.value=t.name; o.textContent=t.name; qg.appendChild(o);
   });
   sel.appendChild(qg);
+  // Custom added members
+  const customM = getCustomMembers();
+  if(customM.length) {
+    const cg = document.createElement('optgroup');
+    cg.label = '➕ Additional members';
+    customM.forEach(t=>{
+      const o=document.createElement('option'); o.value=t.name; o.textContent=t.name+' ('+t.state+')'; cg.appendChild(o);
+    });
+    sel.appendChild(cg);
+  }
 }
 
 function filterLoginList(v) { /* no-op — native select handles filtering */ }
