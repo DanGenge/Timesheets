@@ -3637,7 +3637,7 @@ let _supabase = null;
 
 function getSupabase() {
   if(!_supabase) {
-    _supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+    _supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
   }
   return _supabase;
 }
