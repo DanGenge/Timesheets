@@ -1610,7 +1610,24 @@ const TEAM_REGISTRY = [
   // Admin
   {name:"Admin",             state:"ALL", role:"admin"},
 ];
-const EMPLOYEES = TEAM_REGISTRY.map(t=>t.name);
+// ── Dynamic team (hardcoded + custom added via admin) ────────────
+function getTeamRegistry() {
+  const custom = getRefData('custom_members', []);
+  const existing = new Set(TEAM_REGISTRY.map(t=>t.name));
+  const extras = custom.filter(m=>!existing.has(m.name)).map(m=>({
+    name: m.name, state: m.state||'NSW', role: m.role||'user'
+  }));
+  return [...TEAM_REGISTRY, ...extras];
+}
+function getEmployees() {
+  return getTeamRegistry().map(t=>t.name);
+}
+// Keep EMPLOYEES as a live proxy — functions that need it use getEmployees()
+// For backward compat with direct EMPLOYEES references, we rebuild after any change
+let EMPLOYEES = TEAM_REGISTRY.map(t=>t.name);
+function refreshEmployees() {
+  EMPLOYEES = getEmployees();
+}
 
 const CUSTOMERS = ["Bloomfield Group","BHP","Glencore","Idemitsu","New Hope","Thiess","Yancoal","Whitehaven","Bathurst","Orica","Stanmore","Anglo American","Pembroke","Qcoal","Goldings","Other"];
 
@@ -1759,14 +1776,16 @@ function toast(msg, type='info') {
 function buildSidebar() {
   const list=document.getElementById('emp-list');
   list.innerHTML='';
-  // Group by state
+  // Group by state — use dynamic registry to include custom members
+  const registry = getTeamRegistry();
   const groups = {NSW:[],QLD:[]};
-  TEAM_REGISTRY.filter(t=>t.role!=='admin').forEach((t,ti)=>{
+  registry.filter(t=>t.role!=='admin').forEach((t,ti)=>{
     const i=EMPLOYEES.indexOf(t.name);
     // If current user is not admin, only show themselves
     if(currentUser&&currentUser.role!=='admin'&&t.name!==currentUser.name) return;
-    groups[t.state]=groups[t.state]||[];
-    groups[t.state].push({t,i});
+    const state = t.state||'NSW';
+    groups[state]=groups[state]||[];
+    groups[state].push({t,i});
   });
   ['NSW','QLD'].forEach(state=>{
     if(!groups[state]||!groups[state].length) return;
@@ -3706,17 +3725,19 @@ function resolveEmployee(guess) {
   if(!guess) return null;
   // Strip year suffix if present (e.g. "Barney Taylor 2024" -> "Barney Taylor")
   let g = guess.replace(/\s*(20\d{2})\s*$/, '').toLowerCase().trim().replace(/\s+/g,' ');
+  // Use dynamic employee list (includes custom members)
+  const emps = getEmployees();
   // 1. Exact match
-  const exact=EMPLOYEES.find(e=>e.toLowerCase()===g);
+  const exact=emps.find(e=>e.toLowerCase()===g);
   if(exact) return exact;
   // 2. Last name match
-  const byLastName=EMPLOYEES.find(e=>e.split(' ')[1]?.toLowerCase()===g.split(' ').pop()?.toLowerCase());
+  const byLastName=emps.find(e=>e.split(' ')[1]?.toLowerCase()===g.split(' ').pop()?.toLowerCase());
   if(byLastName) return byLastName;
   // 3. First name match
-  const byFirstName=EMPLOYEES.find(e=>e.split(' ')[0]?.toLowerCase()===g.split(' ')[0]?.toLowerCase());
+  const byFirstName=emps.find(e=>e.split(' ')[0]?.toLowerCase()===g.split(' ')[0]?.toLowerCase());
   if(byFirstName) return byFirstName;
   // 4. Contains match
-  const contains=EMPLOYEES.find(e=>e.toLowerCase().includes(g)||g.includes(e.toLowerCase()));
+  const contains=emps.find(e=>e.toLowerCase().includes(g)||g.includes(e.toLowerCase()));
   return contains||null;
 }
 
@@ -3920,7 +3941,7 @@ async function syncLocalToSupabase() {
   if(!isOnline) { toast('Not connected to database','error'); return; }
   toast('Syncing all local data to cloud…','info');
   let count = 0;
-  for(const emp of EMPLOYEES) {
+  for(const emp of getEmployees()) {
     for(const month of MONTHS) {
       const entries = loadEntries(emp, month);
       if(entries.length) {
@@ -4480,7 +4501,10 @@ function addTeamMember() {
   saveRefData('custom_members', custom);
 
   // Also add to the login dropdown
+  // Rebuild live state
+  refreshEmployees();
   buildLoginList();
+  buildSidebar();
 
   nameEl.value = '';
   renderEditUsers();
@@ -4491,7 +4515,9 @@ function removeTeamMember(name) {
   if(!confirm('Remove '+name+' from the team?\n\nThis will not delete their timesheet data.')) return;
   const custom = getCustomMembers().filter(m=>m.name!==name);
   saveRefData('custom_members', custom);
+  refreshEmployees();
   buildLoginList();
+  buildSidebar();
   renderEditUsers();
   toast('Team member removed','info');
 }
@@ -4601,6 +4627,7 @@ function doLogin() {
     document.getElementById('nav-admin-tab').style.display='block';
     document.getElementById('sync-btn').style.display='inline-flex';
   }
+  refreshEmployees();
   buildSidebar();
   initFormDropdowns();
   initReportFilters();
@@ -4608,6 +4635,10 @@ function doLogin() {
   if(currentUser.role!=='admin'){
     const idx=EMPLOYEES.indexOf(currentUser.name);
     if(idx>=0) selectEmp(currentUser.name,idx);
+    else {
+      // Custom member — find by name directly
+      selectEmp(currentUser.name, EMPLOYEES.length-1);
+    }
   }
 }
 
@@ -4627,6 +4658,7 @@ function doLogout() {
 }
 
 
+refreshEmployees();
 buildSidebar();
 initFormDropdowns();
 initReportFilters();
