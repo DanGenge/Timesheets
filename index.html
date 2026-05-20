@@ -3246,9 +3246,13 @@ function renderUserTab(tab){
 const msState = {}; // {id: Set of selected values}
 
 function initMS(id, items, placeholder='Select…', onChange=null) {
-  msState[id] = new Set();
+  msState[id] = msState[id] || new Set();
   const list = document.getElementById('ms-list-'+id);
-  if(!list) return;
+  if(!list) {
+    // Element not in DOM - store callback for later use, don't throw
+    if(onChange) msState[id+'_onChange'] = onChange;
+    return;
+  }
   list.innerHTML = '';
   // Sort alphabetically, deduplicate
   const unique = [...new Set(items)].sort((a,b)=>a.localeCompare(b));
@@ -3390,8 +3394,7 @@ function initFormDropdowns() {
   // Tasks multi-select (starts empty, filled by onBP)
   initMS('task', [], '— select purpose first —', ()=>onTaskSelectionChange());
 
-  // Products multi-select — combined, alpha, deduplicated
-  initMS('product', getProducts(), 'None — optional');
+  // Products: handled per-task row in the new entry form
 
   // Orica functions
   const fnEl = document.getElementById('f-function');
@@ -3420,7 +3423,7 @@ function clearForm() {
   clearMS('customer');
   clearMS('site');
   clearMS('task');
-  clearMS('product');
+  // product cleared per task row
   document.getElementById('f-bp').value = '';
   document.getElementById('f-function').value = '';
   document.getElementById('f-comments').value = '';
@@ -5773,13 +5776,14 @@ function doLogout() {
 }
 
 
-refreshEmployees();
-buildSidebar();
-initFormDropdowns();
-initReportFilters();
-buildLoginList();
-initUploadDropzone();
-initSupabase();
+// Init each step independently so one error can't kill the rest
+try { refreshEmployees(); } catch(e) { console.error('refreshEmployees failed:', e); }
+try { buildSidebar(); } catch(e) { console.error('buildSidebar failed:', e); }
+try { initFormDropdowns(); } catch(e) { console.error('initFormDropdowns failed:', e); }
+try { initReportFilters(); } catch(e) { console.error('initReportFilters failed:', e); }
+try { buildLoginList(); } catch(e) { console.error('buildLoginList failed:', e); }
+try { initUploadDropzone(); } catch(e) { console.error('initUploadDropzone failed:', e); }
+try { initSupabase(); } catch(e) { console.error('initSupabase failed:', e); }
 </script>
 </body>
 </html>
