@@ -798,14 +798,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
               <label class="req">Hours</label>
               <input type="number" id="f-hrs" min="0.5" max="24" step="0.5" placeholder="e.g. 8">
             </div>
-            <div class="field" style="max-width:130px">
-              <label>Start time</label>
-              <input type="time" id="f-start" style="width:100%">
-            </div>
-            <div class="field" style="max-width:130px">
-              <label>End time</label>
-              <input type="time" id="f-end" style="width:100%">
-            </div>
             <div class="field" style="flex:1">
               <label>Day notes</label>
               <input type="text" id="f-daynote" placeholder="Optional day-specific note…">
@@ -2173,7 +2165,26 @@ function renderMonthTabs() {
 }
 
 function switchMonth(m) {
-  curMonth=m; renderEntry();
+  curMonth=m;
+  renderEntry();
+  // Set date input min/max to constrain to selected month
+  const mi = MONTHS.indexOf(m);
+  if(mi >= 0) {
+    const year = 2026;
+    const pad = n => String(n).padStart(2,'0');
+    const daysInMonth = new Date(year, mi+1, 0).getDate();
+    const minDate = `${year}-${pad(mi+1)}-01`;
+    const maxDate = `${year}-${pad(mi+1)}-${pad(daysInMonth)}`;
+    const dateEl = document.getElementById('f-date');
+    if(dateEl) {
+      dateEl.min = minDate;
+      dateEl.max = maxDate;
+      // Default to 1st of month if currently empty or out of range
+      if(!dateEl.value || dateEl.value < minDate || dateEl.value > maxDate) {
+        dateEl.value = minDate;
+      }
+    }
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -2184,20 +2195,13 @@ let stagedDays = [];
 function addDay() {
   const dateVal = document.getElementById('f-date').value;
   const hrsVal  = parseFloat(document.getElementById('f-hrs').value)||0;
-  if(!dateVal){ toast('Please select a date','error'); return; }
-  const start = document.getElementById('f-start').value;
-  const end   = document.getElementById('f-end').value;
-  let finalHrs = hrsVal;
-  if(start && end && hrsVal===0){
-    const [sh,sm]=start.split(':').map(Number), [eh,em]=end.split(':').map(Number);
-    finalHrs = Math.round(((eh*60+em)-(sh*60+sm))/60*2)/2;
-    if(finalHrs<=0){toast('End time must be after start time','error');return;}
-  }
-  if(finalHrs<=0){ toast('Please enter hours > 0','error'); return; }
-  stagedDays.push({ date:dateVal, hrs:finalHrs, start, end, note:document.getElementById('f-daynote').value });
-  ['f-date','f-hrs','f-start','f-end','f-daynote'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
-  renderStagedDays();
-  toast('Day added — '+fmtDateDisp(dateVal)+' · '+finalHrs+'h','success');
+  if(!dateVal){toast('Please select a date','error');return;}
+  if(hrsVal<=0){toast('Please enter hours > 0','error');return;}
+  if(hrsVal>24){toast('Hours cannot exceed 24','error');return;}
+  const note = document.getElementById('f-daynote')?.value||'';
+  stagedDays.push({ date:dateVal, hrs:hrsVal, start:'', end:'', note });
+  ['f-date','f-hrs','f-daynote'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+
 }
 
 function removeStagedDay(idx) { stagedDays.splice(idx,1); renderStagedDays(); }
@@ -3426,7 +3430,7 @@ function clearForm() {
   document.getElementById('f-bp').value = '';
   document.getElementById('f-function').value = '';
   document.getElementById('f-comments').value = '';
-  ['f-date','f-hrs','f-start','f-end','f-daynote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-date','f-hrs','f-daynote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   stagedDays = [];
   renderStagedDays();
 }
@@ -4327,6 +4331,8 @@ async function initSupabase() {
   startPolling();
   if(isOnline) {
     console.log('✓ Connected to Supabase');
+    // Pull custom team members first
+    pullMembersFromSupabase();
     // Pull ALL cloud data on startup so reports are immediately accurate
     fetchAllFromSupabase().then(()=>{
       console.log('✓ Initial data pull complete');
@@ -4771,6 +4777,8 @@ function addTeamMember() {
   refreshEmployees();
   buildLoginList();
   buildSidebar();
+  // Sync new member to Supabase so all users see them
+  syncMemberToSupabase({name, state: stateEl.value, role: roleEl.value, action:'add'});
 
   nameEl.value = '';
   renderEditUsers();
@@ -4784,6 +4792,8 @@ function removeTeamMember(name) {
   refreshEmployees();
   buildLoginList();
   buildSidebar();
+  // Sync removal to Supabase
+  syncMemberToSupabase({name, action:'remove'});
   renderEditUsers();
   toast('Team member removed','info');
 }
@@ -4870,6 +4880,8 @@ const dashCharts = {};
 // ── Open / Close ─────────────────────────────────────────────────
 function openDashboard() {
   document.getElementById('login-screen').classList.add('hidden');
+  // Remember last logged in user
+  try { localStorage.setItem('last_login_user', currentUser.name); } catch(e){}
   document.getElementById('page-dashboard').style.display = 'block';
   initDashboard();
 }
@@ -5444,11 +5456,67 @@ async function fetchAllFromSupabase() {
   }
 }
 
+
+// ── Sync custom team members to Supabase user_roles table ────────
+async function syncMemberToSupabase(member) {
+  if(!isOnline) return;
+  try {
+    const db = getSupabase();
+    if(member.action==='remove') {
+      await db.from('user_roles').delete().eq('employee_name', member.name);
+      console.log('Member removed from Supabase:', member.name);
+    } else {
+      await db.from('user_roles').upsert({
+        employee_name: member.name,
+        role: member.role||'user',
+        state: member.state||'NSW'
+      }, {onConflict:'employee_name'});
+      console.log('Member synced to Supabase:', member.name);
+    }
+  } catch(e) {
+    console.warn('syncMemberToSupabase failed:', e.message);
+  }
+}
+
+// ── Pull custom members from Supabase on startup ──────────────────
+async function pullMembersFromSupabase() {
+  if(!isOnline) return;
+  try {
+    const db = getSupabase();
+    const { data, error } = await db.from('user_roles').select('*');
+    if(error || !data || !data.length) return;
+    // Merge with existing custom members
+    const existing = getCustomMembers();
+    const existingNames = new Set([
+      ...TEAM_REGISTRY.map(t=>t.name),
+      ...existing.map(m=>m.name)
+    ]);
+    let added = 0;
+    data.forEach(row => {
+      if(!existingNames.has(row.employee_name)) {
+        existing.push({name:row.employee_name, state:row.state||'NSW', role:row.role||'user'});
+        existingNames.add(row.employee_name);
+        added++;
+      }
+    });
+    if(added > 0) {
+      saveRefData('custom_members', existing);
+      refreshEmployees();
+      buildLoginList();
+      buildSidebar();
+      console.log(`Pulled ${added} new team members from Supabase`);
+    }
+  } catch(e) {
+    console.warn('pullMembersFromSupabase failed:', e.message);
+  }
+}
+
 let loginSelected = null;
 
 function buildLoginList() {
   const sel = document.getElementById('login-select');
   if(!sel) return;
+  const lastUser = localStorage.getItem('last_login_user')||'';
   sel.innerHTML = '<option value="">— choose your name —</option>';
   // Admin group
   const ag = document.createElement('optgroup');
@@ -5477,6 +5545,11 @@ function buildLoginList() {
     const o=document.createElement('option'); o.value=t.name; o.textContent=t.name; qg.appendChild(o);
   });
   sel.appendChild(qg);
+  // Auto-select last logged in user
+  if(lastUser) {
+    sel.value = lastUser;
+    if(sel.value === lastUser) onLoginSelect(sel);
+  }
 }
 
 function filterLoginList(v) { /* no-op — native select handles filtering */ }
