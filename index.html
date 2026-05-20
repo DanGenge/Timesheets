@@ -531,6 +531,53 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 /* ── DASHBOARD ───────────────────────────────────────────────────── */
 .dash-panel { display:none; }
 .dash-panel.active { display:block; }
+
+/* ── PER-TASK ENTRY ROWS ────────────────────────────────────────── */
+.task-entry-row {
+  display:grid;
+  grid-template-columns:150px 150px 1fr 80px 1fr;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-bottom:1px solid rgba(0,48,135,0.08);
+  background:#fff;
+  font-size:13px;
+}
+.task-entry-row:last-child { border-bottom:none; }
+.task-entry-row:nth-child(even) { background:#FAFCFF; }
+.task-row-label {
+  font-weight:600;
+  color:#003087;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.task-row-input {
+  height:32px;
+  padding:0 8px;
+  border:1px solid var(--border-med);
+  border-radius:var(--r-sm);
+  font-size:12px;
+  font-family:inherit;
+  width:100%;
+  background:#fff;
+}
+.task-row-input:focus {
+  outline:none;
+  border-color:#003087;
+  box-shadow:0 0 0 2px rgba(0,48,135,0.1);
+}
+.task-row-product {
+  height:32px;
+  padding:0 8px;
+  border:1px solid var(--border-med);
+  border-radius:var(--r-sm);
+  font-size:12px;
+  font-family:inherit;
+  width:100%;
+  background:#fff;
+}
 </style>
 </head>
 <body>
@@ -702,7 +749,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           <!-- STEP 1: Task details -->
           <div class="form-step-label"><span class="step-num">1</span> Task details</div>
 
-          <!-- ROW 1: Customer (multi) → Site (multi) → Orica Function -->
           <div class="form-row cols3">
             <div class="field" id="field-customer">
               <label class="req">Customer</label>
@@ -734,11 +780,10 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             </div>
             <div class="field" id="field-fn">
               <label>Orica function</label>
-              <select id="f-function"><option value="">Select function…</option></select>
+              <select id="f-function"><option value="">N/A — not Orica</option></select>
             </div>
           </div>
 
-          <!-- ROW 2: Business Purpose → Task (multi, alpha, no subtask) -->
           <div class="form-row cols2">
             <div class="field">
               <label class="req">Business purpose</label>
@@ -746,80 +791,56 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
                 <option value="">Select purpose…</option>
               </select>
             </div>
-            <div class="field" id="field-task">
-              <label class="req">Task</label>
-              <div class="ms-wrap" id="ms-task">
-                <button type="button" class="ms-btn" onclick="toggleMS('task')" id="ms-btn-task">
-                  <span class="ms-btn-text" id="ms-lbl-task">— select purpose first —</span>
-                  <i class="ti ti-chevron-down" style="font-size:12px;flex-shrink:0"></i>
-                </button>
-                <div class="ms-panel" id="ms-panel-task">
-                  <div class="ms-search"><input type="search" placeholder="Search…" oninput="filterMS('task',this.value)"></div>
-                  <div class="ms-select-all" onclick="selectAllMS('task')"><input type="checkbox" id="ms-all-task"> Select all</div>
-                  <div class="ms-list" id="ms-list-task"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ROW 3: Products (multi), Comments -->
-          <div class="form-row cols2">
-            <div class="field">
-              <label>Products</label>
-              <div class="ms-wrap" id="ms-product">
-                <button type="button" class="ms-btn" onclick="toggleMS('product')" id="ms-btn-product">
-                  <span class="ms-btn-text" id="ms-lbl-product">None</span>
-                  <i class="ti ti-chevron-down" style="font-size:12px;flex-shrink:0"></i>
-                </button>
-                <div class="ms-panel" id="ms-panel-product">
-                  <div class="ms-search"><input type="search" placeholder="Search…" oninput="filterMS('product',this.value)"></div>
-                  <div class="ms-select-all" onclick="selectAllMS('product')"><input type="checkbox" id="ms-all-product"> Select all</div>
-                  <div class="ms-list" id="ms-list-product"></div>
-                </div>
-              </div>
-            </div>
             <div class="field">
               <label>Comments</label>
               <input type="text" id="f-comments" placeholder="Optional notes…">
             </div>
           </div>
 
+          <!-- STEP 2: Add days — one row per task -->
           <div class="form-divider"></div>
+          <div class="form-step-label">
+            <span class="step-num">2</span> Add days worked
+            <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px">Select task(s) from the dropdown — each task gets its own row</span>
+          </div>
 
-          <!-- STEP 2: Add days to this task -->
-          <div class="form-step-label"><span class="step-num">2</span> Add days worked on this task</div>
-
-          <div class="day-entry-row">
-            <div class="field" style="max-width:180px">
-              <label class="req">Date</label>
-              <input type="date" id="f-date" style="width:100%">
-            </div>
-            <div class="field" style="max-width:120px">
-              <label class="req">Hours</label>
-              <input type="number" id="f-hrs" min="0.5" max="24" step="0.5" placeholder="e.g. 8">
-            </div>
-            <div class="field" style="flex:1">
-              <label>Day notes</label>
-              <input type="text" id="f-daynote" placeholder="Optional day-specific note…">
-            </div>
-            <div class="field" style="justify-content:flex-end;padding-top:18px">
-              <button class="btn btn-add-day" onclick="addDay()"><i class="ti ti-calendar-plus"></i> Add day</button>
+          <!-- Task selector -->
+          <div class="field" id="field-task" style="margin-bottom:12px">
+            <label class="req">Task(s)</label>
+            <div class="ms-wrap" id="ms-task">
+              <button type="button" class="ms-btn" onclick="toggleMS('task')" id="ms-btn-task">
+                <span class="ms-btn-text" id="ms-lbl-task">— select purpose first —</span>
+                <i class="ti ti-chevron-down" style="font-size:12px;flex-shrink:0"></i>
+              </button>
+              <div class="ms-panel" id="ms-panel-task">
+                <div class="ms-search"><input type="search" placeholder="Search…" oninput="filterMS('task',this.value)"></div>
+                <div class="ms-select-all" onclick="selectAllMS('task')"><input type="checkbox" id="ms-all-task"> Select all</div>
+                <div class="ms-list" id="ms-list-task"></div>
+              </div>
             </div>
           </div>
 
-          <!-- Staged days list -->
-          <div id="staged-days-wrap" style="display:none">
-            <div class="staged-header">
-              <span class="staged-title"><i class="ti ti-calendar-check" style="font-size:14px"></i> Days staged for submission</span>
-              <span class="staged-total-lbl">Total: <strong id="staged-total">0</strong> hrs</span>
+          <!-- Per-task entry rows (rendered dynamically when tasks are selected) -->
+          <div id="task-entry-rows" style="display:none">
+            <div style="display:grid;grid-template-columns:150px 90px 1fr 180px;gap:8px;padding:6px 10px;background:#EBF4FF;border-radius:6px 6px 0 0;font-size:10px;font-weight:700;color:#003087;text-transform:uppercase;letter-spacing:0.4px">
+              <div>Task</div><div>Date</div><div>Product</div><div>Hours · Day note</div>
             </div>
-            <div id="staged-days-list"></div>
+            <div id="task-rows-body" style="border:1px solid rgba(0,48,135,0.15);border-top:none;border-radius:0 0 6px 6px"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+              <button class="btn btn-sm" onclick="clearTaskRows()"><i class="ti ti-x"></i> Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="submitAllTaskRows()">
+                <i class="ti ti-send"></i> Submit all entries
+              </button>
+            </div>
           </div>
 
-          <div class="form-row" style="justify-content:flex-end;gap:8px;margin-top:4px">
-            <button class="btn btn-ghost" onclick="clearForm()"><i class="ti ti-eraser"></i> Clear all</button>
-            <button class="btn btn-primary" onclick="submitEntry()"><i class="ti ti-send"></i> Submit task entry</button>
+          <!-- Empty state when no tasks selected -->
+          <div id="task-entry-empty" style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:var(--surface2);border-radius:var(--r)">
+            <i class="ti ti-list-check" style="font-size:24px;display:block;margin-bottom:6px;opacity:0.4"></i>
+            Select a business purpose and task above to start adding hours
           </div>
+
+</div>
 
         </div>
       </div>
@@ -2192,19 +2213,9 @@ function switchMonth(m) {
 // ════════════════════════════════════════════════════════════════════
 let stagedDays = [];
 
-function addDay() {
-  const dateVal = document.getElementById('f-date').value;
-  const hrsVal  = parseFloat(document.getElementById('f-hrs').value)||0;
-  if(!dateVal){toast('Please select a date','error');return;}
-  if(hrsVal<=0){toast('Please enter hours > 0','error');return;}
-  if(hrsVal>24){toast('Hours cannot exceed 24','error');return;}
-  const note = document.getElementById('f-daynote')?.value||'';
-  stagedDays.push({ date:dateVal, hrs:hrsVal, start:'', end:'', note });
-  ['f-date','f-hrs','f-daynote'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
 
-}
 
-function removeStagedDay(idx) { stagedDays.splice(idx,1); renderStagedDays(); }
+
 
 function fmtDateDisp(ds) {
   if(!ds) return '—';
@@ -2212,22 +2223,7 @@ function fmtDateDisp(ds) {
   return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
 }
 
-function renderStagedDays() {
-  const wrap=document.getElementById('staged-days-wrap');
-  const list=document.getElementById('staged-days-list');
-  if(!stagedDays.length){wrap.style.display='none';return;}
-  wrap.style.display='block';
-  const total=stagedDays.reduce((s,d)=>s+d.hrs,0);
-  document.getElementById('staged-total').textContent=total.toFixed(1);
-  list.innerHTML=stagedDays.map((d,i)=>'<div class="staged-day-row">'
-    +'<div class="staged-day-date"><i class="ti ti-calendar" style="font-size:12px;opacity:0.5;margin-right:4px"></i>'+fmtDateDisp(d.date)+'</div>'
-    +'<div class="staged-day-hrs">'+d.hrs+'h</div>'
-    +'<div class="staged-day-time">'+(d.start&&d.end?d.start+'–'+d.end:d.start||d.end||'—')+'</div>'
-    +'<div></div>'
-    +'<div class="staged-day-note">'+(d.note||'')+'</div>'
-    +'<div class="staged-day-del"><button onclick="removeStagedDay('+i+')" title="Remove day"><i class="ti ti-x" style="font-size:13px"></i></button></div>'
-    +'</div>').join('');
-}
+
 
 
 
@@ -3394,7 +3390,7 @@ function initFormDropdowns() {
   bpEl.innerHTML = '<option value="">Select purpose…</option>' + BP.map(b=>`<option value="${b}">${BP_LABEL[b]}</option>`).join('');
 
   // Tasks multi-select (starts empty, filled by onBP)
-  initMS('task', [], '— select purpose first —');
+  initMS('task', [], '— select purpose first —', ()=>onTaskSelectionChange());
 
   // Products multi-select — combined, alpha, deduplicated
   initMS('product', getProducts(), 'None — optional');
@@ -3409,14 +3405,14 @@ function initFormDropdowns() {
 function onBP() {
   const bp = document.getElementById('f-bp').value;
   if(!bp) {
-    setMSItems('task', [], '— select purpose first —');
+    setMSItems('task', [], '— select purpose first —', ()=>onTaskSelectionChange());
+    taskRows = []; renderTaskRows();
     return;
   }
-  // Combine all tasks across purposes, sort alpha, deduplicate
   const allTasks = bp === 'ALL'
     ? [...new Set(Object.values(getRefData('tasks',TASKS_DEFAULT)).flat())].sort()
     : [...new Set(getTasks(bp))].sort();
-  setMSItems('task', allTasks, 'Select task(s)…');
+  setMSItems('task', allTasks, 'Select task(s)…', ()=>onTaskSelectionChange());
 }
 
 function onTask() { /* handled by MS */ }
@@ -3438,51 +3434,7 @@ function clearForm() {
 // ════════════════════════════════════════════════════════════════════
 // UPDATED submitEntry — one entry per task per day (no consolidation)
 // ════════════════════════════════════════════════════════════════════
-function submitEntry() {
-  const customers = getMSValues('customer');
-  const sites     = getMSValues('site');
-  const tasks     = getMSValues('task');
-  const products  = getMSValues('product');
-  const bp        = document.getElementById('f-bp').value;
 
-  if(!customers.length){ toast('Please select at least one Customer','error'); return; }
-  if(!bp){               toast('Please select a Business Purpose','error'); return; }
-  if(!tasks.length){     toast('Please select at least one Task','error'); return; }
-  if(!stagedDays.length){ toast('Add at least one day before submitting','error'); return; }
-
-  const customer  = customers.join(', ');
-  const site      = sites.join(', ');
-  const product   = products[0] || '';
-  const product2  = products[1] || '';
-  const fn        = document.getElementById('f-function').value;
-  const comments  = document.getElementById('f-comments').value;
-
-  const entries = loadEntries(curEmp, curMonth);
-  let addedCount = 0;
-
-  // Create one entry per task × per day (keep each day individual)
-  tasks.forEach(task => {
-    stagedDays.forEach(day => {
-      const entry = {
-        id: Date.now() + Math.random()*1000|0,
-        customer, site, orica_fn: fn, bp, task,
-        subtask: '', product, product2, comments,
-        days: [{ date: day.date, hrs: day.hrs, start: day.start, end: day.end, note: day.note }],
-        total: day.hrs,
-        month: curMonth,
-        submitted: new Date().toISOString()
-      };
-      entries.push(entry);
-      addedCount++;
-    });
-  });
-
-  saveEntriesAndSync(curEmp, curMonth, entries);
-  clearForm();
-  renderEntry();
-  markUnsaved();
-  toast(`${addedCount} entr${addedCount===1?'y':'ies'} submitted`, 'success');
-}
 
 // ════════════════════════════════════════════════════════════════════
 // EXPORT — with week/month selector
@@ -5510,6 +5462,155 @@ async function pullMembersFromSupabase() {
     console.warn('pullMembersFromSupabase failed:', e.message);
   }
 }
+
+
+// ════════════════════════════════════════════════════════════════════
+// PER-TASK ROW ENTRY SYSTEM
+// ════════════════════════════════════════════════════════════════════
+
+// taskRows: [{task, product, date, hrs, note}]
+let taskRows = [];
+
+// Called when tasks multi-select changes
+function onTaskSelectionChange() {
+  const tasks = getMSValues('task');
+  // Add new rows for newly selected tasks
+  const existingTasks = new Set(taskRows.map(r=>r.task));
+  tasks.forEach(task => {
+    if(!existingTasks.has(task)) {
+      taskRows.push({ task, product:'', date:'', hrs:'', note:'' });
+    }
+  });
+  // Remove rows for deselected tasks
+  taskRows = taskRows.filter(r => tasks.includes(r.task));
+  renderTaskRows();
+}
+
+function renderTaskRows() {
+  const container = document.getElementById('task-entry-rows');
+  const empty = document.getElementById('task-entry-empty');
+  const body = document.getElementById('task-rows-body');
+  if(!container || !body) return;
+
+  if(!taskRows.length) {
+    container.style.display = 'none';
+    if(empty) empty.style.display = 'block';
+    return;
+  }
+  container.style.display = 'block';
+  if(empty) empty.style.display = 'none';
+
+  // Get date default from selected month
+  const mi = MONTHS.indexOf(curMonth);
+  const year = 2026;
+  const pad = n => String(n).padStart(2,'0');
+  const defaultDate = mi >= 0 ? `${year}-${pad(mi+1)}-01` : '';
+  const minDate = mi >= 0 ? `${year}-${pad(mi+1)}-01` : '';
+  const maxDate = mi >= 0 ? `${year}-${pad(mi+1)}-${pad(new Date(year,mi+1,0).getDate())}` : '';
+
+  const products = getProducts();
+  const productOptions = '<option value="">None</option>' + products.map(p=>`<option value="${p}">${p}</option>`).join('');
+
+  body.innerHTML = taskRows.map((row, i) => `
+    <div class="task-entry-row" id="trow-${i}">
+      <div class="task-row-label" title="${row.task}">${row.task.length>20?row.task.slice(0,20)+'…':row.task}</div>
+      <input type="date" class="task-row-input" value="${row.date||defaultDate}"
+        min="${minDate}" max="${maxDate}"
+        onchange="updateTaskRow(${i},'date',this.value)">
+      <select class="task-row-product" onchange="updateTaskRow(${i},'product',this.value)">
+        ${productOptions}
+      </select>
+      <input type="number" class="task-row-input" value="${row.hrs||''}"
+        min="0.5" max="24" step="0.5" placeholder="hrs"
+        onchange="updateTaskRow(${i},'hrs',this.value)"
+        style="text-align:center">
+      <input type="text" class="task-row-input" value="${row.note||''}"
+        placeholder="Day note…"
+        onchange="updateTaskRow(${i},'note',this.value)">
+    </div>`).join('');
+
+  // Restore product selections
+  taskRows.forEach((row,i) => {
+    const sel = body.querySelector(`#trow-${i} .task-row-product`);
+    if(sel && row.product) sel.value = row.product;
+  });
+}
+
+function updateTaskRow(i, field, val) {
+  if(taskRows[i]) taskRows[i][field] = val;
+}
+
+function clearTaskRows() {
+  taskRows = [];
+  clearMS('task');
+  renderTaskRows();
+}
+
+function submitAllTaskRows() {
+  const customers = getMSValues('customer');
+  const sites     = getMSValues('site');
+  const bp        = document.getElementById('f-bp').value;
+  const fn        = document.getElementById('f-function').value;
+  const comments  = document.getElementById('f-comments').value;
+
+  if(!customers.length){ toast('Select a customer','error'); return; }
+  if(!bp){ toast('Select a business purpose','error'); return; }
+  if(!taskRows.length){ toast('Select at least one task','error'); return; }
+
+  // Validate all rows have date and hours
+  let valid = true;
+  taskRows.forEach((row, i) => {
+    if(!row.date){ toast(`Add a date for: ${row.task}`,'error'); valid=false; }
+    if(!row.hrs || parseFloat(row.hrs) <= 0){ toast(`Add hours for: ${row.task}`,'error'); valid=false; }
+  });
+  if(!valid) return;
+
+  const customer = customers.join(', ');
+  const site = sites.join(', ');
+  const entries = loadEntries(curEmp, curMonth);
+  let addedCount = 0;
+
+  taskRows.forEach(row => {
+    const hrs = parseFloat(row.hrs)||0;
+    const entry = {
+      id: Date.now() + Math.floor(Math.random()*10000),
+      customer, site, orica_fn: fn, bp,
+      task: row.task,
+      subtask: '',
+      product: row.product || '',
+      product2: '',
+      comments,
+      days: [{ date: row.date, hrs, start:'', end:'', note: row.note||'' }],
+      total: hrs,
+      month: curMonth,
+      submitted: new Date().toISOString()
+    };
+    entries.push(entry);
+    addedCount++;
+  });
+
+  saveEntries(curEmp, curMonth, entries);
+  markUnsaved();
+
+  // Clear form
+  clearMS('customer');
+  clearMS('site');
+  clearMS('task');
+  document.getElementById('f-bp').value = '';
+  document.getElementById('f-comments').value = '';
+  document.getElementById('f-function').value = '';
+  taskRows = [];
+  renderTaskRows();
+  renderEntry();
+  toast(`${addedCount} entr${addedCount===1?'y':'ies'} submitted`,'success');
+}
+
+// Legacy compat — keep addDay for any remaining references
+function addDay() { toast('Use the task rows below to add hours','info'); }
+function submitEntry() { submitAllTaskRows(); }
+let stagedDays = [];
+function renderStagedDays() {}
+function removeStagedDay(idx) {}
 
 let loginSelected = null;
 
