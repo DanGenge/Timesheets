@@ -5512,16 +5512,26 @@ function renderTaskRows() {
   const products = getProducts();
   const productOptions = '<option value="">None</option>' + products.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join('');
 
-  body.innerHTML = taskRows.map(function(row, i) {
+    body.innerHTML = taskRows.map(function(row, i) {
     const taskShort = row.task.length>20 ? row.task.slice(0,20)+'…' : row.task;
-    return '<div class="task-entry-row" id="trow-'+i+'">'
-      + '<div class="task-row-label" title="'+row.task+'">'+taskShort+'</div>'
-      + '<input type="date" class="task-row-input" value="'+(row.date||defaultDate)+'" min="'+minDate+'" max="'+maxDate+'" onchange="updateTaskRow('+i+','date',this.value)">'
-      + '<select class="task-row-product" onchange="updateTaskRow('+i+','product',this.value)">'+productOptions+'</select>'
-      + '<input type="number" class="task-row-input" value="'+(row.hrs||'')+'" min="0.5" max="24" step="0.5" placeholder="hrs" onchange="updateTaskRow('+i+','hrs',this.value)" style="text-align:center">'
-      + '<input type="text" class="task-row-input" value="'+(row.note||'')+'" placeholder="Day note…" onchange="updateTaskRow('+i+','note',this.value)">'
+    const safeTask = row.task.replace(/"/g,'&quot;');
+    const safeVal  = (row.date||defaultDate).replace(/"/g,'&quot;');
+    const safeNote = (row.note||'').replace(/"/g,'&quot;');
+    const safeHrs  = (row.hrs||'').toString().replace(/"/g,'&quot;');
+    return '<div class="task-entry-row" id="trow-'+i+'" data-idx="'+i+'">'
+      + '<div class="task-row-label" title="'+safeTask+'">'+taskShort+'</div>'
+      + '<input type="date" class="task-row-input tr-date" data-idx="'+i+'" value="'+safeVal+'" min="'+minDate+'" max="'+maxDate+'">'
+      + '<select class="task-row-product tr-product" data-idx="'+i+'">'+productOptions+'</select>'
+      + '<input type="number" class="task-row-input tr-hrs" data-idx="'+i+'" value="'+safeHrs+'" min="0.5" max="24" step="0.5" placeholder="hrs" style="text-align:center">'
+      + '<input type="text" class="task-row-input tr-note" data-idx="'+i+'" value="'+safeNote+'" placeholder="Day note…">'
       + '</div>';
   }).join('');
+
+  // Wire up events after DOM is built
+  body.querySelectorAll('.tr-date').forEach(function(el){ el.addEventListener('change', function(){ updateTaskRow(parseInt(this.dataset.idx),'date',this.value); }); });
+  body.querySelectorAll('.tr-product').forEach(function(el){ el.addEventListener('change', function(){ updateTaskRow(parseInt(this.dataset.idx),'product',this.value); }); });
+  body.querySelectorAll('.tr-hrs').forEach(function(el){ el.addEventListener('change', function(){ updateTaskRow(parseInt(this.dataset.idx),'hrs',this.value); }); });
+  body.querySelectorAll('.tr-note').forEach(function(el){ el.addEventListener('input', function(){ updateTaskRow(parseInt(this.dataset.idx),'note',this.value); }); });
 
   // Restore product selections
   taskRows.forEach((row,i) => {
