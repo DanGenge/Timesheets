@@ -840,10 +840,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             Select a business purpose and task above to start adding hours
           </div>
 
-</div>
-
-        </div>
-      </div>
+        </div><!-- /form-body -->
+      </div><!-- /form-card -->
 
       <!-- SUBMITTED ENTRIES TABLE -->
       <div class="entries-card">
@@ -5509,25 +5507,18 @@ function renderTaskRows() {
   const maxDate = mi >= 0 ? `${year}-${pad(mi+1)}-${pad(new Date(year,mi+1,0).getDate())}` : '';
 
   const products = getProducts();
-  const productOptions = '<option value="">None</option>' + products.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const productOptions = '<option value="">None</option>' + products.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join('');
 
-  body.innerHTML = taskRows.map((row, i) => `
-    <div class="task-entry-row" id="trow-${i}">
-      <div class="task-row-label" title="${row.task}">${row.task.length>20?row.task.slice(0,20)+'…':row.task}</div>
-      <input type="date" class="task-row-input" value="${row.date||defaultDate}"
-        min="${minDate}" max="${maxDate}"
-        onchange="updateTaskRow(${i},'date',this.value)">
-      <select class="task-row-product" onchange="updateTaskRow(${i},'product',this.value)">
-        ${productOptions}
-      </select>
-      <input type="number" class="task-row-input" value="${row.hrs||''}"
-        min="0.5" max="24" step="0.5" placeholder="hrs"
-        onchange="updateTaskRow(${i},'hrs',this.value)"
-        style="text-align:center">
-      <input type="text" class="task-row-input" value="${row.note||''}"
-        placeholder="Day note…"
-        onchange="updateTaskRow(${i},'note',this.value)">
-    </div>`).join('');
+  body.innerHTML = taskRows.map(function(row, i) {
+    const taskShort = row.task.length>20 ? row.task.slice(0,20)+'…' : row.task;
+    return '<div class="task-entry-row" id="trow-'+i+'">'
+      + '<div class="task-row-label" title="'+row.task+'">'+taskShort+'</div>'
+      + '<input type="date" class="task-row-input" value="'+(row.date||defaultDate)+'" min="'+minDate+'" max="'+maxDate+'" onchange="updateTaskRow('+i+','date',this.value)">'
+      + '<select class="task-row-product" onchange="updateTaskRow('+i+','product',this.value)">'+productOptions+'</select>'
+      + '<input type="number" class="task-row-input" value="'+(row.hrs||'')+'" min="0.5" max="24" step="0.5" placeholder="hrs" onchange="updateTaskRow('+i+','hrs',this.value)" style="text-align:center">'
+      + '<input type="text" class="task-row-input" value="'+(row.note||'')+'" placeholder="Day note…" onchange="updateTaskRow('+i+','note',this.value)">'
+      + '</div>';
+  }).join('');
 
   // Restore product selections
   taskRows.forEach((row,i) => {
@@ -5646,10 +5637,39 @@ function buildLoginList() {
     const o=document.createElement('option'); o.value=t.name; o.textContent=t.name; qg.appendChild(o);
   });
   sel.appendChild(qg);
-  // Auto-select last logged in user
+  // Pre-select last logged in user (just select, don't auto-login)
   if(lastUser) {
     sel.value = lastUser;
-    if(sel.value === lastUser) onLoginSelect(sel);
+    if(sel.value === lastUser) {
+      // Show the chip and enable Sign in button without triggering full login
+      const t = TEAM_REGISTRY.find(r=>r.name===lastUser) || 
+                getCustomMembers().find(r=>r.name===lastUser) ||
+                (lastUser==='Admin' ? {name:'Admin',state:'ALL',role:'admin'} : null);
+      if(t) {
+        loginSelected = t;
+        document.getElementById('login-btn').disabled = false;
+        // Show user chip
+        const chip = document.getElementById('login-user-chip');
+        if(chip) {
+          chip.style.display='flex';
+          const color = t.role==='admin' ? '#8B6500' : EMP_COLORS[EMPLOYEES.indexOf(t.name)%EMP_COLORS.length]||'#003087';
+          const ini = t.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+          const av = document.getElementById('luc-avatar');
+          if(av){av.textContent=ini; av.style.background=color+'22'; av.style.color=color;}
+          const nm = document.getElementById('luc-name'); if(nm) nm.textContent=t.name;
+          const rl = document.getElementById('luc-role'); if(rl) rl.textContent=t.role==='admin'?'Administrator · All teams':'Technical Services · '+t.state;
+          const bd = document.getElementById('luc-badge');
+          if(bd) bd.innerHTML=t.role==='admin'
+            ?'<span class="login-state-badge badge-admin">ADMIN</span>'
+            :`<span class="login-state-badge badge-${t.state.toLowerCase()}">${t.state}</span>`;
+          // Show passcode for admin
+          if(t.role==='admin') {
+            const pcWrap=document.getElementById('passcode-wrap');
+            if(pcWrap) pcWrap.style.display='block';
+          }
+        }
+      }
+    }
   }
 }
 
