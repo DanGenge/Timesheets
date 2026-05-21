@@ -509,17 +509,18 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 .ms-btn:hover { border-color:#003087; }
 .ms-btn.active { border-color:#003087; box-shadow:0 0 0 2px rgba(0,48,135,0.12); }
 .ms-btn-text { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
-.ms-panel { position:absolute; top:36px; left:0; right:0; background:var(--surface);
-  border:1px solid var(--border-med); border-radius:var(--r); box-shadow:0 6px 20px rgba(0,0,0,0.12);
-  z-index:500; display:none; max-height:240px; overflow:hidden; flex-direction:column; min-width:180px; }
+.ms-panel { position:fixed; background:var(--surface);
+  border:1px solid var(--border-med); border-radius:var(--r); box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  z-index:9999; display:none; max-height:400px; overflow:hidden; flex-direction:column; min-width:260px; width:auto; }
 .ms-panel.open { display:flex; }
 .ms-search { padding:6px 8px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .ms-search input { width:100%; height:26px; padding:0 8px; border:1px solid var(--border-med);
   border-radius:4px; font-size:12px; font-family:inherit; }
-.ms-list { overflow-y:auto; flex:1; }
-.ms-item { display:flex; align-items:center; gap:8px; padding:6px 10px; cursor:pointer; font-size:12px; }
-.ms-item:hover { background:var(--surface2); }
-.ms-item input[type=checkbox] { accent-color:#003087; flex-shrink:0; }
+.ms-list { overflow-y:auto; flex:1; max-height:300px; }
+.ms-item { display:flex; align-items:center; gap:8px; padding:7px 12px; cursor:pointer; font-size:13px; user-select:none; }
+.ms-item:hover { background:#EBF4FF; }
+.ms-item input[type=checkbox] { accent-color:#003087; flex-shrink:0; pointer-events:none; }
+.ms-item span { flex:1; }
 .ms-select-all { padding:5px 10px; border-bottom:1px solid var(--border);
   font-size:11px; font-weight:700; color:#003087; cursor:pointer; display:flex;
   align-items:center; gap:8px; background:#EBF4FF; flex-shrink:0; }
@@ -2554,7 +2555,13 @@ function buildEmpDrop(tid){
   // Select All row
   const allRow=document.createElement('div');
   allRow.className='emp-dropdown-item';
-  allRow.innerHTML=`<input type="checkbox" id="eda-all-${tid}" checked onchange="toggleAllEmps('${tid}',this.checked)"><strong>Select All</strong>`;
+  allRow.innerHTML='<input type="checkbox" id="eda-all-'+tid+'" checked><strong>Select All</strong>';
+  allRow.addEventListener('click',function(e){
+    if(e.target.tagName==='INPUT') return;
+    const cb=document.getElementById('eda-all-'+tid);
+    cb.checked=!cb.checked; toggleAllEmps(tid,cb.checked);
+  });
+  allRow.querySelector('input').addEventListener('change',function(){ toggleAllEmps(tid,this.checked); });
   list.appendChild(allRow);
   // Divider NSW
   const nswHdr=document.createElement('div');
@@ -3269,11 +3276,27 @@ function initMS(id, items, placeholder='Select…', onChange=null) {
 
 function toggleMS(id) {
   const panel = document.getElementById('ms-panel-'+id);
-  const btn = document.getElementById('ms-btn-'+id);
+  const btn   = document.getElementById('ms-btn-'+id);
   const isOpen = panel.classList.contains('open');
   // Close all others
-  document.querySelectorAll('.ms-panel.open').forEach(p=>{ p.classList.remove('open'); document.getElementById('ms-btn-'+p.id.replace('ms-panel-',''))?.classList.remove('active'); });
-  if(!isOpen) { panel.classList.add('open'); btn.classList.add('active'); }
+  document.querySelectorAll('.ms-panel.open').forEach(p=>{
+    p.classList.remove('open');
+    document.getElementById('ms-btn-'+p.id.replace('ms-panel-',''))?.classList.remove('active');
+  });
+  if(!isOpen) {
+    // Position panel under the button using fixed coordinates
+    const rect = btn.getBoundingClientRect();
+    panel.style.top  = (rect.bottom + 4) + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.width = Math.max(rect.width, 280) + 'px';
+    // Make sure it doesn't go off screen bottom
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    panel.style.maxHeight = Math.min(400, spaceBelow) + 'px';
+    panel.classList.add('open');
+    btn.classList.add('active');
+    // Focus search
+    panel.querySelector('input[type=search]')?.focus();
+  }
 }
 
 // Close on outside click
