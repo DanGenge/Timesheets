@@ -2266,7 +2266,7 @@ function renderMonthTabs() {
   const el=document.getElementById('month-tabs');
   el.innerHTML=MONTHS.map(m=>{
     const hasData=loadEntries(curEmp,m).length>0;
-    return '<button class="month-tab '+(m===curMonth?'active':'')+' '+(hasData?'has-data':'')+'" onclick="onMonthTabClick(''+m+'',this)">'+m.slice(0,3)+'</button>';
+    return '<button class="month-tab '+(m===curMonth?'active':'')+' '+(hasData?'has-data':'')+'" onclick="onMonthTabClick(\'' + m + '\',this)">'+m.slice(0,3)+'</button>';
   }).join('');
 }
 
