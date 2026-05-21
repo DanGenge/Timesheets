@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timesheets — NSW &amp; QLD Coal</title>
+  <!-- v13.9 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -6247,13 +6248,15 @@ function doLogout() {
 
 
 // Init each step independently so one error can't kill the rest
-try { refreshEmployees(); } catch(e) { console.error('refreshEmployees failed:', e); }
-try { buildSidebar(); } catch(e) { console.error('buildSidebar failed:', e); }
-try { initFormDropdowns(); } catch(e) { console.error('initFormDropdowns failed:', e); }
-try { initReportFilters(); } catch(e) { console.error('initReportFilters failed:', e); }
-try { buildLoginList(); } catch(e) { console.error('buildLoginList failed:', e); }
-try { initUploadDropzone(); } catch(e) { console.error('initUploadDropzone failed:', e); }
-try { initSupabase(); } catch(e) { console.error('initSupabase failed:', e); }
+console.log('Portal v13.9 initialising...');
+try { refreshEmployees(); console.log('✓ refreshEmployees'); } catch(e) { console.error('✗ refreshEmployees:', e); }
+try { buildSidebar(); console.log('✓ buildSidebar'); } catch(e) { console.error('✗ buildSidebar:', e); }
+try { initFormDropdowns(); console.log('✓ initFormDropdowns'); } catch(e) { console.error('✗ initFormDropdowns:', e); }
+try { initReportFilters(); console.log('✓ initReportFilters'); } catch(e) { console.error('✗ initReportFilters:', e); }
+try { buildLoginList(); console.log('✓ buildLoginList'); } catch(e) { console.error('✗ buildLoginList:', e); }
+try { initUploadDropzone(); console.log('✓ initUploadDropzone'); } catch(e) { console.error('✗ initUploadDropzone:', e); }
+try { initSupabase(); console.log('✓ initSupabase'); } catch(e) { console.error('✗ initSupabase:', e); }
+console.log('Portal init complete.');
 </script>
 
 <!-- ══ ENTRY CALENDAR POPUP ════════════════════════════════════════ -->
