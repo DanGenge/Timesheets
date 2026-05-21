@@ -2555,12 +2555,10 @@ function buildEmpDrop(tid){
   // Select All row
   const allRow=document.createElement('div');
   allRow.className='emp-dropdown-item';
-  allRow.innerHTML='<input type="checkbox" id="eda-all-'+tid+'" checked><strong>Select All</strong>';
-  allRow.addEventListener('click',function(e){
-    if(e.target.tagName==='INPUT') return;
-    const cb=document.getElementById('eda-all-'+tid);
-    cb.checked=!cb.checked; toggleAllEmps(tid,cb.checked);
-  });
+  allRow.innerHTML='<label style="display:flex;align-items:center;gap:8px;width:100%;cursor:pointer;font-weight:700;margin:0">'
+    +'<input type="checkbox" id="eda-all-'+tid+'" checked>'
+    +'<span>Select All</span>'
+    +'</label>';
   allRow.querySelector('input').addEventListener('change',function(){ toggleAllEmps(tid,this.checked); });
   list.appendChild(allRow);
   // Divider NSW
@@ -3267,7 +3265,11 @@ function initMS(id, items, placeholder='Select…', onChange=null) {
     const div = document.createElement('div');
     div.className = 'ms-item';
     div.dataset.val = item;
-    div.innerHTML = `<input type="checkbox" value="${item}" onchange="toggleMSItem('${id}','${item.replace(/'/g,"\\'")}',this.checked)"><span>${item}</span>`;
+    div.innerHTML = '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;padding:0;width:100%">'
+      + '<input type="checkbox" class="ms-cb" data-id="'+id+'" data-val="'+item.replace(/"/g,'&quot;')+'">'
+      + '<span>'+item+'</span>'
+      + '</label>';
+    div.querySelector('.ms-cb').addEventListener('change', (function(capturedId, capturedItem){ return function(){ toggleMSItem(capturedId, capturedItem, this.checked); }; })(id, item));
     list.appendChild(div);
   });
   updateMSLabel(id, placeholder);
