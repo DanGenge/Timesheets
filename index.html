@@ -579,6 +579,90 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
   width:100%;
   background:#fff;
 }
+
+/* ── ENTRY CALENDAR POPUP ────────────────────────────────────────── */
+.cal-overlay { position:fixed; inset:0; z-index:8000; display:flex; align-items:flex-start; justify-content:center; padding-top:80px; }
+.cal-overlay.hidden { display:none; }
+.cal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:8000; }
+.cal-popup { position:relative; z-index:8001; background:#fff; border-radius:14px; box-shadow:0 16px 48px rgba(0,0,0,0.22); width:520px; max-width:96vw; overflow:hidden; }
+.cal-popup-header { background:#003087; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.cal-popup-title { color:#fff; font-size:16px; font-weight:700; }
+.cal-popup-close { background:rgba(255,255,255,0.15); border:none; color:#fff; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.cal-popup-close:hover { background:rgba(255,255,255,0.3); }
+.cal-dows { display:grid; grid-template-columns:repeat(7,1fr); background:#EBF4FF; border-bottom:1px solid rgba(0,48,135,0.1); }
+.cal-dow { text-align:center; padding:7px 2px; font-size:10px; font-weight:700; color:#003087; text-transform:uppercase; letter-spacing:0.4px; }
+.cal-days { display:grid; grid-template-columns:repeat(7,1fr); padding:8px; gap:4px; }
+.cal-cell { border-radius:8px; min-height:56px; padding:5px 5px 4px; cursor:pointer; position:relative; transition:all 0.1s; border:2px solid transparent; }
+.cal-cell.empty { cursor:default; opacity:0; pointer-events:none; }
+.cal-cell:not(.empty):hover { border-color:#003087; transform:scale(1.04); z-index:1; }
+.cal-cell.selected { border-color:#003087 !important; box-shadow:0 2px 8px rgba(0,48,135,0.25); }
+.cal-cell.today .cal-num { font-weight:800; color:#003087; }
+.cal-num { font-size:11px; font-weight:600; color:#444; }
+.cal-hrs { font-size:13px; font-weight:800; text-align:center; margin-top:4px; line-height:1; }
+.cal-tasks { font-size:9px; color:rgba(255,255,255,0.8); text-align:center; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* heat levels */
+.ch0 { background:#F5F4F0; }
+.ch0 .cal-hrs { color:#ccc; }
+.ch1 { background:#DBEAFE; } .ch1 .cal-hrs { color:#1D4ED8; }
+.ch2 { background:#93C5FD; } .ch2 .cal-hrs { color:#1e3a8a; }
+.ch3 { background:#3B82F6; } .ch3 .cal-hrs { color:#fff; }
+.ch4 { background:#1D4ED8; } .ch4 .cal-hrs { color:#fff; }
+.ch5 { background:#003087; } .ch5 .cal-hrs { color:#FFD100; }
+/* Day detail panel */
+.cal-detail { border-top:1px solid #E6F0FA; padding:12px 16px; min-height:80px; max-height:220px; overflow-y:auto; }
+.cal-detail-title { font-size:12px; font-weight:700; color:#003087; margin-bottom:8px; }
+.cal-detail-row { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:6px; margin-bottom:4px; background:#F5F9FF; font-size:12px; cursor:pointer; }
+.cal-detail-row:hover { background:#E6F0FA; }
+.cal-detail-task { flex:1; font-weight:500; color:#1A1A1A; }
+.cal-detail-hrs { font-size:12px; font-weight:700; color:#003087; }
+.cal-detail-meta { font-size:10px; color:var(--muted); }
+.cal-detail-edit { padding:3px 8px; background:#003087; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.cal-detail-edit:hover { background:#002268; }
+.cal-detail-empty { text-align:center; padding:14px; color:var(--muted); font-size:12px; font-style:italic; }
+.cal-legend { display:flex; align-items:center; gap:6px; padding:8px 16px 10px; font-size:10px; color:var(--muted); border-top:1px solid #F0F0F0; }
+.cal-legend-item { display:flex; align-items:center; gap:3px; }
+.cal-legend-dot { width:10px; height:10px; border-radius:2px; }
+
+/* ── DUPLICATE DAY PICKER ─────────────────────────────────────── */
+.dup-overlay { position:fixed; inset:0; z-index:9000; display:flex; align-items:center; justify-content:center; }
+.dup-overlay.hidden { display:none; }
+.dup-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; }
+.dup-popup { position:relative; z-index:9001; background:#fff; border-radius:14px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.25); width:420px; max-width:96vw; overflow:hidden; }
+.dup-header { background:#003087; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.dup-title { color:#fff; font-size:15px; font-weight:700; }
+.dup-close { background:rgba(255,255,255,0.15); border:none; color:#fff; width:28px; height:28px;
+  border-radius:50%; cursor:pointer; font-size:16px; line-height:1; }
+.dup-entry-info { padding:10px 16px; background:#EBF4FF; border-bottom:1px solid rgba(0,48,135,0.1);
+  font-size:12px; color:#003087; }
+.dup-entry-task { font-weight:700; font-size:13px; }
+.dup-instructions { padding:10px 16px 6px; font-size:12px; color:var(--muted); }
+.dup-dows { display:grid; grid-template-columns:repeat(7,1fr); background:#F5F4F0; padding:0 10px; }
+.dup-dow { text-align:center; padding:5px 2px; font-size:10px; font-weight:700; color:#003087;
+  text-transform:uppercase; letter-spacing:0.3px; }
+.dup-days { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; padding:8px 10px 10px; }
+.dup-day { height:38px; border-radius:6px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; cursor:pointer; border:2px solid transparent; font-size:12px;
+  font-weight:500; color:#444; background:#F5F4F0; transition:all 0.1s; user-select:none; }
+.dup-day:hover:not(.dup-empty):not(.dup-source) { border-color:#003087; background:#EBF4FF; }
+.dup-day.dup-empty { opacity:0; pointer-events:none; }
+.dup-day.dup-source { background:#E6F0FA; color:#003087; border-color:#003087; cursor:default; font-weight:700; }
+.dup-day.dup-source::after { content:'orig'; font-size:8px; color:#003087; opacity:0.6; }
+.dup-day.dup-selected { background:#003087; color:#fff; border-color:#003087; font-weight:700; }
+.dup-day.dup-has-data::before { content:''; width:4px; height:4px; border-radius:50%;
+  background:currentColor; opacity:0.5; margin-bottom:1px; }
+.dup-day.dup-weekend { color:#E24B4A; }
+.dup-day.dup-selected.dup-weekend { color:#fff; }
+.dup-actions { padding:12px 16px; display:flex; align-items:center; gap:8px; border-top:1px solid #E6F0FA; }
+.dup-count { flex:1; font-size:12px; color:var(--muted); }
+.dup-count strong { color:#003087; }
+.dup-select-all-btn { font-size:11px; padding:4px 10px; border:1px solid var(--border-med);
+  border-radius:100px; background:transparent; cursor:pointer; color:var(--muted); font-family:inherit; }
+.dup-select-all-btn:hover { background:#EBF4FF; color:#003087; border-color:#003087; }
+.dup-confirm-btn { padding:8px 20px; background:#003087; color:#fff; border:none; border-radius:8px;
+  font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+.dup-confirm-btn:hover { background:#002268; }
+.dup-confirm-btn:disabled { opacity:0.4; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -656,7 +740,9 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
   </div>
   <div class="nav-links">
     <div class="nav-link active" id="nav-entry" onclick="showSection('entry',this)"><i class="ti ti-clock"></i> Entry</div>
-    <div class="nav-link" id="nav-weekly" onclick="showSection('weekly',this)"><i class="ti ti-pencil"></i> Edit</div>
+    <div id="nav-edit-tab" style="display:none">
+      <div class="nav-link" id="nav-weekly" onclick="showSection('weekly',this)"><i class="ti ti-pencil"></i> Edit</div>
+    </div>
     <div class="nav-link" id="nav-reports" onclick="showSection('reports',this)"><i class="ti ti-chart-bar"></i> Reports</div>
   </div>
   <div class="nav-right">
@@ -2180,8 +2266,15 @@ function renderMonthTabs() {
   const el=document.getElementById('month-tabs');
   el.innerHTML=MONTHS.map(m=>{
     const hasData=loadEntries(curEmp,m).length>0;
-    return `<button class="month-tab ${m===curMonth?'active':''} ${hasData?'has-data':''}" onclick="switchMonth('${m}')">${m.slice(0,3)}</button>`;
+    return '<button class="month-tab '+(m===curMonth?'active':'')+' '+(hasData?'has-data':'')+'" onclick="onMonthTabClick(''+m+'',this)">'+m.slice(0,3)+'</button>';
   }).join('');
+}
+
+function onMonthTabClick(m, btn) {
+  const wasActive = (m === curMonth);
+  switchMonth(m);
+  // If already on this month OR has data, open calendar
+  openCalendar(m);
 }
 
 function switchMonth(m) {
@@ -3903,20 +3996,19 @@ function commitUpload() {
     if(!month||!MONTHS.includes(month)) return;
     const existing=loadEntries(emp,month);
 
-    // Build dedup keys: task + each individual date
-    // Key = task|date|hrs (to catch same task same day same hours)
+    // Dedup key: task + date + hrs + customer
+    // Same date is allowed for DIFFERENT tasks
     const existingKeys=new Set();
     existing.forEach(e=>{
       (e.days||[]).forEach(d=>{
-        existingKeys.add(`${e.task}|${d.date}|${d.hrs}`);
+        existingKeys.add(`${e.task}|${d.date}|${d.hrs}|${e.customer}`);
       });
     });
 
     const toAdd=[];
     entries.forEach(e=>{
-      // Check each day individually
       const newDays=(e.days||[]).filter(d=>{
-        const key=`${e.task}|${d.date}|${d.hrs}`;
+        const key=`${e.task}|${d.date}|${d.hrs}|${e.customer}`;
         if(existingKeys.has(key)){ dupes++; return false; }
         existingKeys.add(key);
         return true;
@@ -5599,10 +5691,11 @@ function submitAllTaskRows() {
   const entries = loadEntries(curEmp, curMonth);
   let addedCount = 0;
 
-  taskRows.forEach(row => {
+  const baseId = Date.now();
+  taskRows.forEach((row, rowIdx) => {
     const hrs = parseFloat(row.hrs)||0;
     const entry = {
-      id: Date.now() + Math.floor(Math.random()*10000),
+      id: baseId + rowIdx + Math.floor(Math.random()*100),
       customer, site, orica_fn: fn, bp,
       task: row.task,
       subtask: '',
@@ -5640,6 +5733,346 @@ function submitEntry() { submitAllTaskRows(); }
 
 function renderStagedDays() {}
 function removeStagedDay(idx) {}
+
+// ════════════════════════════════════════════════════════════════════
+// ENTRY CALENDAR POPUP
+// ════════════════════════════════════════════════════════════════════
+let calSelectedDay = null;
+
+function openCalendar(month) {
+  calSelectedDay = null;
+  const overlay = document.getElementById('cal-overlay');
+  if(!overlay) return;
+  overlay.classList.remove('hidden');
+  document.getElementById('cal-popup-title').textContent = month + ' — calendar';
+  renderCalendarDays(month);
+  document.getElementById('cal-detail').innerHTML = '<div class="cal-detail-empty">Tap a day to see entries</div>';
+}
+
+function closeCalendar() {
+  const overlay = document.getElementById('cal-overlay');
+  if(overlay) overlay.classList.add('hidden');
+  calSelectedDay = null;
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape') closeCalendar();
+});
+
+function renderCalendarDays(month) {
+  const mi = MONTHS.indexOf(month);
+  if(mi < 0) return;
+
+  const year = 2026;
+  const daysInMonth = new Date(year, mi+1, 0).getDate();
+  const firstDay = new Date(year, mi, 1).getDay(); // 0=Sun
+  // Convert to Mon-first: Mon=0 … Sun=6
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+
+  // Build day → hours map from entries
+  const entries = loadEntries(curEmp, month);
+  const dayMap = {}; // date string → {hrs, tasks:[]}
+  entries.forEach(e => {
+    (e.days||[]).forEach(d => {
+      const key = d.date;
+      if(!dayMap[key]) dayMap[key] = { hrs: 0, tasks: [] };
+      dayMap[key].hrs += parseFloat(d.hrs)||0;
+      if(!dayMap[key].tasks.includes(e.task)) dayMap[key].tasks.push(e.task);
+    });
+  });
+
+  const maxHrs = Math.max(...Object.values(dayMap).map(d=>d.hrs), 8);
+  const today = new Date().toISOString().slice(0,10);
+  const pad = n => String(n).padStart(2,'0');
+
+  const container = document.getElementById('cal-days');
+  container.innerHTML = '';
+
+  // Empty cells before first day
+  for(let i=0; i<offset; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell empty';
+    container.appendChild(cell);
+  }
+
+  // Day cells
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${pad(mi+1)}-${pad(d)}`;
+    const dayData = dayMap[dateStr] || { hrs:0, tasks:[] };
+    const hrs = dayData.hrs;
+    const heatLevel = hrs === 0 ? 0 : hrs <= 2 ? 1 : hrs <= 4 ? 2 : hrs <= 6 ? 3 : hrs <= 8 ? 4 : 5;
+    const isToday = dateStr === today;
+    const dow = new Date(dateStr+'T00:00:00').getDay(); // 0=Sun, 6=Sat
+    const isWeekend = dow === 0 || dow === 6;
+
+    const cell = document.createElement('div');
+    cell.className = `cal-cell ch${heatLevel}${isToday?' today':''}`;
+    cell.dataset.date = dateStr;
+    cell.title = dateStr + (hrs > 0 ? ` — ${hrs.toFixed(1)}h` : '');
+
+    cell.innerHTML =
+      `<div class="cal-num" style="${isWeekend?'color:#E24B4A':''}">${d}</div>`
+      + (hrs > 0
+        ? `<div class="cal-hrs">${hrs % 1 === 0 ? hrs.toFixed(0) : hrs.toFixed(1)}h</div>`
+        + (dayData.tasks.length ? `<div class="cal-tasks">${dayData.tasks.slice(0,2).join(', ')}</div>` : '')
+        : `<div class="cal-hrs" style="color:transparent">0</div>`);
+
+    cell.addEventListener('click', () => showDayDetail(dateStr, month, cell));
+    container.appendChild(cell);
+  }
+}
+
+function showDayDetail(dateStr, month, cell) {
+  // Highlight selected
+  document.querySelectorAll('.cal-cell.selected').forEach(c=>c.classList.remove('selected'));
+  cell.classList.add('selected');
+  calSelectedDay = dateStr;
+
+  const entries = loadEntries(curEmp, month);
+  // Get all entries that have a day on this date
+  const dayEntries = [];
+  entries.forEach(e => {
+    (e.days||[]).forEach((d,di) => {
+      if(d.date === dateStr) dayEntries.push({ entry:e, day:d, dayIdx:di });
+    });
+  });
+
+  const detail = document.getElementById('cal-detail');
+  const d = new Date(dateStr+'T00:00:00');
+  const label = d.toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long'});
+
+  if(!dayEntries.length) {
+    detail.innerHTML = `<div class="cal-detail-title">${label}</div><div class="cal-detail-empty">No entries — select this month and add one above</div>`;
+    return;
+  }
+
+  const totalHrs = dayEntries.reduce((s,{day})=>s+(parseFloat(day.hrs)||0), 0);
+
+  detail.innerHTML = `<div class="cal-detail-title">${label} — ${totalHrs.toFixed(1)}h total</div>`
+    + dayEntries.map(({entry,day,dayIdx}) => {
+        const hrs = parseFloat(day.hrs)||0;
+        return `<div class="cal-detail-row" onclick="editEntryFromCal('${entry.id}')">
+          <div>
+            <div class="cal-detail-task">${entry.task}</div>
+            <div class="cal-detail-meta">${entry.customer}${entry.site?' · '+entry.site:''} · ${entry.bp}</div>
+          </div>
+          <div class="cal-detail-hrs">${hrs.toFixed(1)}h</div>
+          <button class="cal-detail-edit" onclick="event.stopPropagation();editEntryFromCal('${entry.id}')">
+            <i class="ti ti-pencil" style="font-size:11px"></i> Edit
+          </button>
+        </div>`;
+      }).join('');
+}
+
+function editEntryFromCal(entryId) {
+  closeCalendar();
+  // Switch to the entry page, open that entry in edit mode
+  const navEntry = document.getElementById('nav-entry');
+  if(navEntry) showSection('entry', navEntry);
+  // Small delay to let the page render, then open the entry
+  setTimeout(() => {
+    editingEntryId = null; openEntryId = null;
+    toggleEdit(entryId);
+    // Scroll to the entry
+    setTimeout(() => {
+      const el = document.getElementById('eb-'+entryId);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 100);
+  }, 50);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DUPLICATE DAY PICKER
+// ════════════════════════════════════════════════════════════════════
+let dupEntryId   = null;
+let dupSourceDate = null;
+let dupSelectedDays = new Set();
+let dupMonth = null;
+
+function openDupPicker(entryId, sourceDate) {
+  dupEntryId    = entryId;
+  dupSourceDate = sourceDate;
+  dupSelectedDays = new Set();
+
+  // Get entry info
+  const mi = parseInt(sourceDate.slice(5,7)) - 1;
+  dupMonth = MONTHS[mi];
+  const entries = loadEntries(curEmp, dupMonth);
+  const entry = entries.find(e => String(e.id) === String(entryId));
+  if(!entry) return;
+
+  // Populate header info
+  document.getElementById('dup-task-name').textContent = entry.task;
+  document.getElementById('dup-entry-meta').textContent =
+    entry.customer + (entry.site ? ' · ' + entry.site : '') +
+    ' · ' + (entry.total || 0).toFixed(1) + 'h · ' + sourceDate;
+
+  // Build day grid
+  buildDupDayGrid(mi, sourceDate, entries);
+  updateDupCount();
+
+  document.getElementById('dup-overlay').classList.remove('hidden');
+}
+
+function closeDupPicker() {
+  document.getElementById('dup-overlay').classList.add('hidden');
+  dupEntryId = null; dupSourceDate = null;
+}
+
+function buildDupDayGrid(mi, sourceDate, entries) {
+  const year = 2026;
+  const daysInMonth = new Date(year, mi+1, 0).getDate();
+  const firstDay = new Date(year, mi, 1).getDay();
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  const pad = n => String(n).padStart(2,'0');
+
+  // Build set of dates that already have data
+  const datesWithData = new Set();
+  entries.forEach(e => (e.days||[]).forEach(d => datesWithData.add(d.date)));
+
+  const container = document.getElementById('dup-days');
+  container.innerHTML = '';
+
+  // Empty cells
+  for(let i=0; i<offset; i++) {
+    const el = document.createElement('div');
+    el.className = 'dup-day dup-empty';
+    container.appendChild(el);
+  }
+
+  // Day cells
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${pad(mi+1)}-${pad(d)}`;
+    const dow = new Date(dateStr+'T00:00:00').getDay(); // 0=Sun,6=Sat
+    const isWeekend = dow === 0 || dow === 6;
+    const isSource = dateStr === sourceDate;
+    const hasData = datesWithData.has(dateStr);
+
+    const el = document.createElement('div');
+    el.className = 'dup-day'
+      + (isSource ? ' dup-source' : '')
+      + (isWeekend ? ' dup-weekend' : '')
+      + (hasData && !isSource ? ' dup-has-data' : '');
+    el.dataset.date = dateStr;
+    el.textContent = d;
+    el.title = dateStr + (hasData && !isSource ? ' (has entries)' : '') + (isSource ? ' (source)' : '');
+
+    if(!isSource) {
+      el.addEventListener('click', () => toggleDupDay(dateStr, el));
+    }
+    container.appendChild(el);
+  }
+}
+
+function toggleDupDay(dateStr, el) {
+  if(dupSelectedDays.has(dateStr)) {
+    dupSelectedDays.delete(dateStr);
+    el.classList.remove('dup-selected');
+  } else {
+    dupSelectedDays.add(dateStr);
+    el.classList.add('dup-selected');
+  }
+  updateDupCount();
+}
+
+function dupToggleWorkdays() {
+  // Select all weekdays in the month (deselect if all already selected)
+  const mi = parseInt(dupSourceDate.slice(5,7)) - 1;
+  const year = 2026;
+  const daysInMonth = new Date(year, mi+1, 0).getDate();
+  const pad = n => String(n).padStart(2,'0');
+  const workdays = [];
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${pad(mi+1)}-${pad(d)}`;
+    if(dateStr === dupSourceDate) continue;
+    const dow = new Date(dateStr+'T00:00:00').getDay();
+    if(dow !== 0 && dow !== 6) workdays.push(dateStr);
+  }
+  const allSelected = workdays.every(d => dupSelectedDays.has(d));
+  workdays.forEach(d => {
+    if(allSelected) dupSelectedDays.delete(d);
+    else dupSelectedDays.add(d);
+    const el = document.querySelector(`#dup-days [data-date="${d}"]`);
+    if(el) el.classList.toggle('dup-selected', !allSelected);
+  });
+  updateDupCount();
+}
+
+function dupSelectAll() {
+  document.querySelectorAll('#dup-days .dup-day:not(.dup-empty):not(.dup-source)').forEach(el => {
+    el.classList.add('dup-selected');
+    dupSelectedDays.add(el.dataset.date);
+  });
+  updateDupCount();
+}
+
+function dupClearAll() {
+  document.querySelectorAll('#dup-days .dup-day.dup-selected').forEach(el => {
+    el.classList.remove('dup-selected');
+  });
+  dupSelectedDays.clear();
+  updateDupCount();
+}
+
+function updateDupCount() {
+  const n = dupSelectedDays.size;
+  document.getElementById('dup-count').innerHTML = `<strong>${n}</strong> day${n!==1?'s':''} selected`;
+  document.getElementById('dup-confirm-btn').disabled = n === 0;
+}
+
+function confirmDuplicate() {
+  if(!dupEntryId || !dupSelectedDays.size) return;
+
+  const entries = loadEntries(curEmp, dupMonth);
+  const sourceEntry = entries.find(e => String(e.id) === String(dupEntryId));
+  if(!sourceEntry) { toast('Entry not found', 'error'); return; }
+
+  const sourceDay = (sourceEntry.days||[]).find(d => d.date === dupSourceDate);
+  if(!sourceDay) { toast('Source day not found', 'error'); return; }
+
+  let added = 0;
+  const baseId = Date.now();
+
+  // Check which target dates are in the same month vs different month
+  const byMonth = {};
+  dupSelectedDays.forEach(targetDate => {
+    const m = MONTHS[parseInt(targetDate.slice(5,7))-1];
+    if(!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(targetDate);
+  });
+
+  Object.entries(byMonth).forEach(([month, dates]) => {
+    const monthEntries = loadEntries(curEmp, month);
+    dates.forEach((targetDate, i) => {
+      const newEntry = {
+        ...sourceEntry,
+        id: baseId + added,
+        month,
+        days: [{ date: targetDate, hrs: sourceDay.hrs, start: '', end: '', note: sourceDay.note||'' }],
+        total: sourceDay.hrs,
+        submitted: new Date().toISOString()
+      };
+      monthEntries.push(newEntry);
+      added++;
+    });
+    saveEntries(curEmp, month, monthEntries);
+  });
+
+  markUnsaved();
+  closeDupPicker();
+
+  // Re-render calendar if still open
+  if(!document.getElementById('cal-overlay').classList.contains('hidden')) {
+    renderCalendarDays(dupMonth);
+    document.getElementById('cal-detail').innerHTML = '<div class="cal-detail-empty">Duplicated! Tap a day to review</div>';
+  }
+
+  renderEntry();
+  toast(`✓ Duplicated to ${added} day${added!==1?'s':''}`, 'success');
+}
+
+
 
 let loginSelected = null;
 
@@ -5775,6 +6208,7 @@ function doLogin() {
   // Show admin nav if admin
   if(currentUser.role==='admin'){
     document.getElementById('nav-admin-tab').style.display='block';
+    document.getElementById('nav-edit-tab').style.display='block';
     document.getElementById('sync-btn').style.display='inline-flex';
   }
   refreshEmployees();
@@ -5804,6 +6238,7 @@ function doLogout() {
   document.getElementById('passcode-err').style.display='none';
   document.getElementById('login-btn').disabled=true;
   document.getElementById('nav-admin-tab').style.display='none';
+  document.getElementById('nav-edit-tab').style.display='none';
   document.getElementById('sync-btn').style.display='none';
   document.getElementById('nav-user-chip').innerHTML='';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -5820,5 +6255,66 @@ try { buildLoginList(); } catch(e) { console.error('buildLoginList failed:', e);
 try { initUploadDropzone(); } catch(e) { console.error('initUploadDropzone failed:', e); }
 try { initSupabase(); } catch(e) { console.error('initSupabase failed:', e); }
 </script>
+
+<!-- ══ ENTRY CALENDAR POPUP ════════════════════════════════════════ -->
+<div class="cal-overlay hidden" id="cal-overlay">
+  <div class="cal-backdrop" onclick="closeCalendar()"></div>
+  <div class="cal-popup">
+    <div class="cal-popup-header">
+      <div class="cal-popup-title" id="cal-popup-title">January — calendar</div>
+      <button class="cal-popup-close" onclick="closeCalendar()">×</button>
+    </div>
+    <div class="cal-dows">
+      <div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div>
+      <div class="cal-dow">Thu</div><div class="cal-dow">Fri</div>
+      <div class="cal-dow" style="color:#E24B4A">Sat</div><div class="cal-dow" style="color:#E24B4A">Sun</div>
+    </div>
+    <div class="cal-days" id="cal-days"></div>
+    <div class="cal-detail" id="cal-detail">
+      <div class="cal-detail-empty">Tap a day to see entries</div>
+    </div>
+    <div class="cal-legend">
+      <span>Hours:</span>
+      <div class="cal-legend-item"><div class="cal-legend-dot ch0"></div> 0</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot ch1"></div> 1–2</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot ch2"></div> 3–4</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot ch3"></div> 5–6</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot ch4"></div> 7–8</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot ch5" style="border:1px solid #003087"></div> 8+</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DUPLICATE DAY PICKER ════════════════════════════════════════ -->
+<div class="dup-overlay hidden" id="dup-overlay">
+  <div class="dup-backdrop" onclick="closeDupPicker()"></div>
+  <div class="dup-popup">
+    <div class="dup-header">
+      <div class="dup-title">Duplicate to multiple days</div>
+      <button class="dup-close" onclick="closeDupPicker()">×</button>
+    </div>
+    <div class="dup-entry-info">
+      <div class="dup-entry-task" id="dup-task-name"></div>
+      <div id="dup-entry-meta" style="margin-top:2px;opacity:0.8"></div>
+    </div>
+    <div class="dup-instructions" id="dup-instructions">Select which days to copy this entry to:</div>
+    <div class="dup-dows">
+      <div class="dup-dow">M</div><div class="dup-dow">T</div><div class="dup-dow">W</div>
+      <div class="dup-dow">T</div><div class="dup-dow">F</div>
+      <div class="dup-dow" style="color:#E24B4A">S</div>
+      <div class="dup-dow" style="color:#E24B4A">S</div>
+    </div>
+    <div class="dup-days" id="dup-days"></div>
+    <div class="dup-actions">
+      <button class="dup-select-all-btn" onclick="dupToggleWorkdays()">Weekdays</button>
+      <button class="dup-select-all-btn" onclick="dupSelectAll()">All days</button>
+      <button class="dup-select-all-btn" onclick="dupClearAll()">Clear</button>
+      <div class="dup-count" id="dup-count"><strong>0</strong> days selected</div>
+      <button class="dup-confirm-btn" id="dup-confirm-btn" onclick="confirmDuplicate()" disabled>
+        <i class="ti ti-copy"></i> Duplicate
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
