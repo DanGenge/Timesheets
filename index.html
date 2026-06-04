@@ -792,6 +792,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <div style="font-size:13px;font-weight:600" id="upload-filename"></div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-sm" onclick="cancelUpload()"><i class="ti ti-x"></i> Cancel</button>
+              <button class="btn btn-sm" onclick="showDataCleanerModal(uploadParsed,null)" style="gap:4px"><i class="ti ti-adjustments"></i> Review &amp; clean</button>
               <button class="btn btn-sm btn-primary" onclick="commitUpload()"><i class="ti ti-database-import"></i> Import data</button>
             </div>
           </div>
@@ -1076,7 +1077,10 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="page" id="page-reports">
       <div class="page-hdr" style="margin-bottom:10px">
         <div><div class="page-title" id="rpt-page-title">Reports</div><div class="page-meta" id="rpt-page-meta">NSW &amp; QLD Coal</div></div>
-        <button class="btn btn-sm btn-blue" onclick="exportReport()"><i class="ti ti-download"></i> Export CSV</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-sm" onclick="showDuplicateReview()" title="Review field name variants in loaded data"><i class="ti ti-eye-check"></i> Data quality</button>
+          <button class="btn btn-sm btn-blue" onclick="exportReport()"><i class="ti ti-download"></i> Export CSV</button>
+        </div>
       </div>
       <!-- USER PERSONAL REPORTS (shown to non-admins) -->
       <div id="user-reports-section" style="display:none">
@@ -1195,12 +1199,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-summary" onchange="renderAdminTab('summary')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-summary" onchange="renderAdminTab('summary')"></select>
+          <label>Period</label>
+          <select id="tf-period-summary" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1258,12 +1258,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-tasks" onchange="renderAdminTab('tasks')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-tasks" onchange="renderAdminTab('tasks')"></select>
+          <label>Period</label>
+          <select id="tf-period-tasks" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1309,12 +1305,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-customer" onchange="renderAdminTab('customer')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-customer" onchange="renderAdminTab('customer')"></select>
+          <label>Period</label>
+          <select id="tf-period-customer" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1361,12 +1353,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-product" onchange="renderAdminTab('product')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-product" onchange="renderAdminTab('product')"></select>
+          <label>Period</label>
+          <select id="tf-period-product" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1412,12 +1400,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-employee" onchange="renderAdminTab('employee')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-employee" onchange="renderAdminTab('employee')"></select>
+          <label>Period</label>
+          <select id="tf-period-employee" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1463,12 +1447,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-leave" onchange="renderAdminTab('leave')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-leave" onchange="renderAdminTab('leave')"></select>
+          <label>Period</label>
+          <select id="tf-period-leave" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1517,12 +1497,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-site" onchange="renderAdminTab('site')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-site" onchange="renderAdminTab('site')"></select>
+          <label>Period</label>
+          <select id="tf-period-site" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1568,12 +1544,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-trend" onchange="renderAdminTab('trend')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-trend" onchange="renderAdminTab('trend')"></select>
+          <label>Period</label>
+          <select id="tf-period-trend" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1863,6 +1835,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <div style="font-size:13px;font-weight:600" id="upload-filename"></div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-sm" onclick="cancelUpload()"><i class="ti ti-x"></i> Cancel</button>
+              <button class="btn btn-sm" onclick="showDataCleanerModal(uploadParsed,null)" style="gap:4px"><i class="ti ti-adjustments"></i> Review &amp; clean</button>
               <button class="btn btn-sm btn-primary" onclick="commitUpload()"><i class="ti ti-database-import"></i> Import data</button>
             </div>
           </div>
@@ -2826,27 +2799,61 @@ const BP_COLORS_MAP={'Cost.of.Service':'#003087','Direct.Sales':'#0072CE','BD.an
 const TAB_IDS = ['summary','tasks','customer','product','employee','leave','site','trend'];
 const tabState = {};
 TAB_IDS.forEach(t=>{
-  tabState[t]={state:'ALL',mFrom:0,mTo:11,emps:new Set(),custFilter:'ALL',siteFilter:'ALL',bpFilter:'ALL'};
+  tabState[t]={state:'ALL',mFrom:0,mTo:11,yearFilter:'ALL',emps:new Set(),custFilter:'ALL',siteFilter:'ALL',bpFilter:'ALL'};
 });
+
+// Orica fiscal year helpers (FY ends Sep 30)
+// FY2025 = Oct 2024 – Sep 2025, FY2026 = Oct 2025 – Sep 2026
+function getFiscalYear(calYear, monthIdx) {
+  // monthIdx: 0=Jan…11=Dec. Oct(9),Nov(10),Dec(11) belong to next FY
+  return monthIdx >= 9 ? calYear + 1 : calYear;
+}
+function getFYLabel(fy) { return `FY${fy} (Oct ${fy-1}–Sep ${fy})`; }
+function getAvailableYears() {
+  // Scan all employees/months for years present in the data
+  const years = new Set(['2025','2026']);
+  getEmployees().forEach(emp => {
+    MONTHS.forEach(m => {
+      loadEntries(emp,m).forEach(e => { if(e.year) years.add(String(e.year)); });
+    });
+  });
+  return [...years].sort();
+}
 
 // ── Init tab filters (called once on first admin report show) ──
 let tabFiltersInited = false;
 function initTabFilters(){
   if(tabFiltersInited) return;
   tabFiltersInited = true;
+  const years = getAvailableYears();
   TAB_IDS.forEach(tid=>{
-    // Month from/to
-    ['tf-mfrom-','tf-mto-'].forEach((prefix,isTo)=>{
-      const sel=document.getElementById(prefix+tid);
-      if(!sel)return;
-      MONTHS.forEach((m,i)=>{
-        const o=document.createElement('option');
-        o.value=i; o.textContent=m+' 2026';
-        if(!isTo&&i===0)o.selected=true;
-        if(isTo&&i===11)o.selected=true;
-        sel.appendChild(o);
+    // --- Year / FY / Quarter / Month period picker ---
+    const periodEl = document.getElementById('tf-period-'+tid);
+    if(periodEl) {
+      // All time
+      let html = '<option value="ALL">All time</option>';
+      // Fiscal years
+      const fys = [...new Set(years.flatMap(y=>[parseInt(y), parseInt(y)+1]))].sort();
+      fys.forEach(fy => { html += `<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
+      // Calendar years
+      years.forEach(y => { html += `<option value="CY${y}">Calendar ${y}</option>`; });
+      // Quarters (FY-based: Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep)
+      fys.forEach(fy => {
+        html += `<option value="FY${fy}Q1">FY${fy} Q1 Oct–Dec ${fy-1}</option>`;
+        html += `<option value="FY${fy}Q2">FY${fy} Q2 Jan–Mar ${fy}</option>`;
+        html += `<option value="FY${fy}Q3">FY${fy} Q3 Apr–Jun ${fy}</option>`;
+        html += `<option value="FY${fy}Q4">FY${fy} Q4 Jul–Sep ${fy}</option>`;
       });
-    });
+      // Individual months (grouped by calendar year)
+      years.forEach(y => {
+        MONTHS.forEach(m => { html += `<option value="${y}-${m}">${m} ${y}</option>`; });
+      });
+      periodEl.innerHTML = html;
+      // Default to FY2026
+      const fy26opt = periodEl.querySelector('option[value="FY2026"]');
+      if(fy26opt) fy26opt.selected = true;
+      periodEl.addEventListener('change', () => renderAdminTab(tid));
+    }
     // Customer filter
     const cs=document.getElementById('tf-cust-'+tid);
     if(cs){
@@ -2967,8 +2974,8 @@ function resetTabFilters(tid){
   // Reset UI
   document.querySelectorAll(`#tf-${tid} .state-btn`).forEach(b=>b.classList.remove('active'));
   document.getElementById('ts-all-'+tid)?.classList.add('active');
-  const mf=document.getElementById('tf-mfrom-'+tid); if(mf)mf.value=0;
-  const mt=document.getElementById('tf-mto-'+tid); if(mt)mt.value=11;
+  const pd=document.getElementById('tf-period-'+tid);
+  if(pd){ const fy26=pd.querySelector('option[value="FY2026"]'); if(fy26) fy26.selected=true; else pd.selectedIndex=0; }
   document.querySelectorAll(`#edl-${tid} input[type=checkbox]`).forEach(cb=>cb.checked=true);
   updateEmpDropLabel(tid);
   const cs=document.getElementById('tf-cust-'+tid); if(cs)cs.value='ALL';
@@ -2977,30 +2984,77 @@ function resetTabFilters(tid){
   renderAdminTab(tid);
 }
 
+// ── Parse a period selector value into a filter function ──────────
+// period: 'ALL' | 'FYnnnn' | 'FYnnnnQn' | 'CYnnnn' | 'YYYY-Month'
+function periodToFilter(period) {
+  if(!period || period === 'ALL') return () => true;
+  // FY quarter e.g. FY2026Q1
+  const qm = period.match(/^FY(\d{4})Q(\d)$/);
+  if(qm) {
+    const fy = parseInt(qm[1]), q = parseInt(qm[2]);
+    // Q1=Oct-Dec(prev cal yr), Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep (all same cal yr as fy)
+    const qMonths = {
+      1: [{y:fy-1,m:'October'},{y:fy-1,m:'November'},{y:fy-1,m:'December'}],
+      2: [{y:fy,m:'January'},{y:fy,m:'February'},{y:fy,m:'March'}],
+      3: [{y:fy,m:'April'},{y:fy,m:'May'},{y:fy,m:'June'}],
+      4: [{y:fy,m:'July'},{y:fy,m:'August'},{y:fy,m:'September'}],
+    }[q] || [];
+    const set = new Set(qMonths.map(x=>`${x.y}-${x.m}`));
+    return (e,month,year) => set.has(`${year}-${month}`);
+  }
+  // Full FY e.g. FY2026
+  const fym = period.match(/^FY(\d{4})$/);
+  if(fym) {
+    const fy = parseInt(fym[1]);
+    return (e,month,year) => {
+      const mi = MONTHS.indexOf(month);
+      const calYear = parseInt(year||'2026');
+      // Q1 months (Oct-Dec) belong to fy if calYear === fy-1
+      // Q2-Q4 months (Jan-Sep) belong to fy if calYear === fy
+      return mi >= 9 ? calYear === fy-1 : calYear === fy;
+    };
+  }
+  // Calendar year e.g. CY2025
+  const cym = period.match(/^CY(\d{4})$/);
+  if(cym) {
+    const cy = cym[1];
+    return (e,month,year) => String(year||'2026') === cy;
+  }
+  // Specific month e.g. 2025-January
+  const mm = period.match(/^(\d{4})-(.+)$/);
+  if(mm) {
+    return (e,month,year) => month === mm[2] && String(year||'2026') === mm[1];
+  }
+  return () => true;
+}
+
 // ── Get filtered entries for a tab ──────────────────────────────
 function getTabEntries(tid){
   const s=tabState[tid];
-  const mFrom=parseInt(document.getElementById('tf-mfrom-'+tid)?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-'+tid)?.value??11);
+  const period=(document.getElementById('tf-period-'+tid)?.value)||'FY2026';
   const custF=(document.getElementById('tf-cust-'+tid)?.value)||'ALL';
   const siteF=(document.getElementById('tf-site-'+tid)?.value)||'ALL';
   const bpF  =(document.getElementById('tf-bp-'+tid)?.value)||'ALL';
   const stateF=s?.state||'ALL';
   const emps=s?.emps ? [...s.emps] : getEmployees();
+  const passFilter = periodToFilter(period);
 
   let all=[];
   emps.forEach(emp=>{
     const empRec=getTeamRegistry().find(t=>t.name===emp);
     if(!empRec) return;
     if(stateF!=='ALL'&&empRec.state!==stateF) return;
-    for(let mi=mFrom;mi<=mTo;mi++){
-      loadEntries(emp,MONTHS[mi]).forEach(e=>{
+    // Load all months and filter by period+year
+    MONTHS.forEach((month,mi)=>{
+      loadEntries(emp,month).forEach(e=>{
+        const year = e.year || e._year || '2026';
+        if(!passFilter(e,month,year)) return;
         if(custF!=='ALL'&&e.customer!==custF) return;
         if(siteF!=='ALL'&&e.site!==siteF) return;
         if(bpF!=='ALL'&&e.bp!==bpF) return;
-        all.push({...e,_emp:emp,_month:MONTHS[mi],_monthIdx:mi});
+        all.push({...e,_emp:emp,_month:month,_monthIdx:mi,_year:year});
       });
-    }
+    });
   });
   return all;
 }
@@ -3008,6 +3062,24 @@ function getTabEntries(tid){
 function getTH(entries){return entries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);}
 function fmtK(n){return n>=1000?(n/1000).toFixed(1)+'K':n.toFixed(0);}
 function pctStr(v,t){return t>0?Math.round(v/t*100)+'%':'0%';}
+
+// Returns [mFrom, mTo] (0-11) for chart renderers that need a month range.
+// For multi-month periods, returns the full span visible in the data.
+// This is approximate — used only for highlight dimming on monthly bar charts.
+function periodToMonthRange(period) {
+  if(!period || period === 'ALL') return [0, 11];
+  const qm = period.match(/^FY(\d{4})Q(\d)$/);
+  if(qm) {
+    const q = parseInt(qm[2]);
+    const ranges = {1:[9,11], 2:[0,2], 3:[3,5], 4:[6,8]};
+    return ranges[q] || [0,11];
+  }
+  if(/^FY\d{4}$/.test(period)) return [0,11];
+  if(/^CY\d{4}$/.test(period)) return [0,11];
+  const mm = period.match(/^(\d{4})-(.+)$/);
+  if(mm) { const i=MONTHS.indexOf(mm[2]); return i>=0?[i,i]:[0,11]; }
+  return [0,11];
+}
 
 // ── Horizontal bar builder (PDF style) ──────────────────────────
 function renderHorizBars(containerId,data,palette,maxShown=15){
@@ -3090,8 +3162,7 @@ function renderAdminTab(tid){
 function renderAdminSummary(){
   const entries=getTabEntries('summary');
   const total=getTH(entries);
-  const mFrom=parseInt(document.getElementById('tf-mfrom-summary')?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-summary')?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-summary')?.value||'FY2026');
 
   // Stat cards
   const uniqueEmps=new Set(entries.map(e=>e._emp)).size;
@@ -3125,8 +3196,7 @@ function renderAdminSummary(){
 function renderAdminTasks(){
   const entries=getTabEntries('tasks');
   const total=getTH(entries);
-  const mFrom=parseInt(document.getElementById('tf-mfrom-tasks')?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-tasks')?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-tasks')?.value||'FY2026');
   const byTask={};
   entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
   const sorted=Object.entries(byTask).sort((a,b)=>b[1]-a[1]);
@@ -3254,8 +3324,7 @@ function renderAdminEmployee(){
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});
   }
   // Summary table
-  const mFrom=parseInt(document.getElementById('tf-mfrom-employee')?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-employee')?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-employee')?.value||'FY2026');
   const months=mTo-mFrom+1;
   const tbl=document.getElementById('emp-detail-table');
   if(tbl){
@@ -4376,23 +4445,30 @@ function parseXLSXUpload(wb, filename) {
       const total = dayEntries.reduce((s,d)=>s+d.hrs, 0);
       if(total <= 0) continue;
 
+      // Year from actual dates is more reliable than filename
+      const entryYear = dayEntries[0].date.slice(0,4) || fileYear;
+      // Apply normalisation map (canonical name corrections)
+      const normMap = getRefData('norm_map', {});
+      const norm = v => (v && normMap[v]) ? normMap[v] : v;
+
       results.push({
         id: uid++,
         month: mName,
-        customer: clean(rowF[ci.customer]) || 'Orica',
-        site:     clean(rowF[ci.site]),
+        year: entryYear,
+        customer: norm(clean(rowF[ci.customer]) || 'Orica'),
+        site:     norm(clean(rowF[ci.site])),
         orica_fn: clean(rowF[ci.fn]),
         bp,
-        task,
+        task:     norm(task),
         subtask:  clean(rowF[ci.subtask]),
-        product:  clean(rowF[ci.product]),
-        product2: clean(rowF[ci.product2]),
+        product:  norm(clean(rowF[ci.product])),
+        product2: norm(clean(rowF[ci.product2])),
         comments: clean(rowF[ci.comments]),
         days: dayEntries,
         total,
         submitted: new Date().toISOString(),
         _empGuess: empGuess,
-        _year: fileYear
+        _year: entryYear
       });
     }
   });
@@ -4441,6 +4517,200 @@ function parseCSVUpload(text) {
     });
   }
   return results;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DATA NORMALISATION — canonical name map + duplicate review
+// ════════════════════════════════════════════════════════════════════
+
+// Built-in baseline corrections (typos + formatting known from legacy files)
+const NORM_DEFAULTS = {
+  // Sites
+  'mangoola':             'Mangoola',
+  'Mt Arthur South':      'Mt Arthur Coal',
+  'Busniess Development':  'Business Development',
+  'Glencore - All':       'Glencore',
+  // Customers — remove dot notation
+  'Anglo.American':       'Anglo American',
+  'Bloomfield.Group':     'Bloomfield Group',
+  'New.Hope':             'New Hope',
+  // Tasks — case variants
+  'Project support':      'Project Support',
+  'Blast design Service': 'Blast Design Service',
+  'Data gathering':       'Data Gathering',
+  // Products — case variants
+  'RHINO':                'Rhino™',
+  'Wildfire':             'Wildfire™',
+  'Vulcan':               'Vulcan™',
+};
+
+function getNormMap() {
+  const stored = getRefData('norm_map', {});
+  return {...NORM_DEFAULTS, ...stored};
+}
+
+function saveNormMap(map) {
+  // Only persist overrides beyond defaults
+  const overrides = {};
+  Object.entries(map).forEach(([k,v]) => {
+    if(NORM_DEFAULTS[k] !== v) overrides[k] = v;
+  });
+  saveRefData('norm_map', overrides);
+}
+
+// ── Import data cleaner modal ────────────────────────────────────
+// Shown after parsing when variants are detected; lets admin review
+// before committing. Also callable from "Review data" button.
+let _normPendingCallback = null;
+
+function showDataCleanerModal(parsed, onConfirm) {
+  _normPendingCallback = onConfirm;
+  const map = getNormMap();
+
+  // Collect all unique field values from parsed entries
+  const fields = {site:new Set(), customer:new Set(), task:new Set(), product:new Set()};
+  parsed.forEach(e => {
+    if(e.site)     fields.site.add(e.site);
+    if(e.customer) fields.customer.add(e.customer);
+    if(e.task)     fields.task.add(e.task);
+    if(e.product)  fields.product.add(e.product);
+  });
+
+  // Build table rows: show all known variants + defaults, let admin edit
+  const allKeys = new Set([...Object.keys(NORM_DEFAULTS), ...Object.keys(map)]);
+  // Also add any field values that look suspicious (mixed case, dot-separated, etc.)
+  Object.entries(fields).forEach(([fld, vals]) => {
+    vals.forEach(v => {
+      if(!v) return;
+      // Flag if: has dots, all-lowercase, or closely matches another value (case-only)
+      const vl = v.toLowerCase();
+      const hasDot = v.includes('.');
+      const isLower = v === vl && v.length > 3;
+      const dupeCase = [...vals].some(v2 => v2 !== v && v2.toLowerCase() === vl);
+      if(hasDot || isLower || dupeCase) allKeys.add(v);
+    });
+  });
+
+  // Build rows
+  let rows = [...allKeys].sort().map(k => {
+    const canonical = map[k] || k;
+    const isDefault = NORM_DEFAULTS[k] !== undefined;
+    const isCustom = map[k] !== undefined && !isDefault;
+    const badge = isDefault ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 5px;border-radius:4px;margin-left:4px">built-in</span>'
+                 : isCustom ? '<span style="font-size:10px;background:#FAEEDA;color:#633806;padding:1px 5px;border-radius:4px;margin-left:4px">custom</span>'
+                 : '';
+    return `<tr>
+      <td style="font-size:12px;padding:5px 8px;font-family:monospace">${k}${badge}</td>
+      <td style="padding:4px 8px">→</td>
+      <td style="padding:4px 6px"><input class="norm-input" data-key="${k.replace(/"/g,'&quot;')}" value="${canonical.replace(/"/g,'&quot;')}" style="width:100%;height:28px;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px"></td>
+      <td style="padding:4px 6px;text-align:center"><button onclick="normRemoveRow(this,'${k.replace(/'/g,"\\'")}')">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  const modal = document.getElementById('data-cleaner-modal');
+  if(!modal) return;
+  document.getElementById('dcm-table-body').innerHTML = rows || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px;font-size:12px">No known variants found.</td></tr>';
+  document.getElementById('dcm-count').textContent = `${parsed.length} entries from import`;
+  modal.style.display = 'flex';
+}
+
+function normRemoveRow(btn, key) {
+  btn.closest('tr').remove();
+}
+
+function normAddRow() {
+  const from = document.getElementById('dcm-new-from')?.value.trim();
+  const to   = document.getElementById('dcm-new-to')?.value.trim();
+  if(!from || !to) return;
+  const tbody = document.getElementById('dcm-table-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="font-size:12px;padding:5px 8px;font-family:monospace">${from} <span style="font-size:10px;background:#FAEEDA;color:#633806;padding:1px 5px;border-radius:4px;margin-left:4px">custom</span></td>
+    <td style="padding:4px 8px">→</td>
+    <td style="padding:4px 6px"><input class="norm-input" data-key="${from}" value="${to}" style="width:100%;height:28px;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px"></td>
+    <td style="padding:4px 6px;text-align:center"><button onclick="normRemoveRow(this,'${from}')">✕</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('dcm-new-from').value = '';
+  document.getElementById('dcm-new-to').value = '';
+}
+
+function normConfirm() {
+  // Build new map from table
+  const newMap = {};
+  document.querySelectorAll('#dcm-table-body .norm-input').forEach(input => {
+    const k = input.dataset.key;
+    const v = input.value.trim();
+    if(k && v && k !== v) newMap[k] = v;
+  });
+  saveNormMap(newMap);
+  document.getElementById('data-cleaner-modal').style.display = 'none';
+  if(_normPendingCallback) { _normPendingCallback(newMap); _normPendingCallback = null; }
+}
+
+function normCancel() {
+  document.getElementById('data-cleaner-modal').style.display = 'none';
+  _normPendingCallback = null;
+}
+
+// ── Review Duplicates — scan all loaded data for field variants ──
+function showDuplicateReview() {
+  const fields = {site:[], customer:[], task:[], product:[]};
+  getEmployees().forEach(emp => {
+    MONTHS.forEach(m => {
+      loadEntries(emp, m).forEach(e => {
+        if(e.site)     fields.site.push(e.site);
+        if(e.customer) fields.customer.push(e.customer);
+        if(e.task)     fields.task.push(e.task);
+        if(e.product && e.product !== 'Orica') fields.product.push(e.product);
+      });
+    });
+  });
+
+  // Find groups of values that differ only by case or minor variation
+  const findVariants = (vals) => {
+    const freq = {};
+    vals.forEach(v => { if(v) freq[v] = (freq[v]||0)+1; });
+    const groups = {};
+    Object.keys(freq).forEach(v => {
+      const key = v.toLowerCase().replace(/[.\s-]/g,'');
+      if(!groups[key]) groups[key] = [];
+      groups[key].push({v, n:freq[v]});
+    });
+    return Object.values(groups).filter(g => g.length > 1);
+  };
+
+  let html = '';
+  Object.entries(fields).forEach(([fld, vals]) => {
+    const variants = findVariants(vals);
+    if(!variants.length) return;
+    html += `<div style="font-size:11px;font-weight:700;color:#003087;text-transform:uppercase;letter-spacing:0.04em;padding:6px 0 4px">${fld}</div>`;
+    variants.forEach(group => {
+      const canonical = group.sort((a,b)=>b.n-a.n)[0].v; // most frequent = canonical
+      html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">`;
+      group.forEach(({v,n}) => {
+        const isCanon = v === canonical;
+        html += `<span style="font-size:12px;padding:2px 8px;border-radius:8px;background:${isCanon?'#E1F5EE':'#FDEDEB'};color:${isCanon?'#085041':'#8B1A1A'};cursor:pointer" 
+          title="Used ${n}x — click to set as canonical" 
+          onclick="normSetCanonical('${fld}',${JSON.stringify(group.map(x=>x.v))},'${v}')">${v} <span style="opacity:0.6">(${n})</span></span>`;
+      });
+      html += `</div>`;
+    });
+  });
+
+  const el = document.getElementById('dup-review-body');
+  if(el) el.innerHTML = html || '<div style="color:var(--muted);font-size:12px;padding:12px">No variants found — data looks clean ✓</div>';
+  document.getElementById('dup-review-modal')?.style && (document.getElementById('dup-review-modal').style.display = 'flex');
+}
+
+function normSetCanonical(field, group, canonical) {
+  const map = getNormMap();
+  group.forEach(v => { if(v !== canonical) map[v] = canonical; else delete map[v]; });
+  saveNormMap(map);
+  toast(`✓ "${canonical}" set as canonical for ${group.length} variants`,'success');
+  showDuplicateReview(); // re-render
+}
+
+function closeDupReview() {
+  document.getElementById('dup-review-modal').style.display = 'none';
 }
 
 function showUploadPreview(filename, parsed) {
@@ -4494,17 +4764,18 @@ function commitUpload() {
 
   let imported=0, skipped=0, dupes=0;
 
-  // Group entries by employee+month
+  // Group entries by employee+year+month
   const grouped={};
   uploadParsed.forEach(e=>{
     const empName=resolveEmployee(e._empGuess);
     if(!empName){ skipped++; return; }
-    const key=empName+'||'+(e.month||'');
-    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,entries:[]};
-    grouped[key].entries.push({...e, _emp:empName});
+    const yr = e.year || e._year || '2026';
+    const key=empName+'||'+yr+'||'+(e.month||'');
+    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,year:yr,entries:[]};
+    grouped[key].entries.push({...e, _emp:empName, year:yr});
   });
 
-  Object.values(grouped).forEach(({emp,month,entries})=>{
+  Object.values(grouped).forEach(({emp,month,year,entries})=>{
     if(!month||!MONTHS.includes(month)) return;
     const existing=loadEntries(emp,month);
 
@@ -6830,5 +7101,60 @@ console.log('Portal init complete.');
     </div>
   </div>
 </div>
+<!-- ══ DATA CLEANER MODAL ══════════════════════════════════════════ -->
+<div id="data-cleaner-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;width:min(680px,95vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-adjustments" style="margin-right:6px;color:#003087"></i>Review &amp; clean field names</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="dcm-count"></div>
+      </div>
+      <button onclick="normCancel()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
+    </div>
+    <div style="padding:12px 20px;font-size:12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)">
+      These mappings correct typos and standardise field values before import. Built-in rules apply automatically; you can add your own or remove any.
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:12px 16px">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="font-size:10px;font-weight:700;color:var(--muted);text-align:left;padding:4px 8px;text-transform:uppercase;letter-spacing:0.04em">Raw value (in file)</th>
+          <th></th>
+          <th style="font-size:10px;font-weight:700;color:var(--muted);text-align:left;padding:4px 8px;text-transform:uppercase;letter-spacing:0.04em">Replace with</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="dcm-table-body"></tbody>
+      </table>
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--border);background:var(--surface2);display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <input id="dcm-new-from" placeholder="Raw value…" style="height:30px;font-size:12px;flex:1;min-width:120px">
+      <span style="color:var(--muted)">→</span>
+      <input id="dcm-new-to" placeholder="Canonical name…" style="height:30px;font-size:12px;flex:1;min-width:120px">
+      <button onclick="normAddRow()" class="btn btn-sm"><i class="ti ti-plus"></i> Add rule</button>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button onclick="normCancel()" class="btn btn-sm">Cancel</button>
+        <button onclick="normConfirm()" class="btn btn-sm btn-primary"><i class="ti ti-check"></i> Save &amp; apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DUPLICATE REVIEW MODAL ══════════════════════════════════════ -->
+<div id="dup-review-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;width:min(600px,95vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-eye" style="margin-right:6px;color:#003087"></i>Review field variants in loaded data</div>
+      <button onclick="closeDupReview()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
+    </div>
+    <div style="padding:12px 20px;font-size:12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)">
+      Groups of values that appear to be the same thing spelled differently. Click a value to promote it as the canonical form — others will be mapped to it.
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 20px" id="dup-review-body"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);background:var(--surface2);display:flex;justify-content:flex-end;gap:6px">
+      <button onclick="showDataCleanerModal([],null)" class="btn btn-sm"><i class="ti ti-adjustments"></i> Edit all rules</button>
+      <button onclick="closeDupReview()" class="btn btn-sm btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
