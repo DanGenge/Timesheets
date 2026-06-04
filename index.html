@@ -4280,10 +4280,12 @@ function parseXLSXUpload(wb, filename) {
     const dataF = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
 
     // ── Find header row: has 'Task' AND ('Business Purpose' or 'Bussiness Purpose') ──
+    // Note: 2025 legacy files use the misspelling 'Bussiness Purpose' (double-s before i)
+    // 'usiness' doesn't match 'bussiness', so we check 'iness'+'urpose' instead
     let hdrIdx = -1;
     for(let i=0; i<Math.min(12, data.length); i++) {
-      const row = (dataF[i]||[]).map(v=>v?String(v).trim():'');
-      if(row.some(v=>v==='Task') && row.some(v=>v.toLowerCase().includes('business purpose'))) {
+      const row = (dataF[i]||[]).map(v=>v?String(v).trim().toLowerCase():'');
+      if(row.some(v=>v==='task') && row.some(v=>v.includes('iness') && v.includes('urpose'))) {
         hdrIdx = i; break;
       }
     }
@@ -4297,7 +4299,7 @@ function parseXLSXUpload(wb, filename) {
       if(v==='Customer')                          ci.customer=i;
       if(v==='Site')                              ci.site=i;
       if(v==='Orica Function')                    ci.fn=i;
-      if(v.toLowerCase().includes('business purpose')) ci.bp=i;
+      if(v.toLowerCase().includes('iness') && v.toLowerCase().includes('urpose')) ci.bp=i;
       if(v==='Task')                              ci.task=i;
       if(v==='Sub Task')                          ci.subtask=i;
       if(v==='Product')                           ci.product=i;
