@@ -1699,24 +1699,29 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             </div>
             <div>
               <div style="font-size:10px;font-weight:600;color:#ADADAD;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Complexity driver weights</div>
-              <div class="rm-weight-grid">
+              <div class="rm-weight-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
                 <div class="rm-weight-box">
                   <div class="rm-weight-lbl">Cost of Service hrs</div>
-                  <div class="rm-weight-val" id="rm-w-cos-val">30%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-cos" min="0" max="100" value="30" step="5" oninput="rmWeightChange()">
+                  <div class="rm-weight-val" id="rm-w-cos-val">25%</div>
+                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-cos" min="0" max="100" value="25" step="5" oninput="rmWeightChange()">
                 </div>
                 <div class="rm-weight-box">
                   <div class="rm-weight-lbl">Direct Sales hrs</div>
-                  <div class="rm-weight-val" id="rm-w-ds-val">40%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-ds" min="0" max="100" value="40" step="5" oninput="rmWeightChange()">
+                  <div class="rm-weight-val" id="rm-w-ds-val">35%</div>
+                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-ds" min="0" max="100" value="35" step="5" oninput="rmWeightChange()">
                 </div>
                 <div class="rm-weight-box">
                   <div class="rm-weight-lbl">BD &amp; Technology hrs</div>
-                  <div class="rm-weight-val" id="rm-w-bdt-val">30%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-bdt" min="0" max="100" value="30" step="5" oninput="rmWeightChange()">
+                  <div class="rm-weight-val" id="rm-w-bdt-val">25%</div>
+                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-bdt" min="0" max="100" value="25" step="5" oninput="rmWeightChange()">
+                </div>
+                <div class="rm-weight-box" style="border:1px solid rgba(26,110,64,0.3)">
+                  <div class="rm-weight-lbl" style="color:#1a6e40">Training (Internal)</div>
+                  <div class="rm-weight-val" id="rm-w-trn-val" style="color:#1a6e40">15%</div>
+                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-trn" min="0" max="100" value="15" step="5" oninput="rmWeightChange()">
                 </div>
               </div>
-              <div style="font-size:11px;color:#ADADAD;line-height:1.5">Weights control how each time bucket drives the complexity score. They don't need to sum to 100 — they're normalised internally.</div>
+              <div style="font-size:11px;color:#ADADAD;line-height:1.5">Weights control how each bucket drives complexity. Training (Internal) reflects site engagement depth — delivery hours count toward site complexity. Normalised internally, don't need to sum to 100.</div>
             </div>
           </div>
         </div>
@@ -1736,6 +1741,11 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="rm-section">
           <div class="rm-section-hd"><i class="ti ti-map-pin"></i> Site portfolio</div>
           <div class="rm-controls">
+            <div class="rm-ctrl"><label>Period</label>
+              <select id="rm-fy-filter" style="min-width:180px" onchange="rmRenderTable();rmRenderSummary()">
+                <option value="ALL">All time</option>
+              </select>
+            </div>
             <div class="rm-ctrl"><label>State</label>
               <select id="rm-filter-state" onchange="rmRenderTable();rmRenderSummary()">
                 <option value="ALL">All states</option>
@@ -1756,7 +1766,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <table class="rm-site-table">
               <thead><tr>
                 <th>Site</th>
-                <th>Time buckets (annual hrs)</th>
+                <th>Time buckets (hrs in period)</th>
                 <th class="r">Total hrs</th>
                 <th>Complexity</th>
                 <th class="r">Eng FTE</th>
@@ -1798,11 +1808,11 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div class="rm-info-box">
               <strong style="color:#003087">Complexity score (1–10)</strong><br>
-              Weighted annual hours across CoS, Direct Sales and BD&T are normalised against a reference site of ~1,500 hrs/yr = score 5. Higher hours and a higher proportion of BD&T / DS (which demand more senior engineering judgement per the Band E PD) push the score up. Clamped 1–10.
+              Weighted hours across CoS, Direct Sales, BD&T, and Training (Internal) are normalised against a reference site of ~1,500 weighted hrs/year = score 5. Higher hours and a higher proportion of DS and BD&T push the score up. Scores are clamped 1–10. When filtering by FY or quarter, hours are annualised to a full-year equivalent so complexity is comparable across periods.
             </div>
             <div class="rm-info-box">
               <strong style="color:#003087">FTE calculation</strong><br>
-              Score × 327 hrs/yr base = total annual hours required at that site. The role-mix split allocates those hours to Engineer vs Technician. Dividing by the 1,634 net billable hrs/FTE/year gives headcount. Totals across all sites show the portfolio requirement.
+              Score × 327 hrs/yr = total annual hours required at that site. The role-mix split allocates those hours to Engineer vs Technician. Dividing by 1,634 net billable hrs/FTE/year gives headcount. Totals across all sites give the portfolio requirement.
             </div>
           </div>
         </div>
@@ -2795,7 +2805,19 @@ const RPT_COLORS = ['#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5',
 const LEAVE_COLORS=['#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5','#A8D4F5','#E6F0FA'];
 const BP_COLORS_MAP={'Cost.of.Service':'#003087','Direct.Sales':'#0072CE','BD.and.Technology':'#4BA8E8','Administration':'#A8D4F5'};
 
-// ── Tab filter state (one object per tab) ──────────────────────
+// ── Infer the calendar year for an entry ─────────────────────────
+// Entries imported before the year-field existed have no .year.
+// We derive it from the first day-entry date (most reliable), then
+// fall back to the sheet name year if stored, then leave undefined
+// so the period filter can treat it as "unknown / match all FYs".
+function entryYear(e) {
+  if(e.year) return String(e.year);
+  if(e._year && e._year !== '2026') return String(e._year); // avoid the bad default
+  // Try to get year from first day entry date
+  const firstDay = (e.days||[])[0];
+  if(firstDay && firstDay.date) return firstDay.date.slice(0,4);
+  return null; // unknown — will be excluded from year-specific filters
+}
 const TAB_IDS = ['summary','tasks','customer','product','employee','leave','site','trend'];
 const tabState = {};
 TAB_IDS.forEach(t=>{
@@ -2820,40 +2842,64 @@ function getAvailableYears() {
   return [...years].sort();
 }
 
-// ── Init tab filters (called once on first admin report show) ──
+// ── Init tab filters ──────────────────────────────────────────────
+// Called each time the reports section is opened. The period picker
+// is rebuilt every time (cheap) so newly imported years appear.
+// Other filters (customer, site, bp, employee) are only built once.
 let tabFiltersInited = false;
 function initTabFilters(){
-  if(tabFiltersInited) return;
-  tabFiltersInited = true;
   const years = getAvailableYears();
+
+  // Current Orica fiscal year: Oct 1 → Sep 30
+  // If today is Oct–Dec, we're in the FY that ends next Sep.
+  const now = new Date();
+  const currentFY = now.getMonth() >= 9 ? now.getFullYear()+1 : now.getFullYear();
+
   TAB_IDS.forEach(tid=>{
-    // --- Year / FY / Quarter / Month period picker ---
+    // --- Period picker: always rebuild so new years appear ---
     const periodEl = document.getElementById('tf-period-'+tid);
     if(periodEl) {
-      // All time
+      const currentVal = periodEl.value; // preserve current selection if set
       let html = '<option value="ALL">All time</option>';
-      // Fiscal years
-      const fys = [...new Set(years.flatMap(y=>[parseInt(y), parseInt(y)+1]))].sort();
+      // Fiscal years (most prominent — Orica native)
+      const fySet = new Set(years.flatMap(y=>[parseInt(y), parseInt(y)+1]));
+      const fys = [...fySet].sort((a,b)=>b-a); // newest first
+      html += '<optgroup label="── Fiscal Year (Oct–Sep) ──">';
       fys.forEach(fy => { html += `<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
-      // Calendar years
-      years.forEach(y => { html += `<option value="CY${y}">Calendar ${y}</option>`; });
-      // Quarters (FY-based: Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep)
+      html += '</optgroup>';
+      // FY Quarters
+      html += '<optgroup label="── Fiscal Year Quarters ──">';
       fys.forEach(fy => {
-        html += `<option value="FY${fy}Q1">FY${fy} Q1 Oct–Dec ${fy-1}</option>`;
-        html += `<option value="FY${fy}Q2">FY${fy} Q2 Jan–Mar ${fy}</option>`;
-        html += `<option value="FY${fy}Q3">FY${fy} Q3 Apr–Jun ${fy}</option>`;
-        html += `<option value="FY${fy}Q4">FY${fy} Q4 Jul–Sep ${fy}</option>`;
+        html += `<option value="FY${fy}Q1">FY${fy} Q1 &nbsp;Oct–Dec ${fy-1}</option>`;
+        html += `<option value="FY${fy}Q2">FY${fy} Q2 &nbsp;Jan–Mar ${fy}</option>`;
+        html += `<option value="FY${fy}Q3">FY${fy} Q3 &nbsp;Apr–Jun ${fy}</option>`;
+        html += `<option value="FY${fy}Q4">FY${fy} Q4 &nbsp;Jul–Sep ${fy}</option>`;
       });
-      // Individual months (grouped by calendar year)
-      years.forEach(y => {
+      html += '</optgroup>';
+      // Calendar years
+      html += '<optgroup label="── Calendar Year ──">';
+      [...years].sort((a,b)=>b-a).forEach(y => { html += `<option value="CY${y}">Calendar ${y}</option>`; });
+      html += '</optgroup>';
+      // Individual months
+      html += '<optgroup label="── Individual Months ──">';
+      [...years].sort((a,b)=>b-a).forEach(y => {
         MONTHS.forEach(m => { html += `<option value="${y}-${m}">${m} ${y}</option>`; });
       });
+      html += '</optgroup>';
       periodEl.innerHTML = html;
-      // Default to FY2026
-      const fy26opt = periodEl.querySelector('option[value="FY2026"]');
-      if(fy26opt) fy26opt.selected = true;
-      periodEl.addEventListener('change', () => renderAdminTab(tid));
+      // Restore previous selection, or default to current FY
+      if(currentVal && currentVal !== '' && periodEl.querySelector(`option[value="${currentVal}"]`)) {
+        periodEl.value = currentVal;
+      } else {
+        const defaultOpt = periodEl.querySelector(`option[value="FY${currentFY}"]`);
+        if(defaultOpt) defaultOpt.selected = true;
+      }
+      // Wire change handler (safe to re-add — remove first)
+      periodEl.onchange = () => renderAdminTab(tid);
     }
+
+    if(tabFiltersInited) return; // rest only needs to run once
+
     // Customer filter
     const cs=document.getElementById('tf-cust-'+tid);
     if(cs){
@@ -2872,10 +2918,10 @@ function initTabFilters(){
     }
     // Employee dropdown
     buildEmpDrop(tid);
-    // Select all employees by default
     tabState[tid].emps = new Set(EMPLOYEES);
     updateEmpDropLabel(tid);
   });
+  tabFiltersInited = true;
 }
 
 // ── Employee multi-select dropdown ──────────────────────────────
@@ -3047,12 +3093,15 @@ function getTabEntries(tid){
     // Load all months and filter by period+year
     MONTHS.forEach((month,mi)=>{
       loadEntries(emp,month).forEach(e=>{
-        const year = e.year || e._year || '2026';
-        if(!passFilter(e,month,year)) return;
+        const yr = entryYear(e);
+        // If year is unknown and period is year-specific, exclude.
+        // If period is ALL, include regardless.
+        if(yr === null && period !== 'ALL') return;
+        if(!passFilter(e, month, yr || '0000')) return;
         if(custF!=='ALL'&&e.customer!==custF) return;
         if(siteF!=='ALL'&&e.site!==siteF) return;
         if(bpF!=='ALL'&&e.bp!==bpF) return;
-        all.push({...e,_emp:emp,_month:month,_monthIdx:mi,_year:year});
+        all.push({...e,_emp:emp,_month:month,_monthIdx:mi,_year:yr||'?'});
       });
     });
   });
@@ -3506,7 +3555,13 @@ function exportReport(){
 // ════════════════════════════════════════════════════════════════════
 const RM_NET_HRS = 1634;
 const RM_HRS_PER_CX = 327;
-const RM_REF_HRS = 750;
+const RM_REF_HRS = 750; // ~1,500 weighted hrs/yr → complexity 5 (normalised ref point)
+
+// Training tasks that count toward site complexity
+const RM_TRAINING_TASKS = [
+  'Training (Internal)', 'WebGen™ Training', 'SEB Course - Delivery',
+  'SEB Course - Planning', 'Training (New Technology)', '4D™ Training',
+];
 
 // Mix band defaults: [label, maxCx, defaultEngPct]
 const RM_MIX_BANDS = [
@@ -3518,21 +3573,22 @@ const RM_MIX_BANDS = [
 ];
 
 // State: manual overrides (kept across re-renders)
-let _rmMixOverrides = {};   // {label: engPct}
-let _rmManualSites = [];    // [{id,name,cust,state,cos,ds,bdt}]
+let _rmMixOverrides = {};
+let _rmManualSites = [];  // [{id,name,cust,state,cos,ds,bdt,trn}]
 let _rmNextId = 1;
 
 function rmGetWeights(){
-  const cos = +(document.getElementById('rm-w-cos')?.value||30);
-  const ds  = +(document.getElementById('rm-w-ds')?.value||40);
-  const bdt = +(document.getElementById('rm-w-bdt')?.value||30);
-  const tot = cos+ds+bdt || 1;
-  return {cos:cos/tot, ds:ds/tot, bdt:bdt/tot};
+  const cos = +(document.getElementById('rm-w-cos')?.value||25);
+  const ds  = +(document.getElementById('rm-w-ds')?.value||35);
+  const bdt = +(document.getElementById('rm-w-bdt')?.value||25);
+  const trn = +(document.getElementById('rm-w-trn')?.value||15);
+  const tot = cos+ds+bdt+trn || 1;
+  return {cos:cos/tot, ds:ds/tot, bdt:bdt/tot, trn:trn/tot};
 }
 
-function rmCalcCx(cos,ds,bdt){
+function rmCalcCx(cos,ds,bdt,trn){
   const w = rmGetWeights();
-  const weighted = cos*w.cos + ds*w.ds + bdt*w.bdt;
+  const weighted = cos*w.cos + ds*w.ds + bdt*w.bdt + (trn||0)*w.trn;
   let cx = (weighted / RM_REF_HRS) * 5;
   return Math.round(Math.max(1, Math.min(10, cx)) * 10) / 10;
 }
@@ -3542,8 +3598,8 @@ function rmGetEngPct(cx){
   return _rmMixOverrides[band[0]] !== undefined ? _rmMixOverrides[band[0]] : band[2];
 }
 
-function rmCalcFTE(cos,ds,bdt){
-  const cx = rmCalcCx(cos,ds,bdt);
+function rmCalcFTE(cos,ds,bdt,trn){
+  const cx = rmCalcCx(cos,ds,bdt,trn);
   const hrsNeeded = cx * RM_HRS_PER_CX;
   const engPct = rmGetEngPct(cx) / 100;
   return {
@@ -3562,8 +3618,56 @@ function rmCxColor(cx){
   return '#E24B4A';
 }
 
-// Aggregate live data from allData/loadEntries into per-site buckets
+// Build the FY period filter dropdown
+function rmBuildFYFilter(){
+  const sel = document.getElementById('rm-fy-filter');
+  if(!sel) return;
+  const currentVal = sel.value;
+  const years = getAvailableYears();
+  const fySet = new Set(years.flatMap(y=>[parseInt(y), parseInt(y)+1]));
+  const fys = [...fySet].sort((a,b)=>b-a);
+  let html = '<option value="ALL">All time</option>';
+  html += '<optgroup label="── Fiscal Year ──">';
+  fys.forEach(fy => { html += `<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
+  html += '</optgroup>';
+  html += '<optgroup label="── FY Quarters ──">';
+  fys.forEach(fy => {
+    html += `<option value="FY${fy}Q1">FY${fy} Q1 Oct–Dec ${fy-1}</option>`;
+    html += `<option value="FY${fy}Q2">FY${fy} Q2 Jan–Mar ${fy}</option>`;
+    html += `<option value="FY${fy}Q3">FY${fy} Q3 Apr–Jun ${fy}</option>`;
+    html += `<option value="FY${fy}Q4">FY${fy} Q4 Jul–Sep ${fy}</option>`;
+  });
+  html += '</optgroup>';
+  sel.innerHTML = html;
+  // Default to current FY; restore previous if valid
+  const now = new Date();
+  const currentFY = now.getMonth() >= 9 ? now.getFullYear()+1 : now.getFullYear();
+  if(currentVal && sel.querySelector(`option[value="${currentVal}"]`)) {
+    sel.value = currentVal;
+  } else {
+    const def = sel.querySelector(`option[value="FY${currentFY}"]`);
+    if(def) def.selected = true;
+  }
+}
+
+// How many months are in a given period selector value?
+// Used to annualise partial-year hours to a full-year equivalent.
+function rmPeriodMonths(period){
+  if(!period || period === 'ALL') return 12;
+  if(/^FY\d{4}Q\d$/.test(period)) return 3;
+  if(/^FY\d{4}$/.test(period)) return 12;
+  if(/^CY\d{4}$/.test(period)) return 12;
+  if(/^\d{4}-.+$/.test(period)) return 1;
+  return 12;
+}
+
+// Aggregate live data from loadEntries into per-site buckets, filtered by FY period
 function rmBuildLiveSites(){
+  const period = document.getElementById('rm-fy-filter')?.value || 'ALL';
+  const passFilter = periodToFilter(period);
+  const periodMths = rmPeriodMonths(period);
+  const annualiseFactor = periodMths < 12 ? 12 / periodMths : 1;
+
   const siteMap = {};
   const employees = getEmployees();
   employees.forEach(emp => {
@@ -3571,26 +3675,44 @@ function rmBuildLiveSites(){
     if(!empRec || empRec.role==='admin') return;
     MONTHS.forEach(month => {
       loadEntries(emp, month).forEach(e => {
+        const yr = entryYear(e);
+        // Period filter — include unknown-year entries only for ALL
+        if(yr === null && period !== 'ALL') return;
+        if(!passFilter(e, month, yr||'0000')) return;
+
         const site = (e.site||'').trim();
         if(!site || site==='Other' || e.customer==='Orica') return;
         const key = site + '|||' + (e.customer||'');
         if(!siteMap[key]){
           siteMap[key] = {
-            name: site,
-            cust: e.customer||'',
+            name: site, cust: e.customer||'',
             state: empRec.state||'NSW',
-            cos:0, ds:0, bdt:0,
+            cos:0, ds:0, bdt:0, trn:0,
           };
         }
         const hrs = parseFloat(e.total)||0;
-        const bp = e.bp||'';
-        if(bp==='Cost.of.Service')    siteMap[key].cos += hrs;
-        else if(bp==='Direct.Sales')  siteMap[key].ds  += hrs;
+        const bp  = e.bp||'';
+        const task = e.task||'';
+        if(bp==='Cost.of.Service') siteMap[key].cos += hrs;
+        else if(bp==='Direct.Sales') siteMap[key].ds += hrs;
         else if(bp==='BD.and.Technology') siteMap[key].bdt += hrs;
+        // Training counts regardless of BP
+        if(RM_TRAINING_TASKS.includes(task)) siteMap[key].trn += hrs;
       });
     });
   });
-  return Object.values(siteMap).filter(s=>(s.cos+s.ds+s.bdt)>0);
+
+  // Annualise if viewing a partial period
+  return Object.values(siteMap)
+    .filter(s=>(s.cos+s.ds+s.bdt+s.trn)>0)
+    .map(s=>({
+      ...s,
+      cos: s.cos * annualiseFactor,
+      ds:  s.ds  * annualiseFactor,
+      bdt: s.bdt * annualiseFactor,
+      trn: s.trn * annualiseFactor,
+      _annualised: annualiseFactor > 1,
+    }));
 }
 
 function rmRenderMixGrid(){
@@ -3623,12 +3745,14 @@ function rmMixChange(el){
 }
 
 function rmWeightChange(){
-  const cos = +(document.getElementById('rm-w-cos')?.value||30);
-  const ds  = +(document.getElementById('rm-w-ds')?.value||40);
-  const bdt = +(document.getElementById('rm-w-bdt')?.value||30);
+  const cos = +(document.getElementById('rm-w-cos')?.value||25);
+  const ds  = +(document.getElementById('rm-w-ds')?.value||35);
+  const bdt = +(document.getElementById('rm-w-bdt')?.value||25);
+  const trn = +(document.getElementById('rm-w-trn')?.value||15);
   const el1 = document.getElementById('rm-w-cos-val'); if(el1) el1.textContent = cos+'%';
   const el2 = document.getElementById('rm-w-ds-val');  if(el2) el2.textContent = ds+'%';
   const el3 = document.getElementById('rm-w-bdt-val'); if(el3) el3.textContent = bdt+'%';
+  const el4 = document.getElementById('rm-w-trn-val'); if(el4) el4.textContent = trn+'%';
   rmSavePrefs();
   rmRenderTable();
   rmRenderSummary();
@@ -3637,52 +3761,60 @@ function rmWeightChange(){
 function rmRenderTable(){
   const tbody = document.getElementById('rm-site-tbody');
   if(!tbody) return;
-  const stateF = document.getElementById('rm-filter-state')?.value || 'ALL';
-  const sort   = document.getElementById('rm-sort')?.value || 'cx';
+  const stateF  = document.getElementById('rm-filter-state')?.value || 'ALL';
+  const sort    = document.getElementById('rm-sort')?.value || 'cx';
+  const period  = document.getElementById('rm-fy-filter')?.value || 'ALL';
+  const isPartial = rmPeriodMonths(period) < 12;
 
-  // Merge live + manual (manual tagged so they can be deleted)
   const liveSites = rmBuildLiveSites();
   const allSites = [
     ...liveSites.map(s=>({...s,source:'live'})),
-    ..._rmManualSites.map(s=>({...s,source:'manual'})),
+    ..._rmManualSites.map(s=>({...s,source:'manual',trn:s.trn||0})),
   ];
 
   let rows = allSites.filter(s=>stateF==='ALL'||s.state===stateF);
   rows = rows.map(s=>{
-    const f = rmCalcFTE(s.cos,s.ds,s.bdt);
+    const f = rmCalcFTE(s.cos, s.ds, s.bdt, s.trn||0);
     return {...s,...f};
   });
   if(sort==='cx')   rows.sort((a,b)=>b.cx-a.cx);
   else if(sort==='name') rows.sort((a,b)=>a.name.localeCompare(b.name));
   else if(sort==='eng')  rows.sort((a,b)=>b.engFte-a.engFte);
-  else if(sort==='hrs')  rows.sort((a,b)=>(b.cos+b.ds+b.bdt)-(a.cos+a.ds+a.bdt));
+  else if(sort==='hrs')  rows.sort((a,b)=>(b.cos+b.ds+b.bdt+(b.trn||0))-(a.cos+a.ds+a.bdt+(a.trn||0)));
 
   if(!rows.length){
     tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#ADADAD;padding:24px;font-size:12px">No sites found. Load timesheet data or add a site manually below.</td></tr>`;
     return;
   }
 
+  const annualisedNote = isPartial ? ' <span style="font-size:9px;opacity:0.6">(ann.)</span>' : '';
+
   tbody.innerHTML = rows.map(s=>{
-    const totalHrs = Math.round(s.cos+s.ds+s.bdt);
+    const trn = s.trn||0;
+    const totalHrs = Math.round(s.cos+s.ds+s.bdt+trn);
     const cxCol = rmCxColor(s.cx);
     const barW = Math.round(s.cx/10*66);
     const delBtn = s.source==='manual'
       ? `<button class="rm-del-btn" onclick="rmDeleteSite(${s.id})" title="Remove"><i class="ti ti-trash"></i></button>`
-      : `<span style="font-size:10px;color:#ADADAD" title="From timesheet data">—</span>`;
+      : `<span style="font-size:10px;color:#ADADAD">—</span>`;
     const srcBadge = s.source==='live'
       ? `<span class="rm-source-badge rm-source-live"><i class="ti ti-database"></i> Live</span>`
       : `<span class="rm-source-badge rm-source-manual"><i class="ti ti-pencil"></i> Manual</span>`;
+    const trnPill = trn > 0
+      ? `<span class="rm-bp-pill" style="background:#E8F5E9;color:#1a6e40">Trn ${Math.round(trn)}h${annualisedNote}</span>`
+      : '';
     return `<tr>
       <td>
         <div class="rm-site-name">${s.name}</div>
         <div class="rm-site-cust">${s.cust} · ${s.state}</div>
       </td>
       <td>
-        <span class="rm-bp-pill rm-bp-cos">CoS ${Math.round(s.cos)}h</span>
-        <span class="rm-bp-pill rm-bp-ds">DS ${Math.round(s.ds)}h</span>
-        <span class="rm-bp-pill rm-bp-bdt">BD&T ${Math.round(s.bdt)}h</span>
+        <span class="rm-bp-pill rm-bp-cos">CoS ${Math.round(s.cos)}h${annualisedNote}</span>
+        <span class="rm-bp-pill rm-bp-ds">DS ${Math.round(s.ds)}h${annualisedNote}</span>
+        <span class="rm-bp-pill rm-bp-bdt">BD&T ${Math.round(s.bdt)}h${annualisedNote}</span>
+        ${trnPill}
       </td>
-      <td class="rm-td-r">${totalHrs.toLocaleString()}</td>
+      <td class="rm-td-r">${totalHrs.toLocaleString()}${isPartial?'<div style="font-size:9px;color:#ADADAD">annualised</div>':''}</td>
       <td>
         <div class="rm-cx-bar-wrap">
           <div class="rm-cx-track"><div class="rm-cx-fill" style="width:${barW}px;background:${cxCol}"></div></div>
@@ -3702,10 +3834,10 @@ function rmRenderSummary(){
   const liveSites = rmBuildLiveSites();
   const allSites = [
     ...liveSites.map(s=>({...s,source:'live'})),
-    ..._rmManualSites.map(s=>({...s,source:'manual'})),
+    ..._rmManualSites.map(s=>({...s,source:'manual',trn:s.trn||0})),
   ].filter(s=>stateF==='ALL'||s.state===stateF);
 
-  const calced = allSites.map(s=>({...s,...rmCalcFTE(s.cos,s.ds,s.bdt)}));
+  const calced = allSites.map(s=>({...s,...rmCalcFTE(s.cos,s.ds,s.bdt,s.trn||0)}));
   const n = calced.length;
   const avgCx = n ? calced.reduce((a,s)=>a+s.cx,0)/n : 0;
   const totEng  = calced.reduce((a,s)=>a+s.engFte,0);
@@ -3716,7 +3848,6 @@ function rmRenderSummary(){
   const el3=document.getElementById('rm-stat-eng');   if(el3) el3.textContent = n ? totEng.toFixed(1) : '—';
   const el4=document.getElementById('rm-stat-tech');  if(el4) el4.textContent = n ? totTech.toFixed(1) : '—';
 
-  // Show/hide banners
   const hasLive = liveSites.length > 0;
   const liveBanner = document.getElementById('rm-live-banner');
   const noliveBanner = document.getElementById('rm-nolive-banner');
@@ -3735,6 +3866,7 @@ function rmAddSite(){
     cos: +(document.getElementById('rm-new-cos')?.value||0),
     ds:  +(document.getElementById('rm-new-ds')?.value||0),
     bdt: +(document.getElementById('rm-new-bdt')?.value||0),
+    trn: 0,
   });
   const nameEl = document.getElementById('rm-new-name');
   if(nameEl) nameEl.value = '';
@@ -3752,9 +3884,10 @@ function rmDeleteSite(id){
 
 function rmSavePrefs(){
   saveRefData('rm_weights', {
-    cos: +(document.getElementById('rm-w-cos')?.value||30),
-    ds:  +(document.getElementById('rm-w-ds')?.value||40),
-    bdt: +(document.getElementById('rm-w-bdt')?.value||30),
+    cos: +(document.getElementById('rm-w-cos')?.value||25),
+    ds:  +(document.getElementById('rm-w-ds')?.value||35),
+    bdt: +(document.getElementById('rm-w-bdt')?.value||25),
+    trn: +(document.getElementById('rm-w-trn')?.value||15),
   });
   saveRefData('rm_mix', _rmMixOverrides);
   saveRefData('rm_manual_sites', _rmManualSites);
@@ -3762,13 +3895,13 @@ function rmSavePrefs(){
 }
 
 function rmLoadPrefs(){
-  const w = getRefData('rm_weights', {cos:30,ds:40,bdt:30});
-  const cosEl = document.getElementById('rm-w-cos');
-  const dsEl  = document.getElementById('rm-w-ds');
-  const bdtEl = document.getElementById('rm-w-bdt');
-  if(cosEl){ cosEl.value = w.cos; document.getElementById('rm-w-cos-val').textContent=w.cos+'%'; }
-  if(dsEl) { dsEl.value  = w.ds;  document.getElementById('rm-w-ds-val').textContent =w.ds+'%';  }
-  if(bdtEl){ bdtEl.value = w.bdt; document.getElementById('rm-w-bdt-val').textContent=w.bdt+'%'; }
+  const w = getRefData('rm_weights', {cos:25,ds:35,bdt:25,trn:15});
+  const cosEl=document.getElementById('rm-w-cos'); const dsEl=document.getElementById('rm-w-ds');
+  const bdtEl=document.getElementById('rm-w-bdt'); const trnEl=document.getElementById('rm-w-trn');
+  if(cosEl){cosEl.value=w.cos; document.getElementById('rm-w-cos-val').textContent=w.cos+'%';}
+  if(dsEl) {dsEl.value=w.ds;   document.getElementById('rm-w-ds-val').textContent=w.ds+'%';}
+  if(bdtEl){bdtEl.value=w.bdt; document.getElementById('rm-w-bdt-val').textContent=w.bdt+'%';}
+  if(trnEl){trnEl.value=w.trn||15; const el=document.getElementById('rm-w-trn-val'); if(el) el.textContent=(w.trn||15)+'%';}
   _rmMixOverrides = getRefData('rm_mix', {});
   _rmManualSites  = getRefData('rm_manual_sites', []);
   _rmNextId       = getRefData('rm_next_id', 1);
@@ -3776,6 +3909,7 @@ function rmLoadPrefs(){
 
 function renderAdminResmod(){
   rmLoadPrefs();
+  rmBuildFYFilter();
   rmRenderMixGrid();
   rmRenderTable();
   rmRenderSummary();
