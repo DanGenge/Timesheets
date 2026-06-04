@@ -7,6 +7,7 @@
   <!-- v13.9 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -1185,6 +1186,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="report-tab" onclick="switchRTab('site',this)"><i class="ti ti-map-pin"></i> By site</div>
         <div class="report-tab" onclick="switchRTab('trend',this)"><i class="ti ti-trending-up"></i> Monthly trend</div>
         <div class="report-tab" onclick="switchRTab('resmod',this)"><i class="ti ti-users-group"></i> Resource modeller</div>
+        <div class="report-tab" onclick="switchRTab('visuals',this)"><i class="ti ti-chart-dots"></i> Visuals</div>
       </div>
 
       <!-- SUMMARY -->
@@ -1761,6 +1763,17 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
                 <option value="hrs">Total hrs ↓</option>
               </select>
             </div>
+            <div class="rm-ctrl" style="margin-left:auto">
+              <label>&nbsp;</label>
+              <div style="display:flex;gap:6px">
+                <button class="rm-btn-refresh" onclick="rmOpenMergeModal()" title="Merge duplicate sites">
+                  <i class="ti ti-git-merge"></i> Merge sites
+                </button>
+                <button class="rm-btn-refresh" id="rm-show-hidden-btn" onclick="rmToggleShowHidden()" title="Show/hide excluded sites">
+                  <i class="ti ti-eye-off"></i> <span id="rm-hidden-count">0</span> hidden
+                </button>
+              </div>
+            </div>
           </div>
           <div style="overflow-x:auto">
             <table class="rm-site-table">
@@ -1772,10 +1785,14 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
                 <th class="r">Eng FTE</th>
                 <th class="r">Tech FTE</th>
                 <th class="r">Source</th>
-                <th></th>
+                <th style="text-align:center;min-width:80px">Actions</th>
               </tr></thead>
               <tbody id="rm-site-tbody"></tbody>
             </table>
+          </div>
+          <div id="rm-hidden-sites-section" style="display:none;margin-top:10px;padding:10px;background:rgba(0,0,0,0.03);border-radius:8px;border:1px dashed rgba(0,0,0,0.12)">
+            <div style="font-size:11px;font-weight:700;color:#ADADAD;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Hidden from model</div>
+            <div id="rm-hidden-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           </div>
           <!-- Add manual site -->
           <div class="rm-add-row">
@@ -1817,6 +1834,73 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
       </div><!-- /rpanel-resmod -->
+
+      <!-- VISUALS BUILDER -->
+      <div class="report-panel" id="rpanel-visuals">
+        <style>
+        #rpanel-visuals{padding-top:4px;}
+        .vb-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;}
+        .vb-group{display:flex;flex-direction:column;gap:3px;}
+        .vb-group label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+        .vb-group select,.vb-group input{height:32px;font-size:12px;border-radius:6px;min-width:110px;}
+        .vb-btn{height:32px;padding:0 14px;font-size:12px;font-weight:600;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;}
+        .vb-btn-primary{background:#003087;color:#fff;}
+        .vb-btn-primary:hover{background:#002268;}
+        .vb-btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+        .vb-btn-secondary:hover{background:var(--surface);}
+        .vb-btn-green{background:#1D9E75;color:#fff;}
+        .vb-btn-green:hover{background:#158060;}
+        .vb-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:14px;}
+        .vb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
+        .vb-card-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);}
+        .vb-card-title{font-size:13px;font-weight:600;color:var(--text);}
+        .vb-card-subtitle{font-size:11px;color:var(--muted);margin-top:1px;}
+        .vb-card-actions{display:flex;gap:4px;}
+        .vb-icon-btn{width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+        .vb-icon-btn:hover{background:var(--surface);color:var(--text);}
+        .vb-icon-btn.danger:hover{background:#FDEDEB;color:#C0392B;}
+        .vb-canvas-wrap{padding:14px;flex:1;}
+        .vb-canvas-wrap canvas{width:100%!important;}
+        .vb-empty{text-align:center;padding:48px 24px;color:var(--muted);font-size:13px;}
+        .vb-empty i{font-size:40px;display:block;margin-bottom:10px;opacity:0.3;}
+        .vb-style-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+        .vb-style-opt{border:2px solid var(--border);border-radius:8px;padding:10px 6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s;}
+        .vb-style-opt:hover{border-color:#003087;background:#EBF4FF;}
+        .vb-style-opt.selected{border-color:#003087;background:#E6F0FA;}
+        .vb-style-opt i{font-size:22px;color:#003087;display:block;margin-bottom:4px;}
+        .vb-style-opt span{font-size:11px;font-weight:600;color:var(--text);}
+        .vb-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;}
+        .vb-modal{background:var(--bg);border-radius:12px;width:min(640px,95vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+        .vb-modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .vb-modal-title{font-size:15px;font-weight:700;color:var(--text);}
+        .vb-modal-body{overflow-y:auto;flex:1;padding:18px 20px;}
+        .vb-modal-ft{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+        .vb-field{margin-bottom:14px;}
+        .vb-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+        .vb-field select,.vb-field input[type=text]{width:100%;height:36px;font-size:13px;}
+        .vb-ppt-toast{position:fixed;bottom:24px;right:24px;background:#1D9E75;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:opacity .3s;}
+        </style>
+
+        <div class="vb-toolbar">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:15px;font-weight:700;color:var(--text)">Visuals</div>
+            <div style="font-size:11px;color:var(--muted)">Build charts from your timesheet data. Copy as image or export to PowerPoint.</div>
+          </div>
+          <button class="vb-btn vb-btn-primary" onclick="vbOpenAddModal()">
+            <i class="ti ti-plus"></i> Add visual
+          </button>
+          <button class="vb-btn vb-btn-green" onclick="vbExportAllPptx()" id="vb-pptx-btn">
+            <i class="ti ti-file-presentation"></i> Export all to PowerPoint
+          </button>
+        </div>
+
+        <div id="vb-board" class="vb-board">
+          <div class="vb-empty" id="vb-empty-state">
+            <i class="ti ti-chart-dots"></i>
+            No visuals yet — click <strong>Add visual</strong> to build your first chart.
+          </div>
+        </div>
+      </div><!-- /rpanel-visuals -->
 
     </div><!-- /admin-reports-section -->
 
@@ -3201,7 +3285,7 @@ function switchRTab(name,el){
 function renderAdminTab(tid){
   const fn={summary:renderAdminSummary,tasks:renderAdminTasks,customer:renderAdminCustomer,
     product:renderAdminProduct,employee:renderAdminEmployee,leave:renderAdminLeave,
-    site:renderAdminSite,trend:renderAdminTrend,resmod:renderAdminResmod};
+    site:renderAdminSite,trend:renderAdminTrend,resmod:renderAdminResmod,visuals:renderAdminVisuals};
   if(fn[tid]) fn[tid]();
 }
 
@@ -3576,6 +3660,10 @@ const RM_MIX_BANDS = [
 let _rmMixOverrides = {};
 let _rmManualSites = [];  // [{id,name,cust,state,cos,ds,bdt,trn}]
 let _rmNextId = 1;
+// Site management state
+let _rmHidden  = new Set(); // Set of site keys (name|||cust) to hide from model
+let _rmMerges  = {};        // {variantKey: canonicalKey} — variant's hours fold into canonical
+let _rmShowHidden = false;  // whether hidden section is expanded
 
 function rmGetWeights(){
   const cos = +(document.getElementById('rm-w-cos')?.value||25);
@@ -3662,57 +3750,133 @@ function rmPeriodMonths(period){
 }
 
 // Aggregate live data from loadEntries into per-site buckets, filtered by FY period
-function rmBuildLiveSites(){
-  const period = document.getElementById('rm-fy-filter')?.value || 'ALL';
-  const passFilter = periodToFilter(period);
-  const periodMths = rmPeriodMonths(period);
-  const annualiseFactor = periodMths < 12 ? 12 / periodMths : 1;
+// ── FY blending: how many months into the current FY are we? ────────
+// Returns {prevFY, currentFY, blendPrev, blendCurrent}
+// blendPrev = weight for last completed FY (1.0 at FY start, 0.0 at FY end)
+// blendCurrent = weight for in-progress current FY data (0.0 at start, 1.0 at end)
+// Together these sum to 1.0. When a FY is fully complete, only that year's data is used.
+function rmGetFYBlend(){
+  const now = new Date();
+  const mo = now.getMonth(); // 0=Jan
+  // FY starts Oct 1 (mo=9). Months into current FY:
+  const mthsIntoCurrent = mo >= 9 ? mo - 9 : mo + 3;
+  const currentFY = mo >= 9 ? now.getFullYear()+1 : now.getFullYear();
+  const prevFY    = currentFY - 1;
+  // Progress through current FY (0=just started, 1=complete)
+  const progress  = mthsIntoCurrent / 12;
+  return {
+    prevFY,
+    currentFY,
+    blendPrev:    Math.max(0, 1 - progress),  // fades as year progresses
+    blendCurrent: Math.min(1, progress),        // grows as year progresses
+    mthsIntoCurrent,
+    progress,
+  };
+}
 
+// ── Aggregate hours for one FY period from loaded data ──────────────
+function rmAggregateForPeriod(fyPeriod){
+  const passFilter = periodToFilter(fyPeriod);
   const siteMap = {};
   const employees = getEmployees();
+
   employees.forEach(emp => {
     const empRec = getTeamRegistry().find(t=>t.name===emp);
     if(!empRec || empRec.role==='admin') return;
     MONTHS.forEach(month => {
       loadEntries(emp, month).forEach(e => {
         const yr = entryYear(e);
-        // Period filter — include unknown-year entries only for ALL
-        if(yr === null && period !== 'ALL') return;
-        if(!passFilter(e, month, yr||'0000')) return;
+        if(yr === null) return;
+        if(!passFilter(e, month, yr)) return;
 
-        const site = (e.site||'').trim();
-        if(!site || site==='Other' || e.customer==='Orica') return;
-        const key = site + '|||' + (e.customer||'');
-        if(!siteMap[key]){
-          siteMap[key] = {
-            name: site, cust: e.customer||'',
+        const rawSite = (e.site||'').trim();
+        if(!rawSite || rawSite==='Other' || e.customer==='Orica') return;
+        const rawKey = rawSite + '|||' + (e.customer||'');
+
+        // Apply merge: if this key is a variant, fold into canonical
+        const canonKey = _rmMerges[rawKey] || rawKey;
+        const [canonName, canonCust] = canonKey.split('|||');
+
+        if(!siteMap[canonKey]){
+          siteMap[canonKey] = {
+            name: canonName, cust: canonCust||'',
             state: empRec.state||'NSW',
             cos:0, ds:0, bdt:0, trn:0,
+            key: canonKey,
           };
         }
         const hrs = parseFloat(e.total)||0;
         const bp  = e.bp||'';
         const task = e.task||'';
-        if(bp==='Cost.of.Service') siteMap[key].cos += hrs;
-        else if(bp==='Direct.Sales') siteMap[key].ds += hrs;
-        else if(bp==='BD.and.Technology') siteMap[key].bdt += hrs;
-        // Training counts regardless of BP
-        if(RM_TRAINING_TASKS.includes(task)) siteMap[key].trn += hrs;
+        if(bp==='Cost.of.Service')      siteMap[canonKey].cos += hrs;
+        else if(bp==='Direct.Sales')    siteMap[canonKey].ds  += hrs;
+        else if(bp==='BD.and.Technology') siteMap[canonKey].bdt += hrs;
+        if(RM_TRAINING_TASKS.includes(task)) siteMap[canonKey].trn += hrs;
       });
     });
   });
+  return siteMap;
+}
 
-  // Annualise if viewing a partial period
-  return Object.values(siteMap)
-    .filter(s=>(s.cos+s.ds+s.bdt+s.trn)>0)
-    .map(s=>({
-      ...s,
-      cos: s.cos * annualiseFactor,
-      ds:  s.ds  * annualiseFactor,
-      bdt: s.bdt * annualiseFactor,
-      trn: s.trn * annualiseFactor,
-      _annualised: annualiseFactor > 1,
-    }));
+function rmBuildLiveSites(){
+  const selectedPeriod = document.getElementById('rm-fy-filter')?.value || 'ALL';
+
+  // ── Smart FY blending (only when "current FY" is selected) ────────
+  // If user has manually selected a specific period, honour it exactly.
+  // If they've selected the current FY (or All time), use blended data.
+  const blend = rmGetFYBlend();
+  const isCurrentFY = selectedPeriod === `FY${blend.currentFY}` || selectedPeriod === 'ALL';
+  const isPrevFYComplete = blend.progress >= 1; // Sep 30 has passed = prev FY fully done
+
+  let siteData; // final map of canonKey → site bucket
+
+  if(isCurrentFY && blend.mthsIntoCurrent > 0 && blend.mthsIntoCurrent < 12){
+    // Blended mode: weighted avg of last-FY annual actuals + this-FY annualised-to-date
+    const prevMap    = rmAggregateForPeriod(`FY${blend.prevFY}`);
+    const currentMap = rmAggregateForPeriod(`FY${blend.currentFY}`);
+
+    // Annualise current-FY partial data
+    const annF = 12 / blend.mthsIntoCurrent;
+
+    // Merge keys from both maps
+    const allKeys = new Set([...Object.keys(prevMap), ...Object.keys(currentMap)]);
+    siteData = {};
+    allKeys.forEach(k => {
+      const p = prevMap[k]    || {cos:0,ds:0,bdt:0,trn:0};
+      const c = currentMap[k] || {cos:0,ds:0,bdt:0,trn:0};
+      const ref = prevMap[k] || currentMap[k];
+      // Blend: prev weighted by blendPrev, current annualised weighted by blendCurrent
+      siteData[k] = {
+        name: ref.name, cust: ref.cust, state: ref.state, key: k,
+        cos: p.cos * blend.blendPrev + (c.cos * annF) * blend.blendCurrent,
+        ds:  p.ds  * blend.blendPrev + (c.ds  * annF) * blend.blendCurrent,
+        bdt: p.bdt * blend.blendPrev + (c.bdt * annF) * blend.blendCurrent,
+        trn: p.trn * blend.blendPrev + (c.trn * annF) * blend.blendCurrent,
+        _blended: true,
+        _blendPrev: Math.round(blend.blendPrev*100),
+        _blendCurrent: Math.round(blend.blendCurrent*100),
+      };
+    });
+  } else {
+    // Explicit period selected — use it directly, annualise if partial
+    const periodMths = rmPeriodMonths(selectedPeriod);
+    const annF = periodMths < 12 ? 12 / periodMths : 1;
+    const rawMap = rmAggregateForPeriod(selectedPeriod);
+    siteData = {};
+    Object.entries(rawMap).forEach(([k,s]) => {
+      siteData[k] = {
+        ...s,
+        cos: s.cos * annF,
+        ds:  s.ds  * annF,
+        bdt: s.bdt * annF,
+        trn: s.trn * annF,
+        _annualised: annF > 1,
+      };
+    });
+  }
+
+  return Object.values(siteData)
+    .filter(s=>(s.cos+s.ds+s.bdt+s.trn)>0);
 }
 
 function rmRenderMixGrid(){
@@ -3764,15 +3928,18 @@ function rmRenderTable(){
   const stateF  = document.getElementById('rm-filter-state')?.value || 'ALL';
   const sort    = document.getElementById('rm-sort')?.value || 'cx';
   const period  = document.getElementById('rm-fy-filter')?.value || 'ALL';
-  const isPartial = rmPeriodMonths(period) < 12;
 
   const liveSites = rmBuildLiveSites();
   const allSites = [
     ...liveSites.map(s=>({...s,source:'live'})),
-    ..._rmManualSites.map(s=>({...s,source:'manual',trn:s.trn||0})),
+    ..._rmManualSites.map(s=>({...s,source:'manual',trn:s.trn||0,key:s.name+'|||'+s.cust})),
   ];
 
-  let rows = allSites.filter(s=>stateF==='ALL'||s.state===stateF);
+  // Filter out hidden sites
+  const visibleSites = allSites.filter(s => !_rmHidden.has(s.key||s.name+'|||'+s.cust));
+  const hiddenSites  = allSites.filter(s =>  _rmHidden.has(s.key||s.name+'|||'+s.cust));
+
+  let rows = visibleSites.filter(s=>stateF==='ALL'||s.state===stateF);
   rows = rows.map(s=>{
     const f = rmCalcFTE(s.cos, s.ds, s.bdt, s.trn||0);
     return {...s,...f};
@@ -3782,51 +3949,96 @@ function rmRenderTable(){
   else if(sort==='eng')  rows.sort((a,b)=>b.engFte-a.engFte);
   else if(sort==='hrs')  rows.sort((a,b)=>(b.cos+b.ds+b.bdt+(b.trn||0))-(a.cos+a.ds+a.bdt+(a.trn||0)));
 
+  // Blend indicator
+  const blend = rmGetFYBlend();
+  const isCurrentFY = period === `FY${blend.currentFY}` || period === 'ALL';
+  const isBlended = isCurrentFY && blend.mthsIntoCurrent > 0 && blend.mthsIntoCurrent < 12;
+  const isPartial = !isBlended && rmPeriodMonths(period) < 12;
+
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#ADADAD;padding:24px;font-size:12px">No sites found. Load timesheet data or add a site manually below.</td></tr>`;
-    return;
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#ADADAD;padding:24px;font-size:12px">No sites found.</td></tr>`;
+  } else {
+    const annNote = isBlended
+      ? ` <span style="font-size:9px;opacity:0.6">(blended)</span>`
+      : isPartial ? ` <span style="font-size:9px;opacity:0.6">(ann.)</span>` : '';
+
+    tbody.innerHTML = rows.map(s=>{
+      const trn = s.trn||0;
+      const totalHrs = Math.round(s.cos+s.ds+s.bdt+trn);
+      const cxCol = rmCxColor(s.cx);
+      const barW = Math.round(s.cx/10*66);
+      const siteKey = s.key || s.name+'|||'+s.cust;
+      const escapedKey = siteKey.replace(/'/g,"\\'");
+
+      const srcBadge = s.source==='live'
+        ? `<span class="rm-source-badge rm-source-live"><i class="ti ti-database"></i> Live</span>`
+        : `<span class="rm-source-badge rm-source-manual"><i class="ti ti-pencil"></i> Manual</span>`;
+      const trnPill = trn > 0
+        ? `<span class="rm-bp-pill" style="background:#E8F5E9;color:#1a6e40">Trn ${Math.round(trn)}h${annNote}</span>` : '';
+
+      // Blend label on tooltip
+      const blendTip = s._blended
+        ? `FY${blend.prevFY}: ${s._blendPrev}% · FY${blend.currentFY} YTD: ${s._blendCurrent}%`
+        : '';
+
+      const actionsHtml = s.source==='manual'
+        ? `<button class="rm-del-btn" onclick="rmDeleteSite(${s.id})" title="Remove manual site"><i class="ti ti-trash"></i></button>`
+        : `<button class="rm-del-btn" onclick="rmHideSite('${escapedKey}')" title="Hide from model"><i class="ti ti-eye-off"></i></button>`;
+
+      return `<tr>
+        <td>
+          <div class="rm-site-name">${s.name}${s._blended?` <span style="font-size:9px;background:#E6F1FB;color:#185FA5;padding:1px 5px;border-radius:4px;cursor:help" title="${blendTip}">blended</span>`:''}</div>
+          <div class="rm-site-cust">${s.cust} · ${s.state}</div>
+        </td>
+        <td>
+          <span class="rm-bp-pill rm-bp-cos">CoS ${Math.round(s.cos)}h${annNote}</span>
+          <span class="rm-bp-pill rm-bp-ds">DS ${Math.round(s.ds)}h${annNote}</span>
+          <span class="rm-bp-pill rm-bp-bdt">BD&T ${Math.round(s.bdt)}h${annNote}</span>
+          ${trnPill}
+        </td>
+        <td class="rm-td-r">${totalHrs.toLocaleString()}</td>
+        <td>
+          <div class="rm-cx-bar-wrap">
+            <div class="rm-cx-track"><div class="rm-cx-fill" style="width:${barW}px;background:${cxCol}"></div></div>
+            <span class="rm-cx-lbl" style="color:${cxCol}">${s.cx.toFixed(1)}</span>
+          </div>
+        </td>
+        <td class="rm-td-r"><span class="rm-chip rm-chip-eng">${s.engFte.toFixed(2)}</span></td>
+        <td class="rm-td-r"><span class="rm-chip rm-chip-tech">${s.techFte.toFixed(2)}</span></td>
+        <td class="rm-td-r">${srcBadge}</td>
+        <td style="text-align:center">${actionsHtml}</td>
+      </tr>`;
+    }).join('');
   }
 
-  const annualisedNote = isPartial ? ' <span style="font-size:9px;opacity:0.6">(ann.)</span>' : '';
+  // Hidden sites panel
+  const hiddenCount = _rmHidden.size;
+  const hiddenBtn = document.getElementById('rm-show-hidden-btn');
+  const hiddenCountEl = document.getElementById('rm-hidden-count');
+  if(hiddenCountEl) hiddenCountEl.textContent = hiddenCount;
+  if(hiddenBtn) hiddenBtn.style.opacity = hiddenCount > 0 ? '1' : '0.5';
 
-  tbody.innerHTML = rows.map(s=>{
-    const trn = s.trn||0;
-    const totalHrs = Math.round(s.cos+s.ds+s.bdt+trn);
-    const cxCol = rmCxColor(s.cx);
-    const barW = Math.round(s.cx/10*66);
-    const delBtn = s.source==='manual'
-      ? `<button class="rm-del-btn" onclick="rmDeleteSite(${s.id})" title="Remove"><i class="ti ti-trash"></i></button>`
-      : `<span style="font-size:10px;color:#ADADAD">—</span>`;
-    const srcBadge = s.source==='live'
-      ? `<span class="rm-source-badge rm-source-live"><i class="ti ti-database"></i> Live</span>`
-      : `<span class="rm-source-badge rm-source-manual"><i class="ti ti-pencil"></i> Manual</span>`;
-    const trnPill = trn > 0
-      ? `<span class="rm-bp-pill" style="background:#E8F5E9;color:#1a6e40">Trn ${Math.round(trn)}h${annualisedNote}</span>`
-      : '';
-    return `<tr>
-      <td>
-        <div class="rm-site-name">${s.name}</div>
-        <div class="rm-site-cust">${s.cust} · ${s.state}</div>
-      </td>
-      <td>
-        <span class="rm-bp-pill rm-bp-cos">CoS ${Math.round(s.cos)}h${annualisedNote}</span>
-        <span class="rm-bp-pill rm-bp-ds">DS ${Math.round(s.ds)}h${annualisedNote}</span>
-        <span class="rm-bp-pill rm-bp-bdt">BD&T ${Math.round(s.bdt)}h${annualisedNote}</span>
-        ${trnPill}
-      </td>
-      <td class="rm-td-r">${totalHrs.toLocaleString()}${isPartial?'<div style="font-size:9px;color:#ADADAD">annualised</div>':''}</td>
-      <td>
-        <div class="rm-cx-bar-wrap">
-          <div class="rm-cx-track"><div class="rm-cx-fill" style="width:${barW}px;background:${cxCol}"></div></div>
-          <span class="rm-cx-lbl" style="color:${cxCol}">${s.cx.toFixed(1)}</span>
-        </div>
-      </td>
-      <td class="rm-td-r"><span class="rm-chip rm-chip-eng">${s.engFte.toFixed(2)}</span></td>
-      <td class="rm-td-r"><span class="rm-chip rm-chip-tech">${s.techFte.toFixed(2)}</span></td>
-      <td class="rm-td-r">${srcBadge}</td>
-      <td style="text-align:center">${delBtn}</td>
-    </tr>`;
-  }).join('');
+  const hiddenSection = document.getElementById('rm-hidden-sites-section');
+  const hiddenList = document.getElementById('rm-hidden-list');
+  if(hiddenSection) hiddenSection.style.display = _rmShowHidden && hiddenCount > 0 ? 'block' : 'none';
+  if(hiddenList && _rmShowHidden) {
+    hiddenList.innerHTML = hiddenSites.map(s => {
+      const k = s.key||s.name+'|||'+s.cust;
+      const ek = k.replace(/'/g,"\\'");
+      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:12px">
+        ${s.name} <span style="color:var(--muted);font-size:10px">${s.cust}</span>
+        <button onclick="rmUnhideSite('${ek}')" style="background:none;border:none;cursor:pointer;color:#1D9E75;font-size:11px;padding:0 2px" title="Restore to model"><i class="ti ti-eye"></i></button>
+      </span>`;
+    }).join('');
+  }
+
+  // Add blend info banner if applicable
+  const liveBannerEl = document.getElementById('rm-live-banner');
+  if(liveBannerEl && isBlended) {
+    liveBannerEl.innerHTML = `<i class="ti ti-blend-mode"></i>
+      <span>Blended complexity: ${blend._blendPrev||Math.round(blend.blendPrev*100)}% last FY (FY${blend.prevFY} full year) + ${blend._blendCurrent||Math.round(blend.blendCurrent*100)}% current FY (${blend.mthsIntoCurrent} months in, annualised). Weights shift automatically as FY${blend.currentFY} data accumulates.</span>
+      <button class="rm-btn-refresh" style="margin-left:auto" onclick="renderAdminResmod()"><i class="ti ti-refresh"></i> Refresh</button>`;
+  }
 }
 
 function rmRenderSummary(){
@@ -3882,6 +4094,100 @@ function rmDeleteSite(id){
   rmRenderSummary();
 }
 
+// ── Hide / unhide / toggle ───────────────────────────────────────
+function rmHideSite(key){
+  _rmHidden.add(key);
+  rmSavePrefs();
+  rmRenderTable();
+  rmRenderSummary();
+}
+function rmUnhideSite(key){
+  _rmHidden.delete(key);
+  rmSavePrefs();
+  rmRenderTable();
+  rmRenderSummary();
+}
+function rmToggleShowHidden(){
+  _rmShowHidden = !_rmShowHidden;
+  const btn = document.getElementById('rm-show-hidden-btn');
+  if(btn) btn.style.background = _rmShowHidden ? '#E6F0FA' : '';
+  rmRenderTable();
+}
+
+// ── Merge modal ──────────────────────────────────────────────────
+function rmOpenMergeModal(){
+  const modal = document.getElementById('rm-merge-modal');
+  if(!modal) return;
+  // Build site list from live data
+  const liveSites = rmBuildLiveSites();
+  const allSites  = [...liveSites, ..._rmManualSites];
+  const list = document.getElementById('rm-merge-site-list');
+  const canonSel = document.getElementById('rm-merge-canonical');
+  if(!list || !canonSel) return;
+
+  list.innerHTML = allSites.map(s => {
+    const k = s.key||s.name+'|||'+s.cust;
+    const ek = k.replace(/"/g,'&quot;');
+    const totalHrs = Math.round((s.cos||0)+(s.ds||0)+(s.bdt||0)+(s.trn||0));
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;border:1px solid transparent" 
+              onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <input type="checkbox" value="${ek}" data-name="${s.name.replace(/"/g,'&quot;')}" onchange="rmMergeSelChange()">
+      <span style="flex:1"><strong>${s.name}</strong> <span style="color:var(--muted)">${s.cust} · ${s.state}</span></span>
+      <span style="color:var(--muted);font-size:11px">${totalHrs}h</span>
+    </label>`;
+  }).join('');
+
+  canonSel.innerHTML = '<option value="">— select sites above first —</option>';
+  modal.style.display = 'flex';
+}
+
+function rmMergeSelChange(){
+  const checked = [...document.querySelectorAll('#rm-merge-site-list input:checked')];
+  const canonSel = document.getElementById('rm-merge-canonical');
+  if(!canonSel) return;
+  if(checked.length < 2){
+    canonSel.innerHTML = '<option value="">— select 2 or more sites —</option>';
+    return;
+  }
+  const names = checked.map(cb => ({key: cb.value, name: cb.dataset.name}));
+  canonSel.innerHTML = names.map(n =>
+    `<option value="${n.key.replace(/"/g,'&quot;')}">${n.name}</option>`
+  ).join('');
+}
+
+function rmCloseMergeModal(){
+  document.getElementById('rm-merge-modal').style.display = 'none';
+}
+
+function rmCommitMerge(){
+  const checked = [...document.querySelectorAll('#rm-merge-site-list input:checked')];
+  const canonKey = document.getElementById('rm-merge-canonical')?.value;
+  if(checked.length < 2 || !canonKey){
+    toast('Select at least 2 sites and choose a canonical name', 'error'); return;
+  }
+  // Map all non-canonical selected keys to the canonical
+  checked.forEach(cb => {
+    if(cb.value !== canonKey) {
+      _rmMerges[cb.value] = canonKey;
+    }
+  });
+  rmSavePrefs();
+  rmCloseMergeModal();
+  rmRenderTable();
+  rmRenderSummary();
+  const canonName = checked.find(cb=>cb.value===canonKey)?.dataset.name || canonKey.split('|||')[0];
+  toast(`✓ ${checked.length} sites merged into "${canonName}"`, 'success');
+}
+
+// ── Clear all merges (admin escape hatch) ────────────────────────
+function rmClearMerges(){
+  _rmMerges = {};
+  rmSavePrefs();
+  rmRenderTable();
+  rmRenderSummary();
+  toast('Merges cleared', 'success');
+}
+
 function rmSavePrefs(){
   saveRefData('rm_weights', {
     cos: +(document.getElementById('rm-w-cos')?.value||25),
@@ -3892,6 +4198,8 @@ function rmSavePrefs(){
   saveRefData('rm_mix', _rmMixOverrides);
   saveRefData('rm_manual_sites', _rmManualSites);
   saveRefData('rm_next_id', _rmNextId);
+  saveRefData('rm_hidden', [..._rmHidden]);
+  saveRefData('rm_merges', _rmMerges);
 }
 
 function rmLoadPrefs(){
@@ -3905,6 +4213,8 @@ function rmLoadPrefs(){
   _rmMixOverrides = getRefData('rm_mix', {});
   _rmManualSites  = getRefData('rm_manual_sites', []);
   _rmNextId       = getRefData('rm_next_id', 1);
+  _rmHidden       = new Set(getRefData('rm_hidden', []));
+  _rmMerges       = getRefData('rm_merges', {});
 }
 
 function renderAdminResmod(){
@@ -3913,6 +4223,537 @@ function renderAdminResmod(){
   rmRenderMixGrid();
   rmRenderTable();
   rmRenderSummary();
+}
+
+// ════════════════════════════════════════════════════════════════════
+// VISUALS BUILDER
+// ════════════════════════════════════════════════════════════════════
+const VB_ORICA_COLORS = [
+  '#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5',
+  '#1D9E75','#27AE60','#F39C12','#E67E22','#8E44AD',
+  '#C0392B','#2C3E50','#16A085','#D35400','#7F8C8D',
+];
+
+// Persisted visual specs: [{id, type, dim, period, state, topn, title}]
+let _vbVisuals = [];
+let _vbCharts  = {}; // id → Chart.js instance
+let _vbNextId  = 1;
+let _vbSelectedType = 'bar';
+
+function vbLoad() {
+  _vbVisuals = getRefData('vb_visuals', []);
+  _vbNextId  = getRefData('vb_next_id', 1);
+}
+function vbSave() {
+  saveRefData('vb_visuals', _vbVisuals);
+  saveRefData('vb_next_id', _vbNextId);
+}
+
+// ── Populate period dropdown (reuses same logic as tab filters) ──
+function vbPopulatePeriod(selId) {
+  const sel = document.getElementById(selId);
+  if(!sel) return;
+  const years = getAvailableYears();
+  const now = new Date();
+  const currentFY = now.getMonth() >= 9 ? now.getFullYear()+1 : now.getFullYear();
+  const fys = [...new Set(years.flatMap(y=>[parseInt(y),parseInt(y)+1]))].sort((a,b)=>b-a);
+  let html = '<option value="ALL">All time</option>';
+  html += '<optgroup label="── Fiscal Year ──">';
+  fys.forEach(fy => { html+=`<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
+  html += '</optgroup><optgroup label="── FY Quarters ──">';
+  fys.forEach(fy => {
+    html+=`<option value="FY${fy}Q1">FY${fy} Q1 Oct–Dec ${fy-1}</option>`;
+    html+=`<option value="FY${fy}Q2">FY${fy} Q2 Jan–Mar ${fy}</option>`;
+    html+=`<option value="FY${fy}Q3">FY${fy} Q3 Apr–Jun ${fy}</option>`;
+    html+=`<option value="FY${fy}Q4">FY${fy} Q4 Jul–Sep ${fy}</option>`;
+  });
+  html += '</optgroup><optgroup label="── Calendar Year ──">';
+  [...years].sort((a,b)=>b-a).forEach(y => { html+=`<option value="CY${y}">Calendar ${y}</option>`; });
+  html += '</optgroup><optgroup label="── Individual Months ──">';
+  [...years].sort((a,b)=>b-a).forEach(y => {
+    MONTHS.forEach(m => { html+=`<option value="${y}-${m}">${m} ${y}</option>`; });
+  });
+  html += '</optgroup>';
+  sel.innerHTML = html;
+  const def = sel.querySelector(`option[value="FY${currentFY}"]`);
+  if(def) def.selected = true;
+}
+
+// ── Get filtered + aggregated data for a visual spec ────────────
+function vbGetData(spec) {
+  const {dim, period, state: stateF, topn} = spec;
+  const passFilter = periodToFilter(period);
+  const employees = getEmployees();
+
+  // Aggregate
+  const totals = {}; // label → hours
+  const multiSeries = {}; // For cross-tab dims: {series: {label: hours}}
+
+  employees.forEach(emp => {
+    const empRec = getTeamRegistry().find(t=>t.name===emp);
+    if(!empRec || empRec.role==='admin') return;
+    if(stateF !== 'ALL' && empRec.state !== stateF) return;
+
+    MONTHS.forEach((month,mi) => {
+      loadEntries(emp, month).forEach(e => {
+        const yr = entryYear(e);
+        if(yr === null && period !== 'ALL') return;
+        if(!passFilter(e, month, yr||'0000')) return;
+        const hrs = parseFloat(e.total)||0;
+        if(hrs <= 0) return;
+
+        // Single-series dimensions
+        let label = null;
+        if(dim==='task')     label = e.task||'Other';
+        if(dim==='customer') label = e.customer||'Other';
+        if(dim==='site')     label = e.site||'Other';
+        if(dim==='bp')       label = BP_LABEL[e.bp]||e.bp||'Other';
+        if(dim==='employee') label = emp;
+        if(dim==='product')  label = e.product||'None';
+        if(dim==='month')    label = month;
+
+        if(label) {
+          totals[label] = (totals[label]||0) + hrs;
+          return;
+        }
+
+        // Cross-tab / multi-series dimensions
+        let mLabel = month;
+        let series = null;
+        if(dim==='month_bp')   series = BP_LABEL[e.bp]||e.bp||'Other';
+        if(dim==='month_task') series = e.task||'Other';
+        if(dim==='month_emp')  series = emp;
+        if(dim==='emp_bp')    { mLabel = emp; series = BP_LABEL[e.bp]||e.bp||'Other'; }
+
+        if(series) {
+          if(!multiSeries[series]) multiSeries[series] = {};
+          multiSeries[series][mLabel] = (multiSeries[series][mLabel]||0) + hrs;
+        }
+      });
+    });
+  });
+
+  // Single series
+  if(Object.keys(totals).length) {
+    let entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+    // For month dimension keep calendar order
+    if(dim === 'month') entries = MONTHS.filter(m=>totals[m]).map(m=>[m,totals[m]]);
+    if(topn > 0) entries = entries.slice(0, topn);
+    return {
+      type: 'single',
+      labels: entries.map(([l])=>l),
+      values: entries.map(([,v])=>v),
+    };
+  }
+
+  // Multi series
+  // Determine label axis order
+  let allLabels = [];
+  if(dim.startsWith('month')) {
+    allLabels = MONTHS.filter(m => Object.values(multiSeries).some(s=>s[m]));
+  } else {
+    // emp_bp: sort employees by total
+    const empTotals = {};
+    Object.values(multiSeries).forEach(s=>Object.entries(s).forEach(([k,v])=>{empTotals[k]=(empTotals[k]||0)+v;}));
+    allLabels = Object.entries(empTotals).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
+  }
+  if(topn > 0 && !dim.startsWith('month')) allLabels = allLabels.slice(0, topn);
+
+  // For month_task, limit series to top 5
+  let seriesKeys = Object.keys(multiSeries);
+  if(dim==='month_task') {
+    const serTotals = {};
+    seriesKeys.forEach(s=>{ serTotals[s]=Object.values(multiSeries[s]).reduce((a,b)=>a+b,0); });
+    seriesKeys = seriesKeys.sort((a,b)=>serTotals[b]-serTotals[a]).slice(0, topn>0?Math.min(topn,8):8);
+  }
+
+  return {
+    type: 'multi',
+    labels: allLabels,
+    series: seriesKeys.map((name,i) => ({
+      name,
+      values: allLabels.map(l => multiSeries[name][l]||0),
+      color: VB_ORICA_COLORS[i % VB_ORICA_COLORS.length],
+    })),
+  };
+}
+
+// ── Build Chart.js config from spec + data ───────────────────────
+function vbBuildChartConfig(spec, data) {
+  const {type} = spec;
+  const isMulti = data.type === 'multi';
+  const colors = VB_ORICA_COLORS;
+
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: isMulti || ['pie','doughnut','radar'].includes(type),
+                position:'bottom', labels:{boxWidth:12,font:{size:10}} },
+      tooltip: { callbacks: {
+        label: ctx => ` ${ctx.parsed.y??ctx.parsed??0} hrs`
+      }}
+    },
+    scales: {}
+  };
+
+  if(['pie','doughnut','radar'].includes(type)) {
+    delete baseOpts.scales;
+    if(type==='pie'||type==='doughnut') {
+      baseOpts.plugins.tooltip.callbacks.label = ctx =>
+        ` ${ctx.label}: ${ctx.raw.toFixed(0)}h (${Math.round(ctx.raw/ctx.dataset.data.reduce((a,b)=>a+b,0)*100)}%)`;
+    }
+  } else {
+    const isHoriz = type==='bar';
+    baseOpts.scales = {
+      x: { stacked: type==='stacked', grid:{display:false}, ticks:{font:{size:9},color:'#888'} },
+      y: { stacked: type==='stacked', beginAtZero:true,
+           grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:9},color:'#888'} }
+    };
+    if(isHoriz) { // swap axes for horizontal bar
+      baseOpts.indexAxis = 'y';
+      baseOpts.scales = {
+        x: { beginAtZero:true, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:9},color:'#888'} },
+        y: { grid:{display:false}, ticks:{font:{size:9},color:'#888'} }
+      };
+    }
+  }
+
+  let datasets;
+  if(isMulti) {
+    datasets = data.series.map((s,i) => ({
+      label: s.name.length > 18 ? s.name.slice(0,18)+'…' : s.name,
+      data: s.values,
+      backgroundColor: s.color + (type==='line'||type==='area'?'33':'CC'),
+      borderColor: s.color,
+      borderWidth: type==='line'||type==='area' ? 2 : 0,
+      fill: type==='area',
+      tension: 0.35,
+      borderRadius: type==='col'||type==='stacked' ? 3 : 0,
+    }));
+  } else {
+    const bgColors = type==='pie'||type==='doughnut'||type==='radar'
+      ? data.labels.map((_,i)=>colors[i%colors.length])
+      : colors[0];
+    datasets = [{
+      label: 'Hours',
+      data: data.values,
+      backgroundColor: Array.isArray(bgColors) ? bgColors : bgColors+'CC',
+      borderColor: Array.isArray(bgColors) ? bgColors : bgColors,
+      borderWidth: type==='line'||type==='area' ? 2 : 0,
+      fill: type==='area',
+      tension: 0.35,
+      borderRadius: type==='col'||type==='stacked'||type==='bar' ? 3 : 0,
+      pointBackgroundColor: Array.isArray(bgColors) ? bgColors : bgColors,
+    }];
+  }
+
+  const cjsType = {bar:'bar',col:'bar',line:'line',area:'line',
+                   pie:'pie',doughnut:'doughnut',stacked:'bar',radar:'radar'}[type] || 'bar';
+
+  return {
+    type: cjsType,
+    data: { labels: data.labels, datasets },
+    options: baseOpts,
+  };
+}
+
+// ── Auto-generate a chart title ──────────────────────────────────
+function vbAutoTitle(spec) {
+  const dimLabels = {
+    task:'By task', customer:'By customer', site:'By site', bp:'By purpose',
+    employee:'By employee', product:'By product', month:'Monthly trend',
+    month_bp:'Month × Purpose', month_task:'Month × Task', month_emp:'Month × Employee',
+    emp_bp:'Employee × Purpose',
+  };
+  const stateStr = spec.state!=='ALL' ? ` · ${spec.state}` : '';
+  let periodStr = spec.period==='ALL' ? 'All time' : spec.period;
+  // Make FY labels human-readable
+  periodStr = periodStr.replace(/^FY(\d{4})$/,'FY$1').replace(/^FY(\d{4})Q(\d)$/,'FY$1 Q$2');
+  return `${dimLabels[spec.dim]||spec.dim}${stateStr} — ${periodStr}`;
+}
+
+// ── Render one visual card ───────────────────────────────────────
+function vbRenderCard(spec) {
+  const board = document.getElementById('vb-board');
+  if(!board) return;
+
+  // Remove empty state
+  const empty = document.getElementById('vb-empty-state');
+  if(empty) empty.remove();
+
+  const card = document.createElement('div');
+  card.className = 'vb-card';
+  card.id = `vb-card-${spec.id}`;
+  const title = spec.title || vbAutoTitle(spec);
+
+  card.innerHTML = `
+    <div class="vb-card-hd">
+      <div>
+        <div class="vb-card-title">${title}</div>
+        <div class="vb-card-subtitle">${spec.type.charAt(0).toUpperCase()+spec.type.slice(1)} · ${spec.dim}</div>
+      </div>
+      <div class="vb-card-actions">
+        <button class="vb-icon-btn" onclick="vbCopyCard(${spec.id})" title="Copy as image"><i class="ti ti-copy"></i></button>
+        <button class="vb-icon-btn" onclick="vbDownloadCard(${spec.id})" title="Download PNG"><i class="ti ti-download"></i></button>
+        <button class="vb-icon-btn" onclick="vbExportSinglePptx(${spec.id})" title="Export to PowerPoint"><i class="ti ti-file-presentation"></i></button>
+        <button class="vb-icon-btn danger" onclick="vbRemoveCard(${spec.id})" title="Remove"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="vb-canvas-wrap" style="height:260px">
+      <canvas id="vb-canvas-${spec.id}"></canvas>
+    </div>`;
+
+  board.appendChild(card);
+
+  // Build chart
+  const data = vbGetData(spec);
+  const cfg  = vbBuildChartConfig(spec, data);
+  const ctx  = document.getElementById(`vb-canvas-${spec.id}`).getContext('2d');
+  if(_vbCharts[spec.id]) { _vbCharts[spec.id].destroy(); }
+  _vbCharts[spec.id] = new Chart(ctx, cfg);
+}
+
+// ── Re-render all cards (e.g. after period filter changes) ───────
+function renderAdminVisuals() {
+  vbLoad();
+  const board = document.getElementById('vb-board');
+  if(!board) return;
+  board.innerHTML = '';
+  if(!_vbVisuals.length) {
+    board.innerHTML = `<div class="vb-empty" id="vb-empty-state">
+      <i class="ti ti-chart-dots"></i>
+      No visuals yet — click <strong>Add visual</strong> to build your first chart.
+    </div>`;
+    return;
+  }
+  _vbVisuals.forEach(spec => vbRenderCard(spec));
+}
+
+// ── Modal open/close ─────────────────────────────────────────────
+function vbOpenAddModal() {
+  vbPopulatePeriod('vb-period');
+  // Reset selections
+  document.querySelectorAll('.vb-style-opt').forEach(el=>el.classList.remove('selected'));
+  document.querySelector('.vb-style-opt[data-type="bar"]')?.classList.add('selected');
+  _vbSelectedType = 'bar';
+  const titleEl = document.getElementById('vb-title');
+  if(titleEl) titleEl.value = '';
+  document.getElementById('vb-modal').style.display = 'flex';
+}
+function vbCloseModal() {
+  document.getElementById('vb-modal').style.display = 'none';
+}
+function vbSelectType(el, type) {
+  document.querySelectorAll('.vb-style-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  _vbSelectedType = type;
+}
+
+// ── Add chart ────────────────────────────────────────────────────
+function vbAddChart() {
+  const spec = {
+    id:     _vbNextId++,
+    type:   _vbSelectedType,
+    dim:    document.getElementById('vb-dim').value,
+    period: document.getElementById('vb-period').value,
+    state:  document.getElementById('vb-state').value,
+    topn:   parseInt(document.getElementById('vb-topn').value)||12,
+    title:  document.getElementById('vb-title').value.trim(),
+  };
+  _vbVisuals.push(spec);
+  vbSave();
+  vbCloseModal();
+  vbRenderCard(spec);
+}
+
+// ── Remove card ──────────────────────────────────────────────────
+function vbRemoveCard(id) {
+  if(_vbCharts[id]) { _vbCharts[id].destroy(); delete _vbCharts[id]; }
+  _vbVisuals = _vbVisuals.filter(s=>s.id!==id);
+  vbSave();
+  const card = document.getElementById(`vb-card-${id}`);
+  if(card) card.remove();
+  if(!_vbVisuals.length) {
+    const board = document.getElementById('vb-board');
+    if(board) board.innerHTML = `<div class="vb-empty" id="vb-empty-state">
+      <i class="ti ti-chart-dots"></i>No visuals yet — click <strong>Add visual</strong> to build your first chart.</div>`;
+  }
+}
+
+// ── Copy card as image to clipboard ─────────────────────────────
+async function vbCopyCard(id) {
+  const canvas = document.getElementById(`vb-canvas-${id}`);
+  if(!canvas) return;
+  try {
+    canvas.toBlob(async blob => {
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+      vbToast('✓ Copied to clipboard');
+    });
+  } catch(e) {
+    vbToast('Copy failed — try Download instead');
+  }
+}
+
+// ── Download card as PNG ─────────────────────────────────────────
+function vbDownloadCard(id) {
+  const canvas = document.getElementById(`vb-canvas-${id}`);
+  const spec   = _vbVisuals.find(s=>s.id===id);
+  if(!canvas) return;
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png', 1.0);
+  a.download = `Orica_${(spec?.title||vbAutoTitle(spec||{dim:'chart',period:'',state:'ALL'})).replace(/[^a-z0-9]/gi,'_')}.png`;
+  a.click();
+  vbToast('✓ PNG downloaded');
+}
+
+// ── Build PptxGenJS chart data from a spec ───────────────────────
+function vbBuildPptxChart(pres, slide, spec, x, y, w, h) {
+  const data = vbGetData(spec);
+  const title = spec.title || vbAutoTitle(spec);
+
+  // Map chart type to PptxGenJS type
+  const typeMap = {
+    bar:'bar', col:'bar', line:'line', area:'line',
+    pie:'pie', doughnut:'doughnut', stacked:'bar', radar:'radar'
+  };
+  const pptxType = pres.charts[typeMap[spec.type]?.toUpperCase()] || pres.charts.BAR;
+
+  const oricaHex = VB_ORICA_COLORS.map(c=>c.replace('#',''));
+
+  const chartOpts = {
+    x, y, w, h,
+    showTitle: true, title,
+    titleFontSize: 13, titleColor: '003087', titleFontBold: true,
+    chartArea: { fill: { color: 'FFFFFF' }, roundedCorners: false },
+    catAxisLabelColor: '6B6B6B', valAxisLabelColor: '6B6B6B',
+    valGridLine: { color: 'E8E8E8', size: 0.5 },
+    catGridLine: { style: 'none' },
+    legendPos: 'b', legendFontSize: 9,
+    dataLabelFontSize: 8,
+    barDir: spec.type==='col'||spec.type==='stacked' ? 'col' : 'bar',
+    barGrouping: spec.type==='stacked' ? 'stacked' : 'clustered',
+  };
+
+  let chartData;
+  if(data.type === 'multi') {
+    chartData = data.series.map(s => ({
+      name: s.name,
+      labels: data.labels.map(l=>String(l).slice(0,20)),
+      values: s.values,
+    }));
+    chartOpts.chartColors = data.series.map((_,i)=>oricaHex[i%oricaHex.length]);
+  } else {
+    chartData = [{
+      name: 'Hours',
+      labels: data.labels.map(l=>String(l).slice(0,20)),
+      values: data.values.map(v=>Math.round(v*10)/10),
+    }];
+    chartOpts.chartColors = oricaHex.slice(0, data.labels.length);
+    if(data.labels.length === 1) chartOpts.chartColors = [oricaHex[0]];
+  }
+
+  try {
+    slide.addChart(pptxType, chartData, chartOpts);
+  } catch(e) {
+    console.warn('addChart failed, falling back to image:', e);
+    // Fallback: embed canvas as PNG
+    const canvas = document.getElementById(`vb-canvas-${spec.id}`);
+    if(canvas) {
+      slide.addImage({ data: canvas.toDataURL('image/png'), x, y, w, h });
+    }
+  }
+}
+
+// ── Export single chart to PowerPoint ───────────────────────────
+async function vbExportSinglePptx(id) {
+  const spec = _vbVisuals.find(s=>s.id===id);
+  if(!spec) return;
+  const btn = document.getElementById('vb-pptx-btn');
+  vbToast('Building PowerPoint…');
+  try {
+    const pres = new PptxGenJS();
+    pres.layout = 'LAYOUT_16x9';
+    pres.title = spec.title || vbAutoTitle(spec);
+
+    const slide = pres.addSlide();
+    // Orica blue header bar
+    slide.addShape(pres.ShapeType.rect, {x:0,y:0,w:10,h:0.55,fill:{color:'003087'}});
+    slide.addText(spec.title||vbAutoTitle(spec),
+      {x:0.2,y:0,w:8,h:0.55,color:'FFFFFF',fontSize:16,bold:true,valign:'middle',margin:0});
+    slide.addText('Orica Technical Services · NSW & QLD Coal',
+      {x:0,y:0.55,w:10,h:0.3,color:'6B6B6B',fontSize:9,align:'right',margin:{right:0.15}});
+
+    vbBuildPptxChart(pres, slide, spec, 0.3, 1.0, 9.4, 4.2);
+
+    // Footer
+    slide.addText(`Generated ${new Date().toLocaleDateString('en-AU')}`,
+      {x:0,y:5.3,w:10,h:0.3,color:'ADADAD',fontSize:8,align:'right',margin:{right:0.15}});
+
+    await pres.writeFile({fileName:`Orica_${(spec.title||'chart').replace(/[^a-z0-9]/gi,'_')}.pptx`});
+    vbToast('✓ PowerPoint downloaded');
+  } catch(e) {
+    console.error('PPTX export error:', e);
+    vbToast('Export failed: '+e.message);
+  }
+}
+
+// ── Export ALL charts to one PowerPoint deck ─────────────────────
+async function vbExportAllPptx() {
+  if(!_vbVisuals.length) { toast('No visuals to export', 'info'); return; }
+  const btn = document.getElementById('vb-pptx-btn');
+  if(btn) { btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite;display:inline-block"></i> Building…'; btn.disabled=true; }
+  vbToast('Building PowerPoint deck…');
+  try {
+    const pres = new PptxGenJS();
+    pres.layout = 'LAYOUT_16x9';
+    pres.title  = 'Orica Technical Services — Timesheet Analytics';
+    pres.author = 'Orica NSW & QLD Coal';
+
+    // Title slide
+    const ts = pres.addSlide();
+    ts.addShape(pres.ShapeType.rect, {x:0,y:0,w:10,h:5.625,fill:{color:'003087'}});
+    ts.addText('Timesheet Analytics', {x:0.5,y:1.8,w:9,h:1,color:'FFFFFF',fontSize:36,bold:true,align:'center',margin:0});
+    ts.addText('Orica Technical Services · NSW & QLD Coal',
+      {x:0.5,y:2.9,w:9,h:0.5,color:'A8D4F5',fontSize:16,align:'center',margin:0});
+    ts.addText(`Generated ${new Date().toLocaleDateString('en-AU')}`,
+      {x:0.5,y:4.8,w:9,h:0.4,color:'7DC4F5',fontSize:11,align:'center',margin:0});
+
+    // One slide per visual (up to 1 chart per slide for readability)
+    _vbVisuals.forEach(spec => {
+      const slide = pres.addSlide();
+      slide.addShape(pres.ShapeType.rect, {x:0,y:0,w:10,h:0.55,fill:{color:'003087'}});
+      slide.addText(spec.title||vbAutoTitle(spec),
+        {x:0.2,y:0,w:8.5,h:0.55,color:'FFFFFF',fontSize:14,bold:true,valign:'middle',margin:0});
+      slide.addText('Orica Technical Services',
+        {x:8.5,y:0,w:1.5,h:0.55,color:'A8D4F5',fontSize:9,align:'right',valign:'middle',margin:{right:0.1}});
+      vbBuildPptxChart(pres, slide, spec, 0.3, 0.7, 9.4, 4.6);
+      slide.addText(`${new Date().toLocaleDateString('en-AU')}`,
+        {x:0,y:5.35,w:10,h:0.25,color:'ADADAD',fontSize:8,align:'right',margin:{right:0.15}});
+    });
+
+    await pres.writeFile({fileName:`Orica_Timesheet_Analytics_${new Date().toISOString().slice(0,10)}.pptx`});
+    vbToast(`✓ ${_vbVisuals.length} chart${_vbVisuals.length!==1?'s':''} exported to PowerPoint`);
+  } catch(e) {
+    console.error('PPTX export error:', e);
+    vbToast('Export failed: '+e.message);
+  } finally {
+    if(btn) { btn.innerHTML='<i class="ti ti-file-presentation"></i> Export all to PowerPoint'; btn.disabled=false; }
+  }
+}
+
+// ── Toast helper ─────────────────────────────────────────────────
+function vbToast(msg) {
+  let el = document.getElementById('vb-toast');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = 'vb-toast';
+    el.className = 'vb-ppt-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 3000);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -7286,6 +8127,128 @@ console.log('Portal init complete.');
     <div style="padding:12px 20px;border-top:1px solid var(--border);background:var(--surface2);display:flex;justify-content:flex-end;gap:6px">
       <button onclick="showDataCleanerModal([],null)" class="btn btn-sm"><i class="ti ti-adjustments"></i> Edit all rules</button>
       <button onclick="closeDupReview()" class="btn btn-sm btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VISUAL BUILDER MODAL ════════════════════════════════════════ -->
+<div id="vb-modal" style="display:none" class="vb-modal-overlay" onclick="if(event.target===this)vbCloseModal()">
+  <div class="vb-modal">
+    <div class="vb-modal-hd">
+      <div class="vb-modal-title"><i class="ti ti-chart-dots" style="margin-right:6px;color:#003087"></i>Add visual</div>
+      <button onclick="vbCloseModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
+    </div>
+    <div class="vb-modal-body">
+      <!-- Chart type -->
+      <div class="vb-field">
+        <label>Chart type</label>
+        <div class="vb-style-grid" id="vb-type-grid">
+          <div class="vb-style-opt selected" data-type="bar" onclick="vbSelectType(this,'bar')">
+            <i class="ti ti-chart-bar"></i><span>Bar</span>
+          </div>
+          <div class="vb-style-opt" data-type="col" onclick="vbSelectType(this,'col')">
+            <i class="ti ti-chart-bar" style="transform:rotate(90deg)"></i><span>Column</span>
+          </div>
+          <div class="vb-style-opt" data-type="line" onclick="vbSelectType(this,'line')">
+            <i class="ti ti-chart-line"></i><span>Line</span>
+          </div>
+          <div class="vb-style-opt" data-type="area" onclick="vbSelectType(this,'area')">
+            <i class="ti ti-chart-area"></i><span>Area</span>
+          </div>
+          <div class="vb-style-opt" data-type="pie" onclick="vbSelectType(this,'pie')">
+            <i class="ti ti-chart-pie"></i><span>Pie</span>
+          </div>
+          <div class="vb-style-opt" data-type="doughnut" onclick="vbSelectType(this,'doughnut')">
+            <i class="ti ti-circle-dotted"></i><span>Doughnut</span>
+          </div>
+          <div class="vb-style-opt" data-type="radar" onclick="vbSelectType(this,'radar')">
+            <i class="ti ti-chart-radar"></i><span>Radar</span>
+          </div>
+          <div class="vb-style-opt" data-type="stacked" onclick="vbSelectType(this,'stacked')">
+            <i class="ti ti-layout-rows"></i><span>Stacked bar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data dimension -->
+      <div class="vb-field">
+        <label>Show hours by</label>
+        <select id="vb-dim">
+          <option value="task">Task</option>
+          <option value="customer">Customer</option>
+          <option value="site">Site</option>
+          <option value="bp">Business purpose</option>
+          <option value="employee">Employee</option>
+          <option value="product">Product</option>
+          <option value="month">Month (trend)</option>
+          <option value="month_bp">Month × Business purpose</option>
+          <option value="month_task">Month × Task (top 5)</option>
+          <option value="month_emp">Month × Employee</option>
+          <option value="emp_bp">Employee × Business purpose</option>
+        </select>
+      </div>
+
+      <!-- Period -->
+      <div class="vb-field">
+        <label>Period</label>
+        <select id="vb-period"></select>
+      </div>
+
+      <!-- State filter -->
+      <div class="vb-field">
+        <label>State</label>
+        <select id="vb-state">
+          <option value="ALL">All states</option>
+          <option value="NSW">NSW</option>
+          <option value="QLD">QLD</option>
+        </select>
+      </div>
+
+      <!-- Top N -->
+      <div class="vb-field">
+        <label>Show top N items (0 = all)</label>
+        <input type="number" id="vb-topn" value="12" min="0" max="50" style="width:100px">
+      </div>
+
+      <!-- Chart title -->
+      <div class="vb-field">
+        <label>Chart title (optional)</label>
+        <input type="text" id="vb-title" placeholder="Auto-generated if blank">
+      </div>
+    </div>
+    <div class="vb-modal-ft">
+      <button class="vb-btn vb-btn-secondary" onclick="vbCloseModal()">Cancel</button>
+      <button class="vb-btn vb-btn-primary" onclick="vbAddChart()"><i class="ti ti-check"></i> Add chart</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RM MERGE MODAL ══════════════════════════════════════════════ -->
+<div id="rm-merge-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;width:min(580px,95vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25)">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-git-merge" style="margin-right:6px;color:#003087"></i>Merge duplicate sites</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Select sites to merge, then choose which name to keep as canonical.</div>
+      </div>
+      <button onclick="rmCloseMergeModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
+    </div>
+    <div style="padding:14px 20px;font-size:12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)">
+      <strong>How it works:</strong> Select 2+ sites below, pick the canonical name, and click Merge. Their hours are combined under one entry. The merge persists across reloads.
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Select sites to merge</div>
+      <div id="rm-merge-site-list" style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px"></div>
+      <div style="margin-top:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px">Keep this name as canonical</label>
+        <select id="rm-merge-canonical" style="width:100%;height:34px;font-size:13px">
+          <option value="">— select sites above first —</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="rmCloseMergeModal()" class="btn btn-sm">Cancel</button>
+      <button onclick="rmCommitMerge()" class="btn btn-sm btn-primary"><i class="ti ti-git-merge"></i> Merge selected</button>
     </div>
   </div>
 </div>
