@@ -1681,7 +1681,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           <div class="rm-stat"><div class="rm-stat-lbl">Sites modelled</div><div class="rm-stat-val" id="rm-stat-sites">—</div></div>
           <div class="rm-stat"><div class="rm-stat-lbl">Avg complexity</div><div class="rm-stat-val" id="rm-stat-cx">—</div><div class="rm-stat-sub">out of 10</div></div>
           <div class="rm-stat"><div class="rm-stat-lbl">Senior Engineers required</div><div class="rm-stat-val eng" id="rm-stat-eng">—</div><div class="rm-stat-sub">FTE</div></div>
-          <div class="rm-stat"><div class="rm-stat-lbl">Senior Technicians required</div><div class="rm-stat-val tech" id="rm-stat-tech">—</div><div class="rm-stat-sub">FTE</div></div>
+          <div class="rm-stat"><div class="rm-stat-lbl">Technical Services Representatives required</div><div class="rm-stat-val tech" id="rm-stat-tech">—</div><div class="rm-stat-sub">FTE</div></div>
         </div>
 
         <!-- Capacity & Weights -->
@@ -1731,11 +1731,11 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <!-- Role mix -->
         <div class="rm-section">
           <div class="rm-section-hd"><i class="ti ti-sliders"></i> Role mix by complexity band</div>
-          <div style="font-size:11px;color:#6B6B6B;margin-bottom:10px">What % of a site's required capacity should be Senior Engineer vs Senior Technician? Drag to adjust per band.</div>
+          <div style="font-size:11px;color:#6B6B6B;margin-bottom:10px">What % of a site's required capacity should be Senior Engineer vs Technical Services Representative? Drag to adjust per band.</div>
           <div id="rm-mix-grid"></div>
           <div style="display:flex;gap:14px;font-size:11px;color:#6B6B6B;margin-top:8px">
             <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#185FA5;display:inline-block"></span>Senior Engineer (Band E)</span>
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#0F6E56;display:inline-block"></span>Senior Technician (Band F)</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#0F6E56;display:inline-block"></span>Technical Services Representative (Band F)</span>
           </div>
         </div>
 
@@ -1783,7 +1783,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
                 <th class="r">Total hrs</th>
                 <th>Complexity</th>
                 <th class="r">Eng FTE</th>
-                <th class="r">Tech FTE</th>
+                <th class="r">TSR FTE</th>
                 <th class="r">Source</th>
                 <th style="text-align:center;min-width:80px">Actions</th>
               </tr></thead>
@@ -1829,7 +1829,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             </div>
             <div class="rm-info-box">
               <strong style="color:#003087">FTE calculation</strong><br>
-              Score × 327 hrs/yr = total annual hours required at that site. The role-mix split allocates those hours to Engineer vs Technician. Dividing by 1,634 net billable hrs/FTE/year gives headcount. Totals across all sites give the portfolio requirement.
+              Score × 327 hrs/yr = total annual hours required at that site. The role-mix split allocates those hours to Engineer vs Technical Services Representative. Dividing by 1,634 net billable hrs/FTE/year gives headcount. Totals across all sites give the portfolio requirement.
             </div>
           </div>
         </div>
