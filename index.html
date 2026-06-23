@@ -1194,12 +1194,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-summary" onchange="renderAdminTab('summary')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-summary" onchange="renderAdminTab('summary')"></select>
+          <label>Period</label>
+          <select id="tf-period-summary" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1257,12 +1253,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-tasks" onchange="renderAdminTab('tasks')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-tasks" onchange="renderAdminTab('tasks')"></select>
+          <label>Period</label>
+          <select id="tf-period-tasks" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1308,12 +1300,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-customer" onchange="renderAdminTab('customer')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-customer" onchange="renderAdminTab('customer')"></select>
+          <label>Period</label>
+          <select id="tf-period-customer" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1360,12 +1348,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-product" onchange="renderAdminTab('product')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-product" onchange="renderAdminTab('product')"></select>
+          <label>Period</label>
+          <select id="tf-period-product" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1411,12 +1395,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-employee" onchange="renderAdminTab('employee')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-employee" onchange="renderAdminTab('employee')"></select>
+          <label>Period</label>
+          <select id="tf-period-employee" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1462,12 +1442,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-leave" onchange="renderAdminTab('leave')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-leave" onchange="renderAdminTab('leave')"></select>
+          <label>Period</label>
+          <select id="tf-period-leave" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1516,12 +1492,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-site" onchange="renderAdminTab('site')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-site" onchange="renderAdminTab('site')"></select>
+          <label>Period</label>
+          <select id="tf-period-site" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1567,12 +1539,8 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Month from</label>
-          <select id="tf-mfrom-trend" onchange="renderAdminTab('trend')"></select>
-        </div>
-        <div class="tab-filter-group">
-          <label>Month to</label>
-          <select id="tf-mto-trend" onchange="renderAdminTab('trend')"></select>
+          <label>Period</label>
+          <select id="tf-period-trend" style="min-width:170px"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -2189,11 +2157,23 @@ function showSection(name, el) {
       document.getElementById('user-reports-section').style.display='none';
       document.getElementById('admin-reports-section').style.display='block';
       initTabFilters();
-      // Fetch all employee data from Supabase first
+      // Find which tab is currently active (preserve selection across nav)
+      const adminSection = document.getElementById('admin-reports-section');
+      const activeTab = adminSection?.querySelector('.report-tab.active');
+      const activePanelId = adminSection?.querySelector('.report-panel.active')?.id;
+      const activeTid = activePanelId ? activePanelId.replace('rpanel-','') : 'summary';
+      // Ensure at least summary tab is active if nothing is
+      if(!activeTab){
+        const summaryTab = adminSection?.querySelector('.report-tab');
+        if(summaryTab) summaryTab.classList.add('active');
+        const summaryPanel = document.getElementById('rpanel-summary');
+        if(summaryPanel) summaryPanel.classList.add('active');
+      }
+      const renderFn = () => renderAdminTab(activeTid);
       if(isOnline) {
-        fetchAllFromSupabase().then(()=>renderAdminSummary());
+        fetchAllFromSupabase().then(renderFn);
       } else {
-        renderAdminSummary();
+        renderFn();
       }
     }
     return;
@@ -2607,17 +2587,7 @@ function initTabFilters(){
   tabFiltersInited = true;
   TAB_IDS.forEach(tid=>{
     // Month from/to
-    ['tf-mfrom-','tf-mto-'].forEach((prefix,isTo)=>{
-      const sel=document.getElementById(prefix+tid);
-      if(!sel)return;
-      MONTHS.forEach((m,i)=>{
-        const o=document.createElement('option');
-        o.value=i; o.textContent=m+' 2026';
-        if(!isTo&&i===0)o.selected=true;
-        if(isTo&&i===11)o.selected=true;
-        sel.appendChild(o);
-      });
-    });
+    // Period picker built in initTabFilters loop above
     // Customer filter
     const cs=document.getElementById('tf-cust-'+tid);
     if(cs){
@@ -2738,8 +2708,7 @@ function resetTabFilters(tid){
   // Reset UI
   document.querySelectorAll(`#tf-${tid} .state-btn`).forEach(b=>b.classList.remove('active'));
   document.getElementById('ts-all-'+tid)?.classList.add('active');
-  const mf=document.getElementById('tf-mfrom-'+tid); if(mf)mf.value=0;
-  const mt=document.getElementById('tf-mto-'+tid); if(mt)mt.value=11;
+  // period picker reset handled above
   document.querySelectorAll(`#edl-${tid} input[type=checkbox]`).forEach(cb=>cb.checked=true);
   updateEmpDropLabel(tid);
   const cs=document.getElementById('tf-cust-'+tid); if(cs)cs.value='ALL';
@@ -2751,8 +2720,7 @@ function resetTabFilters(tid){
 // ── Get filtered entries for a tab ──────────────────────────────
 function getTabEntries(tid){
   const s=tabState[tid];
-  const mFrom=parseInt(document.getElementById('tf-mfrom-'+tid)?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-'+tid)?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-'+tid)?.value||'ALL');
   const custF=(document.getElementById('tf-cust-'+tid)?.value)||'ALL';
   const siteF=(document.getElementById('tf-site-'+tid)?.value)||'ALL';
   const bpF  =(document.getElementById('tf-bp-'+tid)?.value)||'ALL';
@@ -2839,19 +2807,32 @@ function renderMonthlyBars(containerId,entries,mFrom,mTo){
 
 // ── switchRTab ───────────────────────────────────────────────────
 function switchRTab(name,el){
-  document.querySelectorAll('.report-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.report-panel').forEach(p=>p.classList.remove('active'));
+  // Scope strictly to the admin reports section — don't touch other panels/tabs
+  const adminSection = document.getElementById('admin-reports-section');
+  if(!adminSection) return;
+  adminSection.querySelectorAll('.report-tab').forEach(t=>t.classList.remove('active'));
+  adminSection.querySelectorAll('.report-panel').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  const panel=document.getElementById('rpanel-'+name);
+  const panel = document.getElementById('rpanel-'+name);
   if(panel) panel.classList.add('active');
   initTabFilters();
   renderAdminTab(name);
 }
 
+// renderAdminTab — see full dispatch map below near RESOURCE MODELLER section
 function renderAdminTab(tid){
-  const fn={summary:renderAdminSummary,tasks:renderAdminTasks,customer:renderAdminCustomer,
-    product:renderAdminProduct,employee:renderAdminEmployee,leave:renderAdminLeave,
-    site:renderAdminSite,trend:renderAdminTrend};
+  const fn={
+    summary:  renderAdminSummary,
+    tasks:    renderAdminTasks,
+    customer: renderAdminCustomer,
+    product:  renderAdminProduct,
+    employee: renderAdminEmployee,
+    leave:    renderAdminLeave,
+    site:     renderAdminSite,
+    trend:    renderAdminTrend,
+    resmod:   renderAdminResmod,
+    visuals:  renderAdminVisuals,
+  };
   if(fn[tid]) fn[tid]();
 }
 
@@ -2861,8 +2842,7 @@ function renderAdminTab(tid){
 function renderAdminSummary(){
   const entries=getTabEntries('summary');
   const total=getTH(entries);
-  const mFrom=parseInt(document.getElementById('tf-mfrom-summary')?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-summary')?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-summary')?.value||'ALL');
 
   // Stat cards
   const uniqueEmps=new Set(entries.map(e=>e._emp)).size;
@@ -2896,8 +2876,7 @@ function renderAdminSummary(){
 function renderAdminTasks(){
   const entries=getTabEntries('tasks');
   const total=getTH(entries);
-  const mFrom=parseInt(document.getElementById('tf-mfrom-tasks')?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-tasks')?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-tasks')?.value||'ALL');
   const byTask={};
   entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
   const sorted=Object.entries(byTask).sort((a,b)=>b[1]-a[1]);
@@ -3025,8 +3004,7 @@ function renderAdminEmployee(){
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});
   }
   // Summary table
-  const mFrom=parseInt(document.getElementById('tf-mfrom-employee')?.value??0);
-  const mTo  =parseInt(document.getElementById('tf-mto-employee')?.value??11);
+  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-employee')?.value||'ALL');
   const months=mTo-mFrom+1;
   const tbl=document.getElementById('emp-detail-table');
   if(tbl){
@@ -4284,7 +4262,7 @@ async function loadEntriesAsync(emp, month) {
 async function refreshFromSupabase(emp, month) {
   if(!isOnline || !emp) return;
   await fetchEmployeeFromSupabase(emp);
-  if(curEmp===emp && editingEntryId===null && curSection==='entry') renderEntry();
+  if(curEmp===emp && editingEntryId===null) renderEntry();
 }
 
 // ── Polling: refresh current employee every 60s ──────────────────
