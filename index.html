@@ -821,7 +821,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
       </div>
 
       <!-- EMPLOYEE PROFILE CARD -->
-      <div id="emp-profile-card" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div id="emp-profile-card" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;align-items:center;gap:16px;flex-wrap:wrap">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap"><i class="ti ti-id-badge"></i> My Profile</div>
         <div style="display:flex;align-items:center;gap:6px">
           <label style="font-size:11px;color:var(--muted);white-space:nowrap">Job title</label>
@@ -2299,8 +2299,8 @@ function updateHeaderAvatars(emp, idx) {
   });
   ['hdr-name','hdrw-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=emp;});
   const hm=document.getElementById('hdr-meta');if(hm)hm.textContent=`Timesheet data entry — 2026`;
-  // Only show profile card for the logged-in user on the entry page
-  if(currentUser && emp === currentUser.name && curSection === 'entry'){
+  // Only show profile card for the logged-in user
+  if(currentUser && emp === currentUser.name){
     renderEmpProfileCard(emp);
   }
 }
@@ -6122,8 +6122,13 @@ function saveEmpProfile(){
   profiles[emp] = { title, roster, region };
   saveRefData('emp_profiles', profiles);
   renderProfileBand(title);
+  // Flash saved indicator
   const saved = document.getElementById('prof-saved');
-  if(saved){ saved.style.display='inline'; setTimeout(()=>saved.style.display='none', 1800); }
+  if(saved){
+    saved.style.display = 'inline';
+    clearTimeout(saved._t);
+    saved._t = setTimeout(()=>{ saved.style.display='none'; }, 2000);
+  }
 }
 
 function getEmpProfile(emp){
@@ -6150,8 +6155,8 @@ function renderProfileBand(title){
 function renderEmpProfileCard(emp){
   const card = document.getElementById('emp-profile-card');
   if(!card) return;
-  // Guard: only show for the logged-in user when on the entry page
-  if(!currentUser || emp !== currentUser.name || curSection !== 'entry'){
+  // Only show for the currently logged-in user
+  if(!currentUser || emp !== currentUser.name){
     card.style.display = 'none';
     return;
   }
