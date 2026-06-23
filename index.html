@@ -820,6 +820,54 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
       </div>
 
+      <!-- EMPLOYEE PROFILE CARD -->
+      <div id="emp-profile-card" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap"><i class="ti ti-id-badge"></i> My Profile</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-size:11px;color:var(--muted);white-space:nowrap">Job title</label>
+          <select id="prof-title" onchange="saveEmpProfile()" style="height:28px;font-size:12px;font-weight:600;border:1px solid var(--border-med);border-radius:var(--r-sm);padding:0 6px;min-width:240px">
+            <option value="">— select title —</option>
+            <optgroup label="Band E">
+              <option value="Manager – Technical Services">Manager – Technical Services</option>
+              <option value="Manager – Specialist Technical Services">Manager – Specialist Technical Services</option>
+              <option value="Senior Engineer – Technical Services">Senior Engineer – Technical Services</option>
+              <option value="Senior Specialist – Technical Services">Senior Specialist – Technical Services</option>
+            </optgroup>
+            <optgroup label="Band F">
+              <option value="Engineer – Technical Services">Engineer – Technical Services</option>
+              <option value="Engineer – Blasting">Engineer – Blasting</option>
+              <option value="Advisor – Technical Services">Advisor – Technical Services</option>
+              <option value="Senior Technician – Blasting">Senior Technician – Blasting</option>
+              <option value="Specialist – Technology Support">Specialist – Technology Support</option>
+            </optgroup>
+            <optgroup label="Band G">
+              <option value="Technician – Blasting">Technician – Blasting</option>
+            </optgroup>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-size:11px;color:var(--muted);white-space:nowrap">Band</label>
+          <div id="prof-band" style="font-size:12px;font-weight:700;color:#003087;padding:3px 10px;background:#e8f0fb;border-radius:20px;white-space:nowrap">—</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-size:11px;color:var(--muted);white-space:nowrap">Region</label>
+          <select id="prof-region" onchange="saveEmpProfile()" style="height:28px;font-size:12px;font-weight:600;border:1px solid var(--border-med);border-radius:var(--r-sm);padding:0 6px">
+            <option value="NSW">NSW</option>
+            <option value="QLD">QLD</option>
+            <option value="Specialist">Specialist</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-size:11px;color:var(--muted);white-space:nowrap">Roster</label>
+          <select id="prof-roster" onchange="saveEmpProfile()" style="height:28px;font-size:12px;font-weight:600;border:1px solid var(--border-med);border-radius:var(--r-sm);padding:0 6px">
+            <option value="52">5/2 (office) — 1,634 hrs/yr</option>
+            <option value="77">7/7 FIFO — 1,460 hrs/yr</option>
+            <option value="86">8/6 FIFO — 1,560 hrs/yr</option>
+          </select>
+        </div>
+        <div id="prof-saved" style="font-size:11px;color:#1a6e40;display:none"><i class="ti ti-check"></i> Saved</div>
+      </div>
+
       <!-- STATS -->
       <div class="stat-grid" id="stats"></div>
 
@@ -1061,6 +1109,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           <select id="new-member-state" style="flex:1;min-width:100px;height:32px">
             <option value="NSW">NSW</option>
             <option value="QLD">QLD</option>
+            <option value="Specialist">Specialist</option>
           </select>
           <select id="new-member-role" style="flex:1;min-width:90px;height:32px">
             <option value="user">User</option>
@@ -1180,6 +1229,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="report-tab" onclick="switchRTab('leave',this)"><i class="ti ti-beach"></i> Leave</div>
         <div class="report-tab" onclick="switchRTab('site',this)"><i class="ti ti-map-pin"></i> By site</div>
         <div class="report-tab" onclick="switchRTab('trend',this)"><i class="ti ti-trending-up"></i> Monthly trend</div>
+        <div class="report-tab" onclick="switchRTab('resmodel',this)"><i class="ti ti-users-group"></i> Resource Model</div>
       </div>
 
       <!-- SUMMARY -->
@@ -1194,8 +1244,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-summary" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-summary" onchange="renderAdminTab('summary')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-summary" onchange="renderAdminTab('summary')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1253,8 +1307,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-tasks" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-tasks" onchange="renderAdminTab('tasks')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-tasks" onchange="renderAdminTab('tasks')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1300,8 +1358,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-customer" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-customer" onchange="renderAdminTab('customer')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-customer" onchange="renderAdminTab('customer')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1348,8 +1410,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-product" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-product" onchange="renderAdminTab('product')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-product" onchange="renderAdminTab('product')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1395,8 +1461,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-employee" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-employee" onchange="renderAdminTab('employee')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-employee" onchange="renderAdminTab('employee')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1442,8 +1512,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-leave" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-leave" onchange="renderAdminTab('leave')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-leave" onchange="renderAdminTab('leave')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1492,8 +1566,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-site" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-site" onchange="renderAdminTab('site')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-site" onchange="renderAdminTab('site')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1539,8 +1617,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-trend" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-trend" onchange="renderAdminTab('trend')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-trend" onchange="renderAdminTab('trend')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1574,6 +1656,106 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
       </div>
+
+      <!-- RESOURCE MODELLER -->
+      <div class="report-panel" id="rpanel-resmodel">
+
+        <!-- Roster hrs/FTE inputs -->
+        <div class="rpt-card" style="margin-bottom:12px">
+          <h3>Roster type — annual billable hours per FTE</h3>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-top:4px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="font-size:12px;color:var(--muted);white-space:nowrap">5/2 (office)</label>
+              <input type="number" id="rm-hrs-52" min="800" max="2200" value="1634" step="1"
+                style="width:70px;padding:4px 6px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:600;text-align:center"
+                oninput="renderAdminTab('resmodel')">
+              <span style="font-size:11px;color:var(--muted)">hrs/yr</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="font-size:12px;color:var(--muted);white-space:nowrap">7/7 FIFO</label>
+              <input type="number" id="rm-hrs-77" min="800" max="2200" value="1460" step="1"
+                style="width:70px;padding:4px 6px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:600;text-align:center"
+                oninput="renderAdminTab('resmodel')">
+              <span style="font-size:11px;color:var(--muted)">hrs/yr</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="font-size:12px;color:var(--muted);white-space:nowrap">8/6 FIFO</label>
+              <input type="number" id="rm-hrs-86" min="800" max="2200" value="1560" step="1"
+                style="width:70px;padding:4px 6px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:600;text-align:center"
+                oninput="renderAdminTab('resmodel')">
+              <span style="font-size:11px;color:var(--muted)">hrs/yr</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);max-width:340px;line-height:1.5">Edit these to match your actuals. Job titles are set by employees on each timesheet entry and drive the demand calculation.</div>
+          </div>
+        </div>
+
+        <!-- NSW + QLD side by side -->
+        <div class="grid2" style="margin-bottom:12px">
+          <div class="rpt-card" style="border-top:3px solid #003087">
+            <h3 style="color:#003087">NSW Team</h3>
+            <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:11px;color:var(--muted)">Band E (Sr Eng)</label>
+                <input type="number" id="rm-nsw-e" min="0" max="20" value="3" step="1"
+                  style="width:48px;padding:3px 5px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:700;text-align:center"
+                  oninput="renderAdminTab('resmodel')">
+              </div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:11px;color:var(--muted)">Band F (TSR)</label>
+                <input type="number" id="rm-nsw-f" min="0" max="20" value="4" step="1"
+                  style="width:48px;padding:3px 5px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:700;text-align:center"
+                  oninput="renderAdminTab('resmodel')">
+              </div>
+            </div>
+            <div class="stat-grid" id="rm-nsw-stats"></div>
+            <div style="overflow-x:auto;margin-top:8px"><table class="dt" id="rm-nsw-table"></table></div>
+          </div>
+          <div class="rpt-card" style="border-top:3px solid #8B3A00">
+            <h3 style="color:#8B3A00">QLD Team</h3>
+            <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:11px;color:var(--muted)">Band E (Sr Eng)</label>
+                <input type="number" id="rm-qld-e" min="0" max="20" value="0" step="1"
+                  style="width:48px;padding:3px 5px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:700;text-align:center"
+                  oninput="renderAdminTab('resmodel')">
+              </div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:11px;color:var(--muted)">Band F (TSR)</label>
+                <input type="number" id="rm-qld-f" min="0" max="20" value="0" step="1"
+                  style="width:48px;padding:3px 5px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:700;text-align:center"
+                  oninput="renderAdminTab('resmodel')">
+              </div>
+            </div>
+            <div class="stat-grid" id="rm-qld-stats"></div>
+            <div style="overflow-x:auto;margin-top:8px"><table class="dt" id="rm-qld-table"></table></div>
+          </div>
+        </div>
+
+        <!-- Specialist full-width -->
+        <div class="rpt-card" style="border-top:3px solid #5a3e8a;margin-bottom:12px">
+          <h3 style="color:#5a3e8a">Specialist Team <span style="font-size:10px;font-weight:400;color:var(--muted)">(cross-regional)</span></h3>
+          <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;align-items:center;gap:5px">
+              <label style="font-size:11px;color:var(--muted)">Specialists (HC)</label>
+              <input type="number" id="rm-sp-hc" min="0" max="20" value="1" step="1"
+                style="width:48px;padding:3px 5px;border:1px solid var(--border-med);border-radius:var(--r-sm);font-size:13px;font-weight:700;text-align:center"
+                oninput="renderAdminTab('resmodel')">
+            </div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.5;max-width:400px">Tag people as "Specialist" in the Team registry to include them here. Their hours appear in this panel regardless of which state's sites they work on.</div>
+          </div>
+          <div class="stat-grid" id="rm-sp-stats"></div>
+          <div style="overflow-x:auto;margin-top:8px"><table class="dt" id="rm-sp-table"></table></div>
+        </div>
+
+        <!-- All-teams summary -->
+        <div id="rm-profile-notice" style="display:none;background:#fffbe6;border:1px solid #f0c040;border-radius:var(--r-sm);padding:8px 12px;font-size:12px;color:#5a4000;margin-bottom:10px"></div>
+        <div class="rpt-card">
+          <h3>Overall — all teams combined</h3>
+          <div class="stat-grid" id="rm-all-stats"></div>
+        </div>
+
+      </div><!-- /rpanel-resmodel -->
+
 
     </div><!-- /admin-reports-section -->
 
@@ -2117,6 +2299,10 @@ function updateHeaderAvatars(emp, idx) {
   });
   ['hdr-name','hdrw-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=emp;});
   const hm=document.getElementById('hdr-meta');if(hm)hm.textContent=`Timesheet data entry — 2026`;
+  // Only show profile card for the logged-in user on the entry page
+  if(currentUser && emp === currentUser.name && curSection === 'entry'){
+    renderEmpProfileCard(emp);
+  }
 }
 
 function refreshView() {
@@ -2157,23 +2343,11 @@ function showSection(name, el) {
       document.getElementById('user-reports-section').style.display='none';
       document.getElementById('admin-reports-section').style.display='block';
       initTabFilters();
-      // Find which tab is currently active (preserve selection across nav)
-      const adminSection = document.getElementById('admin-reports-section');
-      const activeTab = adminSection?.querySelector('.report-tab.active');
-      const activePanelId = adminSection?.querySelector('.report-panel.active')?.id;
-      const activeTid = activePanelId ? activePanelId.replace('rpanel-','') : 'summary';
-      // Ensure at least summary tab is active if nothing is
-      if(!activeTab){
-        const summaryTab = adminSection?.querySelector('.report-tab');
-        if(summaryTab) summaryTab.classList.add('active');
-        const summaryPanel = document.getElementById('rpanel-summary');
-        if(summaryPanel) summaryPanel.classList.add('active');
-      }
-      const renderFn = () => renderAdminTab(activeTid);
+      // Fetch all employee data from Supabase first
       if(isOnline) {
-        fetchAllFromSupabase().then(renderFn);
+        fetchAllFromSupabase().then(()=>renderAdminSummary());
       } else {
-        renderFn();
+        renderAdminSummary();
       }
     }
     return;
@@ -2181,6 +2355,10 @@ function showSection(name, el) {
   if(!curEmp){document.getElementById('no-sel').style.display='block';return;}
   document.getElementById('no-sel').style.display='none';
   document.getElementById('page-'+name).classList.add('active');
+  // Re-render profile card for the logged-in user when returning to entry
+  if(name==='entry' && currentUser && currentUser.name){
+    renderEmpProfileCard(currentUser.name);
+  }
   refreshView();
 }
 
@@ -2574,7 +2752,7 @@ const LEAVE_COLORS=['#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5','#A8D4F5',
 const BP_COLORS_MAP={'Cost.of.Service':'#003087','Direct.Sales':'#0072CE','BD.and.Technology':'#4BA8E8','Administration':'#A8D4F5'};
 
 // ── Tab filter state (one object per tab) ──────────────────────
-const TAB_IDS = ['summary','tasks','customer','product','employee','leave','site','trend'];
+const TAB_IDS = ['summary','tasks','customer','product','employee','leave','site','trend','resmodel'];
 const tabState = {};
 TAB_IDS.forEach(t=>{
   tabState[t]={state:'ALL',mFrom:0,mTo:11,emps:new Set(),custFilter:'ALL',siteFilter:'ALL',bpFilter:'ALL'};
@@ -2587,7 +2765,17 @@ function initTabFilters(){
   tabFiltersInited = true;
   TAB_IDS.forEach(tid=>{
     // Month from/to
-    // Period picker built in initTabFilters loop above
+    ['tf-mfrom-','tf-mto-'].forEach((prefix,isTo)=>{
+      const sel=document.getElementById(prefix+tid);
+      if(!sel)return;
+      MONTHS.forEach((m,i)=>{
+        const o=document.createElement('option');
+        o.value=i; o.textContent=m+' 2026';
+        if(!isTo&&i===0)o.selected=true;
+        if(isTo&&i===11)o.selected=true;
+        sel.appendChild(o);
+      });
+    });
     // Customer filter
     const cs=document.getElementById('tf-cust-'+tid);
     if(cs){
@@ -2646,6 +2834,20 @@ function buildEmpDrop(tid){
     row.innerHTML=`<input type="checkbox" checked onchange="toggleEmp('${tid}','${t.name}',this.checked)"><span>${t.name}</span><span class="emp-state badge-qld">QLD</span>`;
     list.appendChild(row);
   });
+  // Specialist group
+  const spTeam = getTeamRegistry().filter(t=>t.role!=='admin'&&t.state==='Specialist');
+  if(spTeam.length){
+    const spHdr=document.createElement('div');
+    spHdr.style.cssText='padding:4px 10px;font-size:10px;font-weight:700;color:#5a3e8a;text-transform:uppercase;letter-spacing:0.4px;background:#f0ebff';
+    spHdr.textContent='Specialist'; list.appendChild(spHdr);
+    spTeam.forEach(t=>{
+      const row=document.createElement('div');
+      row.className='emp-dropdown-item';
+      row.id=`edr-${tid}-${t.name.replace(/ /g,'_')}`;
+      row.innerHTML=`<input type="checkbox" checked onchange="toggleEmp('${tid}','${t.name}',this.checked)"><span>${t.name}</span><span class="emp-state" style="background:#ede0ff;color:#5a3e8a;font-size:10px;padding:2px 6px;border-radius:10px">SP</span>`;
+      list.appendChild(row);
+    });
+  }
 }
 
 function toggleEmpDrop(tid){
@@ -2708,7 +2910,8 @@ function resetTabFilters(tid){
   // Reset UI
   document.querySelectorAll(`#tf-${tid} .state-btn`).forEach(b=>b.classList.remove('active'));
   document.getElementById('ts-all-'+tid)?.classList.add('active');
-  // period picker reset handled above
+  const mf=document.getElementById('tf-mfrom-'+tid); if(mf)mf.value=0;
+  const mt=document.getElementById('tf-mto-'+tid); if(mt)mt.value=11;
   document.querySelectorAll(`#edl-${tid} input[type=checkbox]`).forEach(cb=>cb.checked=true);
   updateEmpDropLabel(tid);
   const cs=document.getElementById('tf-cust-'+tid); if(cs)cs.value='ALL';
@@ -2720,7 +2923,8 @@ function resetTabFilters(tid){
 // ── Get filtered entries for a tab ──────────────────────────────
 function getTabEntries(tid){
   const s=tabState[tid];
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-'+tid)?.value||'ALL');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-'+tid)?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-'+tid)?.value??11);
   const custF=(document.getElementById('tf-cust-'+tid)?.value)||'ALL';
   const siteF=(document.getElementById('tf-site-'+tid)?.value)||'ALL';
   const bpF  =(document.getElementById('tf-bp-'+tid)?.value)||'ALL';
@@ -2807,32 +3011,19 @@ function renderMonthlyBars(containerId,entries,mFrom,mTo){
 
 // ── switchRTab ───────────────────────────────────────────────────
 function switchRTab(name,el){
-  // Scope strictly to the admin reports section — don't touch other panels/tabs
-  const adminSection = document.getElementById('admin-reports-section');
-  if(!adminSection) return;
-  adminSection.querySelectorAll('.report-tab').forEach(t=>t.classList.remove('active'));
-  adminSection.querySelectorAll('.report-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.report-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.report-panel').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  const panel = document.getElementById('rpanel-'+name);
+  const panel=document.getElementById('rpanel-'+name);
   if(panel) panel.classList.add('active');
   initTabFilters();
   renderAdminTab(name);
 }
 
-// renderAdminTab — see full dispatch map below near RESOURCE MODELLER section
 function renderAdminTab(tid){
-  const fn={
-    summary:  renderAdminSummary,
-    tasks:    renderAdminTasks,
-    customer: renderAdminCustomer,
-    product:  renderAdminProduct,
-    employee: renderAdminEmployee,
-    leave:    renderAdminLeave,
-    site:     renderAdminSite,
-    trend:    renderAdminTrend,
-    resmod:   renderAdminResmod,
-    visuals:  renderAdminVisuals,
-  };
+  const fn={summary:renderAdminSummary,tasks:renderAdminTasks,customer:renderAdminCustomer,
+    product:renderAdminProduct,employee:renderAdminEmployee,leave:renderAdminLeave,
+    site:renderAdminSite,trend:renderAdminTrend,resmodel:renderAdminResModel};
   if(fn[tid]) fn[tid]();
 }
 
@@ -2842,7 +3033,8 @@ function renderAdminTab(tid){
 function renderAdminSummary(){
   const entries=getTabEntries('summary');
   const total=getTH(entries);
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-summary')?.value||'ALL');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-summary')?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-summary')?.value??11);
 
   // Stat cards
   const uniqueEmps=new Set(entries.map(e=>e._emp)).size;
@@ -2876,7 +3068,8 @@ function renderAdminSummary(){
 function renderAdminTasks(){
   const entries=getTabEntries('tasks');
   const total=getTH(entries);
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-tasks')?.value||'ALL');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-tasks')?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-tasks')?.value??11);
   const byTask={};
   entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
   const sorted=Object.entries(byTask).sort((a,b)=>b[1]-a[1]);
@@ -3004,7 +3197,8 @@ function renderAdminEmployee(){
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});
   }
   // Summary table
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-employee')?.value||'ALL');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-employee')?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-employee')?.value??11);
   const months=mTo-mFrom+1;
   const tbl=document.getElementById('emp-detail-table');
   if(tbl){
@@ -3160,7 +3354,199 @@ function renderAdminTrend(){
   }
 }
 
-// ── Override initReportFilters (now handled by initTabFilters) ──
+// ══════════════════════════════════════════════════════════════════
+// RESOURCE MODELLER
+// ══════════════════════════════════════════════════════════════════
+
+// helper: load all entries for a list of employees
+function rmLoadEntries(emps){
+  const entries = [];
+  const months12 = new Set();
+  emps.forEach(emp=>{
+    MONTHS.forEach((m,mi)=>{
+      loadEntries(emp,m).forEach(e=>{
+        entries.push({...e,_emp:emp,_monthIdx:mi});
+        months12.add(mi);
+      });
+    });
+  });
+  return {entries, dataMonths: months12.size||1};
+}
+
+// helper: annualisation factor
+function rmAnnFactor(entries){
+  const mSet = new Set(entries.map(e=>e._monthIdx));
+  return 12 / (mSet.size||1);
+}
+
+// helper: pick hrs/FTE by dominant job title in entries, else use 5/2 default
+function rmHrsFTE(entries, hrs52, hrs77, hrs86){
+  if(!entries.length) return hrs52;
+  const counts = {};
+  entries.forEach(e=>{
+    const jt = e.job_title||'';
+    counts[jt] = (counts[jt]||0) + (parseFloat(e.total)||0);
+  });
+  // Specialist → usually FIFO
+  return hrs52; // default — individual per entry not tracked yet
+}
+
+// helper: render a mini team table by customer/site
+function rmRenderTable(tblId, entries, annFactor, hrsFTE52, hrsFTE77, hrsFTE86, hcE, hcF){
+  const tbl = document.getElementById(tblId);
+  if(!tbl) return;
+  const byCust = {};
+  entries.forEach(e=>{
+    const k = e.customer||'Unknown';
+    if(!byCust[k]) byCust[k]={sites:{},total:0,byTitle:{}};
+    const h = parseFloat(e.total)||0;
+    byCust[k].total += h;
+    const sk = e.site||'(no site)';
+    if(!byCust[k].sites[sk]) byCust[k].sites[sk]=0;
+    byCust[k].sites[sk] += h;
+    const jt = e.job_title||'Unknown';
+    byCust[k].byTitle[jt]=(byCust[k].byTitle[jt]||0)+h;
+  });
+  const totalHC = (hcE||0)+(hcF||0);
+  tbl.innerHTML='<thead><tr><th>Customer / Site</th><th>YTD hrs</th><th>Annual est.</th><th>Demand FTEs</th></tr></thead>';
+  const tb = document.createElement('tbody');
+  Object.entries(byCust).sort((a,b)=>b[1].total-a[1].total).forEach(([cust,cd])=>{
+    const ann = cd.total * annFactor;
+    const dem = hrsFTE52>0 ? ann/hrsFTE52 : 0;
+    const tr  = document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:700">${cust}</td><td>${cd.total.toFixed(0)}</td><td>${ann.toFixed(0)}</td><td>${dem.toFixed(1)}</td>`;
+    tb.appendChild(tr);
+    Object.entries(cd.sites).sort((a,b)=>b[1]-a[1]).forEach(([site,sh])=>{
+      const sa = sh*annFactor;
+      const sd = hrsFTE52>0 ? sa/hrsFTE52 : 0;
+      const sr = document.createElement('tr');
+      sr.innerHTML=`<td style="padding-left:18px;color:var(--muted);font-size:12px">↳ ${site}</td><td style="color:var(--muted);font-size:12px">${sh.toFixed(0)}</td><td style="color:var(--muted);font-size:12px">${sa.toFixed(0)}</td><td style="color:var(--muted);font-size:12px">${sd.toFixed(1)}</td>`;
+      tb.appendChild(sr);
+    });
+  });
+  if(Object.keys(byCust).length===0){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">No data — employees in this team haven\'t entered timesheets yet, or job titles haven\'t been set</td>`;
+    tb.appendChild(tr);
+  }
+  tbl.appendChild(tb);
+}
+
+// helper: render stat cards for a team panel
+function rmStats(statsId, hcE, hcF, entries, annFactor, hrsFTE){
+  const el = document.getElementById(statsId);
+  if(!el) return;
+  const totalHC = hcE+hcF;
+  const ytd = entries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
+  const ann = ytd*annFactor;
+  const dem = hrsFTE>0 ? ann/hrsFTE : 0;
+  const gap = dem - totalHC;
+  const gc  = gap>0.5?'#8B1A1A':gap<-0.5?'#1a6e40':'#003087';
+  const gl  = gap>0.5?'Shortfall':gap<-0.5?'Surplus':'Balanced';
+  const dMonths = new Set(entries.map(e=>e._monthIdx)).size||1;
+  el.innerHTML =
+    `<div class="stat accent"><div class="stat-lbl">Headcount</div><div class="stat-val">${totalHC}</div><div class="stat-sub">${hcE}E + ${hcF}F</div></div>`+
+    `<div class="stat"><div class="stat-lbl">YTD hours</div><div class="stat-val">${fmtK(ytd)}</div><div class="stat-sub">${dMonths} month${dMonths!==1?'s':''}</div></div>`+
+    `<div class="stat blue"><div class="stat-lbl">Demand FTEs</div><div class="stat-val">${dem.toFixed(1)}</div><div class="stat-sub">@ ${hrsFTE.toFixed(0)}h/yr</div></div>`+
+    `<div class="stat" style="border-left:3px solid ${gc}"><div class="stat-lbl">Gap (${gl})</div><div class="stat-val" style="color:${gc}">${gap>=0?'+':''} ${gap.toFixed(1)}</div><div class="stat-sub">FTEs</div></div>`;
+}
+
+function renderAdminResModel(){
+  // ── Roster hrs/FTE ──────────────────────────────────────────────
+  const hrs52 = parseFloat(document.getElementById('rm-hrs-52')?.value||1634);
+  const hrs77 = parseFloat(document.getElementById('rm-hrs-77')?.value||1460);
+  const hrs86 = parseFloat(document.getElementById('rm-hrs-86')?.value||1560);
+  const rosterHrs = { '52': hrs52, '77': hrs77, '86': hrs86 };
+
+  // ── Headcount inputs ────────────────────────────────────────────
+  const nswE  = parseInt(document.getElementById('rm-nsw-e')?.value||0);
+  const nswF  = parseInt(document.getElementById('rm-nsw-f')?.value||0);
+  const qldE  = parseInt(document.getElementById('rm-qld-e')?.value||0);
+  const qldF  = parseInt(document.getElementById('rm-qld-f')?.value||0);
+  const spHC  = parseInt(document.getElementById('rm-sp-hc')?.value||0);
+
+  // ── Profiles ────────────────────────────────────────────────────
+  const profiles = getEmpProfiles();
+
+  // ── Team members by region (profile.region preferred over registry state) ──
+  const registry = getTeamRegistry().filter(t=>t.role!=='admin');
+  function empRegion(name){
+    // Profile region takes precedence; fall back to team registry state
+    return profiles[name]?.region || registry.find(t=>t.name===name)?.state || 'NSW';
+  }
+  const allNames = registry.map(t=>t.name);
+  const nswEmps  = allNames.filter(n=>empRegion(n)==='NSW');
+  const qldEmps  = allNames.filter(n=>empRegion(n)==='QLD');
+  const spEmps   = allNames.filter(n=>empRegion(n)==='Specialist');
+
+  // ── Weighted hrs/FTE per team based on roster profiles ──────────
+  function teamHrsFTE(emps){
+    if(!emps.length) return hrs52;
+    let total=0, count=0;
+    emps.forEach(e=>{
+      const r=(profiles[e]?.roster)||'52';
+      total += rosterHrs[r]||hrs52;
+      count++;
+    });
+    return count ? total/count : hrs52;
+  }
+  const nswHrs = teamHrsFTE(nswEmps);
+  const qldHrs = teamHrsFTE(qldEmps);
+  const spHrs  = teamHrsFTE(spEmps);
+
+  // ── Load entries per team ───────────────────────────────────────
+  const {entries:nswEnt, dataMonths:nswMths} = rmLoadEntries(nswEmps);
+  const {entries:qldEnt, dataMonths:qldMths} = rmLoadEntries(qldEmps);
+  const {entries:spEnt,  dataMonths:spMths}  = rmLoadEntries(spEmps);
+
+  const nswAnn = 12/(nswMths||1);
+  const qldAnn = 12/(qldMths||1);
+  const spAnn  = 12/(spMths||1);
+
+  // ── Render each team ────────────────────────────────────────────
+  rmStats('rm-nsw-stats', nswE, nswF, nswEnt, nswAnn, nswHrs);
+  rmRenderTable('rm-nsw-table', nswEnt, nswAnn, nswHrs, nswHrs, nswHrs, nswE, nswF);
+
+  rmStats('rm-qld-stats', qldE, qldF, qldEnt, qldAnn, qldHrs);
+  rmRenderTable('rm-qld-table', qldEnt, qldAnn, qldHrs, qldHrs, qldHrs, qldE, qldF);
+
+  rmStats('rm-sp-stats', spHC, 0, spEnt, spAnn, spHrs);
+  rmRenderTable('rm-sp-table', spEnt, spAnn, spHrs, spHrs, spHrs, spHC, 0);
+
+  // ── Profile coverage notice ─────────────────────────────────────
+  const allEmps = [...nswEmps,...qldEmps,...spEmps];
+  const noProfile = allEmps.filter(e=>!profiles[e]?.title);
+  const noticeEl = document.getElementById('rm-profile-notice');
+  if(noticeEl){
+    if(noProfile.length){
+      noticeEl.style.display='block';
+      noticeEl.innerHTML=`<i class="ti ti-alert-triangle" style="color:#8B6500;margin-right:4px"></i><strong>${noProfile.length} employee${noProfile.length!==1?'s':''}</strong> haven't set their profile yet: ${noProfile.slice(0,5).join(', ')}${noProfile.length>5?' +more':''}.  Demand uses hours only until profiles are set.`;
+    } else {
+      noticeEl.style.display='none';
+    }
+  }
+
+  // ── All-teams summary ───────────────────────────────────────────
+  const allHC   = nswE+nswF+qldE+qldF+spHC;
+  const allEnt  = [...nswEnt,...qldEnt,...spEnt];
+  const allMths = new Set(allEnt.map(e=>e._monthIdx)).size||1;
+  const allAnn  = 12/allMths;
+  const allYTD  = allEnt.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
+  const avgHrs  = allEmps.length ? allEmps.reduce((s,e)=>s+(rosterHrs[(profiles[e]?.roster)||'52']||hrs52),0)/allEmps.length : hrs52;
+  const allAnnH = allYTD*allAnn;
+  const allDem  = avgHrs>0 ? allAnnH/avgHrs : 0;
+  const allGap  = allDem - allHC;
+  const gc      = allGap>0.5?'#8B1A1A':allGap<-0.5?'#1a6e40':'#003087';
+  const gl      = allGap>0.5?'Shortfall':allGap<-0.5?'Surplus':'Balanced';
+  const sumEl   = document.getElementById('rm-all-stats');
+  if(sumEl) sumEl.innerHTML =
+    `<div class="stat accent"><div class="stat-lbl">Total headcount</div><div class="stat-val">${allHC}</div><div class="stat-sub">NSW ${nswE+nswF} | QLD ${qldE+qldF} | Sp ${spHC}</div></div>`+
+    `<div class="stat"><div class="stat-lbl">Total YTD hrs</div><div class="stat-val">${fmtK(allYTD)}</div><div class="stat-sub">${allMths} month${allMths!==1?'s':''} with data</div></div>`+
+    `<div class="stat blue"><div class="stat-lbl">Total demand FTEs</div><div class="stat-val">${allDem.toFixed(1)}</div><div class="stat-sub">roster-weighted avg ${avgHrs.toFixed(0)}h/yr</div></div>`+
+    `<div class="stat" style="border-left:3px solid ${gc}"><div class="stat-lbl">Overall gap (${gl})</div><div class="stat-val" style="color:${gc}">${allGap>=0?'+':''} ${allGap.toFixed(1)}</div><div class="stat-sub">FTEs (+ve = shortfall)</div></div>`;
+}
+
+
 function initReportFilters(){ initTabFilters(); }
 function applyFilters(){ renderAdminTab(document.querySelector('.report-tab.active')?.textContent?.toLowerCase()); }
 function resetFilters(){ TAB_IDS.forEach(t=>resetTabFilters(t)); }
@@ -5705,6 +6091,85 @@ function submitAllTaskRows() {
   renderEntry();
   toast(`${addedCount} entr${addedCount===1?'y':'ies'} submitted`,'success');
 }
+
+// ── Employee profile (title / band / roster / region) ────────────
+const TITLE_BAND = {
+  // Band E
+  'Manager – Technical Services':           'Band E',
+  'Manager – Specialist Technical Services':'Band E',
+  'Senior Engineer – Technical Services':   'Band E',
+  'Senior Specialist – Technical Services': 'Band E',
+  // Band F
+  'Engineer – Technical Services':          'Band F',
+  'Engineer – Blasting':                    'Band F',
+  'Advisor – Technical Services':           'Band F',
+  'Senior Technician – Blasting':           'Band F',
+  'Specialist – Technology Support':        'Band F',
+  // Band G
+  'Technician – Blasting':                  'Band G',
+};
+const ROSTER_HRS = { '52': 1634, '77': 1460, '86': 1560 };
+
+function getEmpProfiles(){ return getRefData('emp_profiles', {}); }
+
+function saveEmpProfile(){
+  if(!currentUser || !currentUser.name) return;
+  const emp    = currentUser.name;
+  const title  = document.getElementById('prof-title')?.value  || '';
+  const roster = document.getElementById('prof-roster')?.value || '52';
+  const region = document.getElementById('prof-region')?.value || 'NSW';
+  const profiles = getEmpProfiles();
+  profiles[emp] = { title, roster, region };
+  saveRefData('emp_profiles', profiles);
+  renderProfileBand(title);
+  const saved = document.getElementById('prof-saved');
+  if(saved){ saved.style.display='inline'; setTimeout(()=>saved.style.display='none', 1800); }
+}
+
+function getEmpProfile(emp){
+  const profiles = getEmpProfiles();
+  const regState = getTeamRegistry().find(t=>t.name===emp)?.state || 'NSW';
+  return profiles[emp] || { title:'', roster:'52', region: regState };
+}
+
+function renderProfileBand(title){
+  const el = document.getElementById('prof-band');
+  if(!el) return;
+  const band = TITLE_BAND[title] || '—';
+  const colors = {
+    'Band E': { bg:'#e8f0fb', color:'#003087' },
+    'Band F': { bg:'#fff0e0', color:'#8B3A00' },
+    'Band G': { bg:'#f0f0f0', color:'#555'    }
+  };
+  const c = colors[band] || { bg:'#f0f0f0', color:'#888' };
+  el.textContent = band;
+  el.style.background = c.bg;
+  el.style.color = c.color;
+}
+
+function renderEmpProfileCard(emp){
+  const card = document.getElementById('emp-profile-card');
+  if(!card) return;
+  // Guard: only show for the logged-in user when on the entry page
+  if(!currentUser || emp !== currentUser.name || curSection !== 'entry'){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'flex';
+  const p = getEmpProfile(emp);
+  const titleEl  = document.getElementById('prof-title');
+  const rosterEl = document.getElementById('prof-roster');
+  const regionEl = document.getElementById('prof-region');
+  if(titleEl)  titleEl.value  = p.title  || '';
+  if(rosterEl) rosterEl.value = p.roster || '52';
+  if(regionEl) regionEl.value = p.region || (getTeamRegistry().find(t=>t.name===emp)?.state || 'NSW');
+  renderProfileBand(p.title || '');
+}
+
+// Legacy stubs
+function rmSaveLastTitle(){}
+function rmRestoreLastTitle(){}
+
 
 // Legacy compat — keep addDay for any remaining references
 function addDay() { toast('Use the task rows below to add hours','info'); }
