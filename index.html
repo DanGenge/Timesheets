@@ -7,7 +7,6 @@
   <!-- v13.9 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -793,7 +792,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <div style="font-size:13px;font-weight:600" id="upload-filename"></div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-sm" onclick="cancelUpload()"><i class="ti ti-x"></i> Cancel</button>
-              <button class="btn btn-sm" onclick="showDataCleanerModal(uploadParsed,null)" style="gap:4px"><i class="ti ti-adjustments"></i> Review &amp; clean</button>
               <button class="btn btn-sm btn-primary" onclick="commitUpload()"><i class="ti ti-database-import"></i> Import data</button>
             </div>
           </div>
@@ -1078,10 +1076,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="page" id="page-reports">
       <div class="page-hdr" style="margin-bottom:10px">
         <div><div class="page-title" id="rpt-page-title">Reports</div><div class="page-meta" id="rpt-page-meta">NSW &amp; QLD Coal</div></div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn btn-sm" onclick="showDuplicateReview()" title="Review field name variants in loaded data"><i class="ti ti-eye-check"></i> Data quality</button>
-          <button class="btn btn-sm btn-blue" onclick="exportReport()"><i class="ti ti-download"></i> Export CSV</button>
-        </div>
+        <button class="btn btn-sm btn-blue" onclick="exportReport()"><i class="ti ti-download"></i> Export CSV</button>
       </div>
       <!-- USER PERSONAL REPORTS (shown to non-admins) -->
       <div id="user-reports-section" style="display:none">
@@ -1185,8 +1180,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="report-tab" onclick="switchRTab('leave',this)"><i class="ti ti-beach"></i> Leave</div>
         <div class="report-tab" onclick="switchRTab('site',this)"><i class="ti ti-map-pin"></i> By site</div>
         <div class="report-tab" onclick="switchRTab('trend',this)"><i class="ti ti-trending-up"></i> Monthly trend</div>
-        <div class="report-tab" onclick="switchRTab('resmod',this)"><i class="ti ti-users-group"></i> Resource modeller</div>
-        <div class="report-tab" onclick="switchRTab('visuals',this)"><i class="ti ti-chart-dots"></i> Visuals</div>
       </div>
 
       <!-- SUMMARY -->
@@ -1201,8 +1194,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-summary" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-summary" onchange="renderAdminTab('summary')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-summary" onchange="renderAdminTab('summary')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1260,8 +1257,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-tasks" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-tasks" onchange="renderAdminTab('tasks')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-tasks" onchange="renderAdminTab('tasks')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1307,8 +1308,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-customer" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-customer" onchange="renderAdminTab('customer')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-customer" onchange="renderAdminTab('customer')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1355,8 +1360,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-product" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-product" onchange="renderAdminTab('product')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-product" onchange="renderAdminTab('product')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1402,8 +1411,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-employee" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-employee" onchange="renderAdminTab('employee')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-employee" onchange="renderAdminTab('employee')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1449,8 +1462,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-leave" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-leave" onchange="renderAdminTab('leave')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-leave" onchange="renderAdminTab('leave')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1499,8 +1516,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-site" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-site" onchange="renderAdminTab('site')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-site" onchange="renderAdminTab('site')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1546,8 +1567,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
         <div class="tab-filter-group">
-          <label>Period</label>
-          <select id="tf-period-trend" style="min-width:170px"></select>
+          <label>Month from</label>
+          <select id="tf-mfrom-trend" onchange="renderAdminTab('trend')"></select>
+        </div>
+        <div class="tab-filter-group">
+          <label>Month to</label>
+          <select id="tf-mto-trend" onchange="renderAdminTab('trend')"></select>
         </div>
         <div class="tab-filter-group">
           <label>Employee</label>
@@ -1582,326 +1607,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
       </div>
 
-      <!-- RESOURCE MODELLER -->
-      <div class="report-panel" id="rpanel-resmod">
-        <style>
-        #rpanel-resmod .rm-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:1.25rem;}
-        #rpanel-resmod .rm-stat{background:#F5F4F0;border-radius:8px;padding:12px 16px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-stat{background:#272725;}}
-        #rpanel-resmod .rm-stat-lbl{font-size:11px;color:#6B6B6B;margin-bottom:4px;}
-        #rpanel-resmod .rm-stat-val{font-size:22px;font-weight:700;color:#1A1A1A;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-stat-val{color:#F0EDDF;}}
-        #rpanel-resmod .rm-stat-sub{font-size:11px;color:#ADADAD;margin-top:2px;}
-        #rpanel-resmod .rm-stat-val.eng{color:#185FA5;}
-        #rpanel-resmod .rm-stat-val.tech{color:#0F6E56;}
-        #rpanel-resmod .rm-section{background:#fff;border:1px solid rgba(0,0,0,0.09);border-radius:12px;padding:14px 18px;margin-bottom:12px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-section{background:#1E1E1C;border-color:rgba(255,255,255,0.08);}}
-        #rpanel-resmod .rm-section-hd{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#003087;margin-bottom:12px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-section-hd{color:#4BA8E8;}}
-        #rpanel-resmod .rm-section-hd i{font-size:15px;}
-        #rpanel-resmod .rm-cap-card{background:#F9F8F4;border-radius:8px;padding:12px 14px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-cap-card{background:#272725;}}
-        #rpanel-resmod .rm-cap-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-cap-row{border-color:rgba(255,255,255,0.06);}}
-        #rpanel-resmod .rm-cap-row:last-child{border-bottom:none;}
-        #rpanel-resmod .rm-cap-lbl{color:#6B6B6B;}
-        #rpanel-resmod .rm-cap-val{font-weight:600;color:#1A1A1A;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-cap-val{color:#F0EDDF;}}
-        #rpanel-resmod .rm-cap-val.highlight{color:#185FA5;}
-        #rpanel-resmod .rm-weight-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
-        #rpanel-resmod .rm-weight-box{background:#F9F8F4;border-radius:8px;padding:10px 12px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-weight-box{background:#272725;}}
-        #rpanel-resmod .rm-weight-lbl{font-size:11px;color:#6B6B6B;margin-bottom:4px;}
-        #rpanel-resmod .rm-weight-val{font-size:17px;font-weight:700;color:#1A1A1A;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-weight-val{color:#F0EDDF;}}
-        #rpanel-resmod .rm-site-table{width:100%;border-collapse:collapse;font-size:12px;}
-        #rpanel-resmod .rm-site-table th{font-size:10px;font-weight:600;color:#6B6B6B;text-align:left;padding:4px 8px;border-bottom:1px solid rgba(0,0,0,0.09);text-transform:uppercase;letter-spacing:0.03em;}
-        #rpanel-resmod .rm-site-table th.r{text-align:right;}
-        #rpanel-resmod .rm-site-table td{padding:7px 8px;border-bottom:0.5px solid rgba(0,0,0,0.06);vertical-align:middle;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-site-table td,#rpanel-resmod .rm-site-table th{border-color:rgba(255,255,255,0.06);}}
-        #rpanel-resmod .rm-site-table tr:last-child td{border-bottom:none;}
-        #rpanel-resmod .rm-site-table tr:hover td{background:rgba(0,48,135,0.04);}
-        #rpanel-resmod .rm-site-name{font-weight:600;color:#1A1A1A;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-site-name{color:#F0EDDF;}}
-        #rpanel-resmod .rm-site-cust{font-size:10px;color:#ADADAD;}
-        #rpanel-resmod .rm-bp-pill{font-size:10px;padding:2px 6px;border-radius:9px;white-space:nowrap;display:inline-block;margin:1px 1px 1px 0;}
-        #rpanel-resmod .rm-bp-cos{background:#E6F1FB;color:#0C447C;}
-        #rpanel-resmod .rm-bp-ds{background:#E1F5EE;color:#085041;}
-        #rpanel-resmod .rm-bp-bdt{background:#FAEEDA;color:#633806;}
-        #rpanel-resmod .rm-cx-bar-wrap{display:flex;align-items:center;gap:5px;}
-        #rpanel-resmod .rm-cx-track{width:72px;height:5px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;flex-shrink:0;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-cx-track{background:rgba(255,255,255,0.1);}}
-        #rpanel-resmod .rm-cx-fill{height:100%;border-radius:3px;}
-        #rpanel-resmod .rm-cx-lbl{font-size:11px;font-weight:700;min-width:22px;}
-        #rpanel-resmod .rm-chip{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:9px;font-weight:600;}
-        #rpanel-resmod .rm-chip-eng{background:#E6F1FB;color:#185FA5;}
-        #rpanel-resmod .rm-chip-tech{background:#E1F5EE;color:#0F6E56;}
-        #rpanel-resmod .rm-td-r{text-align:right;}
-        #rpanel-resmod .rm-del-btn{background:none;border:none;cursor:pointer;color:#ADADAD;padding:2px 4px;border-radius:4px;font-size:13px;}
-        #rpanel-resmod .rm-del-btn:hover{background:#FDEDEB;color:#C0392B;}
-        #rpanel-resmod .rm-source-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:9px;font-weight:600;}
-        #rpanel-resmod .rm-source-live{background:#E1F5EE;color:#085041;}
-        #rpanel-resmod .rm-source-manual{background:#FFF0E0;color:#8B4500;}
-        #rpanel-resmod .rm-controls{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;}
-        #rpanel-resmod .rm-ctrl label{display:block;font-size:10px;color:#6B6B6B;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;}
-        #rpanel-resmod .rm-ctrl select,#rpanel-resmod .rm-ctrl input[type=text]{height:30px;font-size:12px;border-radius:6px;}
-        #rpanel-resmod .rm-add-row{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;padding-top:10px;border-top:0.5px solid rgba(0,0,0,0.08);margin-top:10px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-add-row{border-color:rgba(255,255,255,0.07);}}
-        #rpanel-resmod .rm-add-row label{display:block;font-size:10px;color:#6B6B6B;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;}
-        #rpanel-resmod .rm-add-row input,#rpanel-resmod .rm-add-row select{height:30px;font-size:12px;}
-        #rpanel-resmod .rm-btn-add{height:30px;padding:0 12px;font-size:12px;font-weight:600;background:#003087;color:#fff;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;}
-        #rpanel-resmod .rm-btn-add:hover{background:#0057A8;}
-        #rpanel-resmod .rm-btn-refresh{height:30px;padding:0 12px;font-size:12px;font-weight:600;background:transparent;color:#003087;border:1px solid #003087;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-btn-refresh{color:#4BA8E8;border-color:#4BA8E8;}}
-        #rpanel-resmod .rm-btn-refresh:hover{background:#E6F0FA;}
-        #rpanel-resmod .rm-mix-row{display:grid;grid-template-columns:130px 1fr 80px;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;}
-        #rpanel-resmod .rm-mix-lbl{color:#6B6B6B;}
-        #rpanel-resmod .rm-mix-bars{display:flex;gap:3px;align-items:center;}
-        #rpanel-resmod .rm-mix-e{height:7px;border-radius:3px 0 0 3px;background:#185FA5;transition:width 0.25s;}
-        #rpanel-resmod .rm-mix-t{height:7px;border-radius:0 3px 3px 0;background:#0F6E56;transition:width 0.25s;}
-        #rpanel-resmod .rm-mix-pcts{font-size:11px;font-weight:600;color:#6B6B6B;white-space:nowrap;}
-        #rpanel-resmod .rm-info-box{background:#F5F4F0;border-radius:8px;padding:12px 16px;font-size:12px;color:#6B6B6B;line-height:1.6;}
-        @media(prefers-color-scheme:dark){#rpanel-resmod .rm-info-box{background:#272725;}}
-        #rpanel-resmod .rm-live-banner{background:#E1F5EE;border:1px solid rgba(15,110,86,0.2);border-radius:8px;padding:8px 14px;font-size:12px;color:#085041;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-        #rpanel-resmod .rm-nolive-banner{background:#FFF0E0;border:1px solid rgba(184,92,0,0.2);border-radius:8px;padding:8px 14px;font-size:12px;color:#8B4500;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-        </style>
-
-        <div id="rm-live-banner" class="rm-live-banner" style="display:none">
-          <i class="ti ti-circle-check"></i>
-          <span>Live data loaded — hours are aggregated from your full timesheet dataset across all employees and months.</span>
-          <button class="rm-btn-refresh" style="margin-left:auto" onclick="renderAdminResmod()"><i class="ti ti-refresh"></i> Refresh</button>
-        </div>
-        <div id="rm-nolive-banner" class="rm-nolive-banner" style="display:none">
-          <i class="ti ti-info-circle"></i>
-          <span>No live timesheet data found. Sites below use manually entered hour estimates. Load timesheet data from the cloud to auto-populate.</span>
-        </div>
-
-        <!-- Summary stat cards -->
-        <div class="rm-grid">
-          <div class="rm-stat"><div class="rm-stat-lbl">Sites modelled</div><div class="rm-stat-val" id="rm-stat-sites">—</div></div>
-          <div class="rm-stat"><div class="rm-stat-lbl">Avg complexity</div><div class="rm-stat-val" id="rm-stat-cx">—</div><div class="rm-stat-sub">out of 10</div></div>
-          <div class="rm-stat"><div class="rm-stat-lbl">Senior Engineers required</div><div class="rm-stat-val eng" id="rm-stat-eng">—</div><div class="rm-stat-sub">FTE</div></div>
-          <div class="rm-stat"><div class="rm-stat-lbl">Technical Services Representatives required</div><div class="rm-stat-val tech" id="rm-stat-tech">—</div><div class="rm-stat-sub">FTE</div></div>
-        </div>
-
-        <!-- Capacity & Weights -->
-        <div class="rm-section">
-          <div class="rm-section-hd"><i class="ti ti-adjustments-horizontal"></i> Capacity &amp; complexity weights</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-            <div>
-              <div style="font-size:10px;font-weight:600;color:#ADADAD;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Net billable capacity per FTE / year</div>
-              <div class="rm-cap-card">
-                <div class="rm-cap-row"><span class="rm-cap-lbl">Ordinary hours / week</span><span class="rm-cap-val">38 hrs</span></div>
-                <div class="rm-cap-row"><span class="rm-cap-lbl">Annual leave</span><span class="rm-cap-val">4 weeks</span></div>
-                <div class="rm-cap-row"><span class="rm-cap-lbl">Public holidays (est.)</span><span class="rm-cap-val">2 weeks</span></div>
-                <div class="rm-cap-row"><span class="rm-cap-lbl">Personal leave (est.)</span><span class="rm-cap-val">1 week</span></div>
-                <div class="rm-cap-row"><span class="rm-cap-lbl">Admin / non-billable (est.)</span><span class="rm-cap-val">2 weeks</span></div>
-                <div class="rm-cap-row"><span class="rm-cap-lbl">Net billable hrs / year</span><span class="rm-cap-val highlight">1,634 hrs</span></div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:600;color:#ADADAD;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Complexity driver weights</div>
-              <div class="rm-weight-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
-                <div class="rm-weight-box">
-                  <div class="rm-weight-lbl">Cost of Service hrs</div>
-                  <div class="rm-weight-val" id="rm-w-cos-val">25%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-cos" min="0" max="100" value="25" step="5" oninput="rmWeightChange()">
-                </div>
-                <div class="rm-weight-box">
-                  <div class="rm-weight-lbl">Direct Sales hrs</div>
-                  <div class="rm-weight-val" id="rm-w-ds-val">35%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-ds" min="0" max="100" value="35" step="5" oninput="rmWeightChange()">
-                </div>
-                <div class="rm-weight-box">
-                  <div class="rm-weight-lbl">BD &amp; Technology hrs</div>
-                  <div class="rm-weight-val" id="rm-w-bdt-val">25%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-bdt" min="0" max="100" value="25" step="5" oninput="rmWeightChange()">
-                </div>
-                <div class="rm-weight-box" style="border:1px solid rgba(26,110,64,0.3)">
-                  <div class="rm-weight-lbl" style="color:#1a6e40">Training (Internal)</div>
-                  <div class="rm-weight-val" id="rm-w-trn-val" style="color:#1a6e40">15%</div>
-                  <input type="range" style="width:100%;margin-top:5px" id="rm-w-trn" min="0" max="100" value="15" step="5" oninput="rmWeightChange()">
-                </div>
-              </div>
-              <div style="font-size:11px;color:#ADADAD;line-height:1.5">Weights control how each bucket drives complexity. Training (Internal) reflects site engagement depth — delivery hours count toward site complexity. Normalised internally, don't need to sum to 100.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Role mix -->
-        <div class="rm-section">
-          <div class="rm-section-hd"><i class="ti ti-sliders"></i> Role mix by complexity band</div>
-          <div style="font-size:11px;color:#6B6B6B;margin-bottom:10px">What % of a site's required capacity should be Senior Engineer vs Technical Services Representative? Drag to adjust per band.</div>
-          <div id="rm-mix-grid"></div>
-          <div style="display:flex;gap:14px;font-size:11px;color:#6B6B6B;margin-top:8px">
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#185FA5;display:inline-block"></span>Senior Engineer (Band E)</span>
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#0F6E56;display:inline-block"></span>Technical Services Representative (Band F)</span>
-          </div>
-        </div>
-
-        <!-- Site portfolio table -->
-        <div class="rm-section">
-          <div class="rm-section-hd"><i class="ti ti-map-pin"></i> Site portfolio</div>
-          <div class="rm-controls">
-            <div class="rm-ctrl"><label>Period</label>
-              <select id="rm-fy-filter" style="min-width:180px" onchange="rmRenderTable();rmRenderSummary()">
-                <option value="ALL">All time</option>
-              </select>
-            </div>
-            <div class="rm-ctrl"><label>State</label>
-              <select id="rm-filter-state" onchange="rmRenderTable();rmRenderSummary()">
-                <option value="ALL">All states</option>
-                <option value="NSW">NSW only</option>
-                <option value="QLD">QLD only</option>
-              </select>
-            </div>
-            <div class="rm-ctrl"><label>Sort by</label>
-              <select id="rm-sort" onchange="rmRenderTable()">
-                <option value="cx">Complexity ↓</option>
-                <option value="name">Site name</option>
-                <option value="eng">Engineer FTE ↓</option>
-                <option value="hrs">Total hrs ↓</option>
-              </select>
-            </div>
-            <div class="rm-ctrl" style="margin-left:auto">
-              <label>&nbsp;</label>
-              <div style="display:flex;gap:6px">
-                <button class="rm-btn-refresh" onclick="rmOpenMergeModal()" title="Merge duplicate sites">
-                  <i class="ti ti-git-merge"></i> Merge sites
-                </button>
-                <button class="rm-btn-refresh" id="rm-show-hidden-btn" onclick="rmToggleShowHidden()" title="Show/hide excluded sites">
-                  <i class="ti ti-eye-off"></i> <span id="rm-hidden-count">0</span> hidden
-                </button>
-              </div>
-            </div>
-          </div>
-          <div style="overflow-x:auto">
-            <table class="rm-site-table">
-              <thead><tr>
-                <th>Site</th>
-                <th>Time buckets (hrs in period)</th>
-                <th class="r">Total hrs</th>
-                <th>Complexity</th>
-                <th class="r">Eng FTE</th>
-                <th class="r">TSR FTE</th>
-                <th class="r">Source</th>
-                <th style="text-align:center;min-width:80px">Actions</th>
-              </tr></thead>
-              <tbody id="rm-site-tbody"></tbody>
-            </table>
-          </div>
-          <div id="rm-hidden-sites-section" style="display:none;margin-top:10px;padding:10px;background:rgba(0,0,0,0.03);border-radius:8px;border:1px dashed rgba(0,0,0,0.12)">
-            <div style="font-size:11px;font-weight:700;color:#ADADAD;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Hidden from model</div>
-            <div id="rm-hidden-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-          </div>
-          <!-- Add manual site -->
-          <div class="rm-add-row">
-            <div><label>Site name</label><input type="text" id="rm-new-name" placeholder="e.g. Narrabri" style="width:130px"></div>
-            <div><label>Customer</label>
-              <select id="rm-new-cust">
-                <option value="">Select…</option>
-                <option>Bloomfield Group</option><option>BHP</option><option>Glencore</option>
-                <option>Idemitsu</option><option>New Hope</option><option>Thiess</option>
-                <option>Yancoal</option><option>Whitehaven</option><option>Anglo American</option>
-                <option>Pembroke</option><option>Stanmore</option><option>Qcoal</option>
-                <option>Goldings</option><option>Other</option>
-              </select>
-            </div>
-            <div><label>CoS hrs/yr</label><input type="number" id="rm-new-cos" min="0" max="9999" value="200" style="width:75px"></div>
-            <div><label>DS hrs/yr</label><input type="number" id="rm-new-ds" min="0" max="9999" value="100" style="width:75px"></div>
-            <div><label>BD&amp;T hrs/yr</label><input type="number" id="rm-new-bdt" min="0" max="9999" value="50" style="width:75px"></div>
-            <div><label>State</label>
-              <select id="rm-new-state" style="width:65px">
-                <option value="NSW">NSW</option><option value="QLD">QLD</option>
-              </select>
-            </div>
-            <button class="rm-btn-add" onclick="rmAddSite()"><i class="ti ti-plus"></i> Add</button>
-          </div>
-        </div>
-
-        <!-- Algorithm explainer -->
-        <div class="rm-section" style="border-style:dashed">
-          <div class="rm-section-hd"><i class="ti ti-info-circle"></i> How the algorithm works</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-            <div class="rm-info-box">
-              <strong style="color:#003087">Complexity score (1–10)</strong><br>
-              Weighted hours across CoS, Direct Sales, BD&T, and Training (Internal) are normalised against a reference site of ~1,500 weighted hrs/year = score 5. Higher hours and a higher proportion of DS and BD&T push the score up. Scores are clamped 1–10. When filtering by FY or quarter, hours are annualised to a full-year equivalent so complexity is comparable across periods.
-            </div>
-            <div class="rm-info-box">
-              <strong style="color:#003087">FTE calculation</strong><br>
-              Score × 327 hrs/yr = total annual hours required at that site. The role-mix split allocates those hours to Engineer vs Technical Services Representative. Dividing by 1,634 net billable hrs/FTE/year gives headcount. Totals across all sites give the portfolio requirement.
-            </div>
-          </div>
-        </div>
-      </div><!-- /rpanel-resmod -->
-
-      <!-- VISUALS BUILDER -->
-      <div class="report-panel" id="rpanel-visuals">
-        <style>
-        #rpanel-visuals{padding-top:4px;}
-        .vb-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;}
-        .vb-group{display:flex;flex-direction:column;gap:3px;}
-        .vb-group label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
-        .vb-group select,.vb-group input{height:32px;font-size:12px;border-radius:6px;min-width:110px;}
-        .vb-btn{height:32px;padding:0 14px;font-size:12px;font-weight:600;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;}
-        .vb-btn-primary{background:#003087;color:#fff;}
-        .vb-btn-primary:hover{background:#002268;}
-        .vb-btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
-        .vb-btn-secondary:hover{background:var(--surface);}
-        .vb-btn-green{background:#1D9E75;color:#fff;}
-        .vb-btn-green:hover{background:#158060;}
-        .vb-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:14px;}
-        .vb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
-        .vb-card-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);}
-        .vb-card-title{font-size:13px;font-weight:600;color:var(--text);}
-        .vb-card-subtitle{font-size:11px;color:var(--muted);margin-top:1px;}
-        .vb-card-actions{display:flex;gap:4px;}
-        .vb-icon-btn{width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;}
-        .vb-icon-btn:hover{background:var(--surface);color:var(--text);}
-        .vb-icon-btn.danger:hover{background:#FDEDEB;color:#C0392B;}
-        .vb-canvas-wrap{padding:14px;flex:1;}
-        .vb-canvas-wrap canvas{width:100%!important;}
-        .vb-empty{text-align:center;padding:48px 24px;color:var(--muted);font-size:13px;}
-        .vb-empty i{font-size:40px;display:block;margin-bottom:10px;opacity:0.3;}
-        .vb-style-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
-        .vb-style-opt{border:2px solid var(--border);border-radius:8px;padding:10px 6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s;}
-        .vb-style-opt:hover{border-color:#003087;background:#EBF4FF;}
-        .vb-style-opt.selected{border-color:#003087;background:#E6F0FA;}
-        .vb-style-opt i{font-size:22px;color:#003087;display:block;margin-bottom:4px;}
-        .vb-style-opt span{font-size:11px;font-weight:600;color:var(--text);}
-        .vb-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;}
-        .vb-modal{background:var(--bg);border-radius:12px;width:min(640px,95vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25);}
-        .vb-modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-        .vb-modal-title{font-size:15px;font-weight:700;color:var(--text);}
-        .vb-modal-body{overflow-y:auto;flex:1;padding:18px 20px;}
-        .vb-modal-ft{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
-        .vb-field{margin-bottom:14px;}
-        .vb-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
-        .vb-field select,.vb-field input[type=text]{width:100%;height:36px;font-size:13px;}
-        .vb-ppt-toast{position:fixed;bottom:24px;right:24px;background:#1D9E75;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:opacity .3s;}
-        </style>
-
-        <div class="vb-toolbar">
-          <div style="flex:1;min-width:200px">
-            <div style="font-size:15px;font-weight:700;color:var(--text)">Visuals</div>
-            <div style="font-size:11px;color:var(--muted)">Build charts from your timesheet data. Copy as image or export to PowerPoint.</div>
-          </div>
-          <button class="vb-btn vb-btn-primary" onclick="vbOpenAddModal()">
-            <i class="ti ti-plus"></i> Add visual
-          </button>
-          <button class="vb-btn vb-btn-green" onclick="vbExportAllPptx()" id="vb-pptx-btn">
-            <i class="ti ti-file-presentation"></i> Export all to PowerPoint
-          </button>
-        </div>
-
-        <div id="vb-board" class="vb-board">
-          <div class="vb-empty" id="vb-empty-state">
-            <i class="ti ti-chart-dots"></i>
-            No visuals yet — click <strong>Add visual</strong> to build your first chart.
-          </div>
-        </div>
-      </div><!-- /rpanel-visuals -->
-
     </div><!-- /admin-reports-section -->
 
       <!-- ADMIN PAGE → Upload only -->
@@ -1929,7 +1634,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <div style="font-size:13px;font-weight:600" id="upload-filename"></div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-sm" onclick="cancelUpload()"><i class="ti ti-x"></i> Cancel</button>
-              <button class="btn btn-sm" onclick="showDataCleanerModal(uploadParsed,null)" style="gap:4px"><i class="ti ti-adjustments"></i> Review &amp; clean</button>
               <button class="btn btn-sm btn-primary" onclick="commitUpload()"><i class="ti ti-database-import"></i> Import data</button>
             </div>
           </div>
@@ -2889,101 +2593,31 @@ const RPT_COLORS = ['#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5',
 const LEAVE_COLORS=['#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5','#A8D4F5','#E6F0FA'];
 const BP_COLORS_MAP={'Cost.of.Service':'#003087','Direct.Sales':'#0072CE','BD.and.Technology':'#4BA8E8','Administration':'#A8D4F5'};
 
-// ── Infer the calendar year for an entry ─────────────────────────
-// Entries imported before the year-field existed have no .year.
-// We derive it from the first day-entry date (most reliable), then
-// fall back to the sheet name year if stored, then leave undefined
-// so the period filter can treat it as "unknown / match all FYs".
-function entryYear(e) {
-  if(e.year) return String(e.year);
-  if(e._year && e._year !== '2026') return String(e._year); // avoid the bad default
-  // Try to get year from first day entry date
-  const firstDay = (e.days||[])[0];
-  if(firstDay && firstDay.date) return firstDay.date.slice(0,4);
-  return null; // unknown — will be excluded from year-specific filters
-}
+// ── Tab filter state (one object per tab) ──────────────────────
 const TAB_IDS = ['summary','tasks','customer','product','employee','leave','site','trend'];
 const tabState = {};
 TAB_IDS.forEach(t=>{
-  tabState[t]={state:'ALL',mFrom:0,mTo:11,yearFilter:'ALL',emps:new Set(),custFilter:'ALL',siteFilter:'ALL',bpFilter:'ALL'};
+  tabState[t]={state:'ALL',mFrom:0,mTo:11,emps:new Set(),custFilter:'ALL',siteFilter:'ALL',bpFilter:'ALL'};
 });
 
-// Orica fiscal year helpers (FY ends Sep 30)
-// FY2025 = Oct 2024 – Sep 2025, FY2026 = Oct 2025 – Sep 2026
-function getFiscalYear(calYear, monthIdx) {
-  // monthIdx: 0=Jan…11=Dec. Oct(9),Nov(10),Dec(11) belong to next FY
-  return monthIdx >= 9 ? calYear + 1 : calYear;
-}
-function getFYLabel(fy) { return `FY${fy} (Oct ${fy-1}–Sep ${fy})`; }
-function getAvailableYears() {
-  // Scan all employees/months for years present in the data
-  const years = new Set(['2025','2026']);
-  getEmployees().forEach(emp => {
-    MONTHS.forEach(m => {
-      loadEntries(emp,m).forEach(e => { if(e.year) years.add(String(e.year)); });
-    });
-  });
-  return [...years].sort();
-}
-
-// ── Init tab filters ──────────────────────────────────────────────
-// Called each time the reports section is opened. The period picker
-// is rebuilt every time (cheap) so newly imported years appear.
-// Other filters (customer, site, bp, employee) are only built once.
+// ── Init tab filters (called once on first admin report show) ──
 let tabFiltersInited = false;
 function initTabFilters(){
-  const years = getAvailableYears();
-
-  // Current Orica fiscal year: Oct 1 → Sep 30
-  // If today is Oct–Dec, we're in the FY that ends next Sep.
-  const now = new Date();
-  const currentFY = now.getMonth() >= 9 ? now.getFullYear()+1 : now.getFullYear();
-
+  if(tabFiltersInited) return;
+  tabFiltersInited = true;
   TAB_IDS.forEach(tid=>{
-    // --- Period picker: always rebuild so new years appear ---
-    const periodEl = document.getElementById('tf-period-'+tid);
-    if(periodEl) {
-      const currentVal = periodEl.value; // preserve current selection if set
-      let html = '<option value="ALL">All time</option>';
-      // Fiscal years (most prominent — Orica native)
-      const fySet = new Set(years.flatMap(y=>[parseInt(y), parseInt(y)+1]));
-      const fys = [...fySet].sort((a,b)=>b-a); // newest first
-      html += '<optgroup label="── Fiscal Year (Oct–Sep) ──">';
-      fys.forEach(fy => { html += `<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
-      html += '</optgroup>';
-      // FY Quarters
-      html += '<optgroup label="── Fiscal Year Quarters ──">';
-      fys.forEach(fy => {
-        html += `<option value="FY${fy}Q1">FY${fy} Q1 &nbsp;Oct–Dec ${fy-1}</option>`;
-        html += `<option value="FY${fy}Q2">FY${fy} Q2 &nbsp;Jan–Mar ${fy}</option>`;
-        html += `<option value="FY${fy}Q3">FY${fy} Q3 &nbsp;Apr–Jun ${fy}</option>`;
-        html += `<option value="FY${fy}Q4">FY${fy} Q4 &nbsp;Jul–Sep ${fy}</option>`;
+    // Month from/to
+    ['tf-mfrom-','tf-mto-'].forEach((prefix,isTo)=>{
+      const sel=document.getElementById(prefix+tid);
+      if(!sel)return;
+      MONTHS.forEach((m,i)=>{
+        const o=document.createElement('option');
+        o.value=i; o.textContent=m+' 2026';
+        if(!isTo&&i===0)o.selected=true;
+        if(isTo&&i===11)o.selected=true;
+        sel.appendChild(o);
       });
-      html += '</optgroup>';
-      // Calendar years
-      html += '<optgroup label="── Calendar Year ──">';
-      [...years].sort((a,b)=>b-a).forEach(y => { html += `<option value="CY${y}">Calendar ${y}</option>`; });
-      html += '</optgroup>';
-      // Individual months
-      html += '<optgroup label="── Individual Months ──">';
-      [...years].sort((a,b)=>b-a).forEach(y => {
-        MONTHS.forEach(m => { html += `<option value="${y}-${m}">${m} ${y}</option>`; });
-      });
-      html += '</optgroup>';
-      periodEl.innerHTML = html;
-      // Restore previous selection, or default to current FY
-      if(currentVal && currentVal !== '' && periodEl.querySelector(`option[value="${currentVal}"]`)) {
-        periodEl.value = currentVal;
-      } else {
-        const defaultOpt = periodEl.querySelector(`option[value="FY${currentFY}"]`);
-        if(defaultOpt) defaultOpt.selected = true;
-      }
-      // Wire change handler (safe to re-add — remove first)
-      periodEl.onchange = () => renderAdminTab(tid);
-    }
-
-    if(tabFiltersInited) return; // rest only needs to run once
-
+    });
     // Customer filter
     const cs=document.getElementById('tf-cust-'+tid);
     if(cs){
@@ -3002,10 +2636,10 @@ function initTabFilters(){
     }
     // Employee dropdown
     buildEmpDrop(tid);
+    // Select all employees by default
     tabState[tid].emps = new Set(EMPLOYEES);
     updateEmpDropLabel(tid);
   });
-  tabFiltersInited = true;
 }
 
 // ── Employee multi-select dropdown ──────────────────────────────
@@ -3104,8 +2738,8 @@ function resetTabFilters(tid){
   // Reset UI
   document.querySelectorAll(`#tf-${tid} .state-btn`).forEach(b=>b.classList.remove('active'));
   document.getElementById('ts-all-'+tid)?.classList.add('active');
-  const pd=document.getElementById('tf-period-'+tid);
-  if(pd){ const fy26=pd.querySelector('option[value="FY2026"]'); if(fy26) fy26.selected=true; else pd.selectedIndex=0; }
+  const mf=document.getElementById('tf-mfrom-'+tid); if(mf)mf.value=0;
+  const mt=document.getElementById('tf-mto-'+tid); if(mt)mt.value=11;
   document.querySelectorAll(`#edl-${tid} input[type=checkbox]`).forEach(cb=>cb.checked=true);
   updateEmpDropLabel(tid);
   const cs=document.getElementById('tf-cust-'+tid); if(cs)cs.value='ALL';
@@ -3114,80 +2748,30 @@ function resetTabFilters(tid){
   renderAdminTab(tid);
 }
 
-// ── Parse a period selector value into a filter function ──────────
-// period: 'ALL' | 'FYnnnn' | 'FYnnnnQn' | 'CYnnnn' | 'YYYY-Month'
-function periodToFilter(period) {
-  if(!period || period === 'ALL') return () => true;
-  // FY quarter e.g. FY2026Q1
-  const qm = period.match(/^FY(\d{4})Q(\d)$/);
-  if(qm) {
-    const fy = parseInt(qm[1]), q = parseInt(qm[2]);
-    // Q1=Oct-Dec(prev cal yr), Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep (all same cal yr as fy)
-    const qMonths = {
-      1: [{y:fy-1,m:'October'},{y:fy-1,m:'November'},{y:fy-1,m:'December'}],
-      2: [{y:fy,m:'January'},{y:fy,m:'February'},{y:fy,m:'March'}],
-      3: [{y:fy,m:'April'},{y:fy,m:'May'},{y:fy,m:'June'}],
-      4: [{y:fy,m:'July'},{y:fy,m:'August'},{y:fy,m:'September'}],
-    }[q] || [];
-    const set = new Set(qMonths.map(x=>`${x.y}-${x.m}`));
-    return (e,month,year) => set.has(`${year}-${month}`);
-  }
-  // Full FY e.g. FY2026
-  const fym = period.match(/^FY(\d{4})$/);
-  if(fym) {
-    const fy = parseInt(fym[1]);
-    return (e,month,year) => {
-      const mi = MONTHS.indexOf(month);
-      const calYear = parseInt(year||'2026');
-      // Q1 months (Oct-Dec) belong to fy if calYear === fy-1
-      // Q2-Q4 months (Jan-Sep) belong to fy if calYear === fy
-      return mi >= 9 ? calYear === fy-1 : calYear === fy;
-    };
-  }
-  // Calendar year e.g. CY2025
-  const cym = period.match(/^CY(\d{4})$/);
-  if(cym) {
-    const cy = cym[1];
-    return (e,month,year) => String(year||'2026') === cy;
-  }
-  // Specific month e.g. 2025-January
-  const mm = period.match(/^(\d{4})-(.+)$/);
-  if(mm) {
-    return (e,month,year) => month === mm[2] && String(year||'2026') === mm[1];
-  }
-  return () => true;
-}
-
 // ── Get filtered entries for a tab ──────────────────────────────
 function getTabEntries(tid){
   const s=tabState[tid];
-  const period=(document.getElementById('tf-period-'+tid)?.value)||'FY2026';
+  const mFrom=parseInt(document.getElementById('tf-mfrom-'+tid)?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-'+tid)?.value??11);
   const custF=(document.getElementById('tf-cust-'+tid)?.value)||'ALL';
   const siteF=(document.getElementById('tf-site-'+tid)?.value)||'ALL';
   const bpF  =(document.getElementById('tf-bp-'+tid)?.value)||'ALL';
   const stateF=s?.state||'ALL';
   const emps=s?.emps ? [...s.emps] : getEmployees();
-  const passFilter = periodToFilter(period);
 
   let all=[];
   emps.forEach(emp=>{
     const empRec=getTeamRegistry().find(t=>t.name===emp);
     if(!empRec) return;
     if(stateF!=='ALL'&&empRec.state!==stateF) return;
-    // Load all months and filter by period+year
-    MONTHS.forEach((month,mi)=>{
-      loadEntries(emp,month).forEach(e=>{
-        const yr = entryYear(e);
-        // If year is unknown and period is year-specific, exclude.
-        // If period is ALL, include regardless.
-        if(yr === null && period !== 'ALL') return;
-        if(!passFilter(e, month, yr || '0000')) return;
+    for(let mi=mFrom;mi<=mTo;mi++){
+      loadEntries(emp,MONTHS[mi]).forEach(e=>{
         if(custF!=='ALL'&&e.customer!==custF) return;
         if(siteF!=='ALL'&&e.site!==siteF) return;
         if(bpF!=='ALL'&&e.bp!==bpF) return;
-        all.push({...e,_emp:emp,_month:month,_monthIdx:mi,_year:yr||'?'});
+        all.push({...e,_emp:emp,_month:MONTHS[mi],_monthIdx:mi});
       });
-    });
+    }
   });
   return all;
 }
@@ -3195,24 +2779,6 @@ function getTabEntries(tid){
 function getTH(entries){return entries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);}
 function fmtK(n){return n>=1000?(n/1000).toFixed(1)+'K':n.toFixed(0);}
 function pctStr(v,t){return t>0?Math.round(v/t*100)+'%':'0%';}
-
-// Returns [mFrom, mTo] (0-11) for chart renderers that need a month range.
-// For multi-month periods, returns the full span visible in the data.
-// This is approximate — used only for highlight dimming on monthly bar charts.
-function periodToMonthRange(period) {
-  if(!period || period === 'ALL') return [0, 11];
-  const qm = period.match(/^FY(\d{4})Q(\d)$/);
-  if(qm) {
-    const q = parseInt(qm[2]);
-    const ranges = {1:[9,11], 2:[0,2], 3:[3,5], 4:[6,8]};
-    return ranges[q] || [0,11];
-  }
-  if(/^FY\d{4}$/.test(period)) return [0,11];
-  if(/^CY\d{4}$/.test(period)) return [0,11];
-  const mm = period.match(/^(\d{4})-(.+)$/);
-  if(mm) { const i=MONTHS.indexOf(mm[2]); return i>=0?[i,i]:[0,11]; }
-  return [0,11];
-}
 
 // ── Horizontal bar builder (PDF style) ──────────────────────────
 function renderHorizBars(containerId,data,palette,maxShown=15){
@@ -3285,7 +2851,7 @@ function switchRTab(name,el){
 function renderAdminTab(tid){
   const fn={summary:renderAdminSummary,tasks:renderAdminTasks,customer:renderAdminCustomer,
     product:renderAdminProduct,employee:renderAdminEmployee,leave:renderAdminLeave,
-    site:renderAdminSite,trend:renderAdminTrend,resmod:renderAdminResmod,visuals:renderAdminVisuals};
+    site:renderAdminSite,trend:renderAdminTrend};
   if(fn[tid]) fn[tid]();
 }
 
@@ -3295,7 +2861,8 @@ function renderAdminTab(tid){
 function renderAdminSummary(){
   const entries=getTabEntries('summary');
   const total=getTH(entries);
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-summary')?.value||'FY2026');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-summary')?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-summary')?.value??11);
 
   // Stat cards
   const uniqueEmps=new Set(entries.map(e=>e._emp)).size;
@@ -3329,7 +2896,8 @@ function renderAdminSummary(){
 function renderAdminTasks(){
   const entries=getTabEntries('tasks');
   const total=getTH(entries);
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-tasks')?.value||'FY2026');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-tasks')?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-tasks')?.value??11);
   const byTask={};
   entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
   const sorted=Object.entries(byTask).sort((a,b)=>b[1]-a[1]);
@@ -3457,7 +3025,8 @@ function renderAdminEmployee(){
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});
   }
   // Summary table
-  const [mFrom,mTo]=periodToMonthRange(document.getElementById('tf-period-employee')?.value||'FY2026');
+  const mFrom=parseInt(document.getElementById('tf-mfrom-employee')?.value??0);
+  const mTo  =parseInt(document.getElementById('tf-mto-employee')?.value??11);
   const months=mTo-mFrom+1;
   const tbl=document.getElementById('emp-detail-table');
   if(tbl){
@@ -3633,1128 +3202,6 @@ function exportReport(){
 
 
 
-
-// ════════════════════════════════════════════════════════════════════
-// RESOURCE MODELLER
-// ════════════════════════════════════════════════════════════════════
-const RM_NET_HRS = 1634;
-const RM_HRS_PER_CX = 327;
-const RM_REF_HRS = 750; // ~1,500 weighted hrs/yr → complexity 5 (normalised ref point)
-
-// Training tasks that count toward site complexity
-const RM_TRAINING_TASKS = [
-  'Training (Internal)', 'WebGen™ Training', 'SEB Course - Delivery',
-  'SEB Course - Planning', 'Training (New Technology)', '4D™ Training',
-];
-
-// Mix band defaults: [label, maxCx, defaultEngPct]
-const RM_MIX_BANDS = [
-  ['Very low (1–2)',   2,  20],
-  ['Low (3–4)',        4,  35],
-  ['Medium (5–6)',     6,  55],
-  ['High (7–8)',       8,  70],
-  ['Very high (9–10)',10,  85],
-];
-
-// State: manual overrides (kept across re-renders)
-let _rmMixOverrides = {};
-let _rmManualSites = [];  // [{id,name,cust,state,cos,ds,bdt,trn}]
-let _rmNextId = 1;
-// Site management state
-let _rmHidden  = new Set(); // Set of site keys (name|||cust) to hide from model
-let _rmMerges  = {};        // {variantKey: canonicalKey} — variant's hours fold into canonical
-let _rmShowHidden = false;  // whether hidden section is expanded
-
-function rmGetWeights(){
-  const cos = +(document.getElementById('rm-w-cos')?.value||25);
-  const ds  = +(document.getElementById('rm-w-ds')?.value||35);
-  const bdt = +(document.getElementById('rm-w-bdt')?.value||25);
-  const trn = +(document.getElementById('rm-w-trn')?.value||15);
-  const tot = cos+ds+bdt+trn || 1;
-  return {cos:cos/tot, ds:ds/tot, bdt:bdt/tot, trn:trn/tot};
-}
-
-function rmCalcCx(cos,ds,bdt,trn){
-  const w = rmGetWeights();
-  const weighted = cos*w.cos + ds*w.ds + bdt*w.bdt + (trn||0)*w.trn;
-  let cx = (weighted / RM_REF_HRS) * 5;
-  return Math.round(Math.max(1, Math.min(10, cx)) * 10) / 10;
-}
-
-function rmGetEngPct(cx){
-  const band = RM_MIX_BANDS.find(b=>cx<=b[1]) || RM_MIX_BANDS[RM_MIX_BANDS.length-1];
-  return _rmMixOverrides[band[0]] !== undefined ? _rmMixOverrides[band[0]] : band[2];
-}
-
-function rmCalcFTE(cos,ds,bdt,trn){
-  const cx = rmCalcCx(cos,ds,bdt,trn);
-  const hrsNeeded = cx * RM_HRS_PER_CX;
-  const engPct = rmGetEngPct(cx) / 100;
-  return {
-    cx,
-    hrsNeeded: Math.round(hrsNeeded),
-    engFte: Math.round(hrsNeeded * engPct / RM_NET_HRS * 100) / 100,
-    techFte: Math.round(hrsNeeded * (1-engPct) / RM_NET_HRS * 100) / 100,
-  };
-}
-
-function rmCxColor(cx){
-  if(cx<=2) return '#888780';
-  if(cx<=4) return '#1D9E75';
-  if(cx<=6) return '#BA7517';
-  if(cx<=8) return '#185FA5';
-  return '#E24B4A';
-}
-
-// Build the FY period filter dropdown
-function rmBuildFYFilter(){
-  const sel = document.getElementById('rm-fy-filter');
-  if(!sel) return;
-  const currentVal = sel.value;
-  const years = getAvailableYears();
-  const fySet = new Set(years.flatMap(y=>[parseInt(y), parseInt(y)+1]));
-  const fys = [...fySet].sort((a,b)=>b-a);
-  let html = '<option value="ALL">All time</option>';
-  html += '<optgroup label="── Fiscal Year ──">';
-  fys.forEach(fy => { html += `<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
-  html += '</optgroup>';
-  html += '<optgroup label="── FY Quarters ──">';
-  fys.forEach(fy => {
-    html += `<option value="FY${fy}Q1">FY${fy} Q1 Oct–Dec ${fy-1}</option>`;
-    html += `<option value="FY${fy}Q2">FY${fy} Q2 Jan–Mar ${fy}</option>`;
-    html += `<option value="FY${fy}Q3">FY${fy} Q3 Apr–Jun ${fy}</option>`;
-    html += `<option value="FY${fy}Q4">FY${fy} Q4 Jul–Sep ${fy}</option>`;
-  });
-  html += '</optgroup>';
-  sel.innerHTML = html;
-  // Default to current FY; restore previous if valid
-  const now = new Date();
-  const currentFY = now.getMonth() >= 9 ? now.getFullYear()+1 : now.getFullYear();
-  if(currentVal && sel.querySelector(`option[value="${currentVal}"]`)) {
-    sel.value = currentVal;
-  } else {
-    const def = sel.querySelector(`option[value="FY${currentFY}"]`);
-    if(def) def.selected = true;
-  }
-}
-
-// How many months are in a given period selector value?
-// Used to annualise partial-year hours to a full-year equivalent.
-function rmPeriodMonths(period){
-  if(!period || period === 'ALL') return 12;
-  if(/^FY\d{4}Q\d$/.test(period)) return 3;
-  if(/^FY\d{4}$/.test(period)) return 12;
-  if(/^CY\d{4}$/.test(period)) return 12;
-  if(/^\d{4}-.+$/.test(period)) return 1;
-  return 12;
-}
-
-// Aggregate live data from loadEntries into per-site buckets, filtered by FY period
-// ── FY blending: how many months into the current FY are we? ────────
-// Returns {prevFY, currentFY, blendPrev, blendCurrent}
-// blendPrev = weight for last completed FY (1.0 at FY start, 0.0 at FY end)
-// blendCurrent = weight for in-progress current FY data (0.0 at start, 1.0 at end)
-// Together these sum to 1.0. When a FY is fully complete, only that year's data is used.
-function rmGetFYBlend(){
-  const now = new Date();
-  const mo = now.getMonth(); // 0=Jan
-  // FY starts Oct 1 (mo=9). Months into current FY:
-  const mthsIntoCurrent = mo >= 9 ? mo - 9 : mo + 3;
-  const currentFY = mo >= 9 ? now.getFullYear()+1 : now.getFullYear();
-  const prevFY    = currentFY - 1;
-  // Progress through current FY (0=just started, 1=complete)
-  const progress  = mthsIntoCurrent / 12;
-  return {
-    prevFY,
-    currentFY,
-    blendPrev:    Math.max(0, 1 - progress),  // fades as year progresses
-    blendCurrent: Math.min(1, progress),        // grows as year progresses
-    mthsIntoCurrent,
-    progress,
-  };
-}
-
-// ── Aggregate hours for one FY period from loaded data ──────────────
-function rmAggregateForPeriod(fyPeriod){
-  const passFilter = periodToFilter(fyPeriod);
-  const siteMap = {};
-  const employees = getEmployees();
-
-  employees.forEach(emp => {
-    const empRec = getTeamRegistry().find(t=>t.name===emp);
-    if(!empRec || empRec.role==='admin') return;
-    MONTHS.forEach(month => {
-      loadEntries(emp, month).forEach(e => {
-        const yr = entryYear(e);
-        if(yr === null) return;
-        if(!passFilter(e, month, yr)) return;
-
-        const rawSite = (e.site||'').trim();
-        if(!rawSite || rawSite==='Other' || e.customer==='Orica') return;
-        const rawKey = rawSite + '|||' + (e.customer||'');
-
-        // Apply merge: if this key is a variant, fold into canonical
-        const canonKey = _rmMerges[rawKey] || rawKey;
-        const [canonName, canonCust] = canonKey.split('|||');
-
-        if(!siteMap[canonKey]){
-          siteMap[canonKey] = {
-            name: canonName, cust: canonCust||'',
-            state: empRec.state||'NSW',
-            cos:0, ds:0, bdt:0, trn:0,
-            key: canonKey,
-          };
-        }
-        const hrs = parseFloat(e.total)||0;
-        const bp  = e.bp||'';
-        const task = e.task||'';
-        if(bp==='Cost.of.Service')      siteMap[canonKey].cos += hrs;
-        else if(bp==='Direct.Sales')    siteMap[canonKey].ds  += hrs;
-        else if(bp==='BD.and.Technology') siteMap[canonKey].bdt += hrs;
-        if(RM_TRAINING_TASKS.includes(task)) siteMap[canonKey].trn += hrs;
-      });
-    });
-  });
-  return siteMap;
-}
-
-function rmBuildLiveSites(){
-  const selectedPeriod = document.getElementById('rm-fy-filter')?.value || 'ALL';
-
-  // ── Smart FY blending (only when "current FY" is selected) ────────
-  // If user has manually selected a specific period, honour it exactly.
-  // If they've selected the current FY (or All time), use blended data.
-  const blend = rmGetFYBlend();
-  const isCurrentFY = selectedPeriod === `FY${blend.currentFY}` || selectedPeriod === 'ALL';
-  const isPrevFYComplete = blend.progress >= 1; // Sep 30 has passed = prev FY fully done
-
-  let siteData; // final map of canonKey → site bucket
-
-  if(isCurrentFY && blend.mthsIntoCurrent > 0 && blend.mthsIntoCurrent < 12){
-    // Blended mode: weighted avg of last-FY annual actuals + this-FY annualised-to-date
-    const prevMap    = rmAggregateForPeriod(`FY${blend.prevFY}`);
-    const currentMap = rmAggregateForPeriod(`FY${blend.currentFY}`);
-
-    // Annualise current-FY partial data
-    const annF = 12 / blend.mthsIntoCurrent;
-
-    // Merge keys from both maps
-    const allKeys = new Set([...Object.keys(prevMap), ...Object.keys(currentMap)]);
-    siteData = {};
-    allKeys.forEach(k => {
-      const p = prevMap[k]    || {cos:0,ds:0,bdt:0,trn:0};
-      const c = currentMap[k] || {cos:0,ds:0,bdt:0,trn:0};
-      const ref = prevMap[k] || currentMap[k];
-      // Blend: prev weighted by blendPrev, current annualised weighted by blendCurrent
-      siteData[k] = {
-        name: ref.name, cust: ref.cust, state: ref.state, key: k,
-        cos: p.cos * blend.blendPrev + (c.cos * annF) * blend.blendCurrent,
-        ds:  p.ds  * blend.blendPrev + (c.ds  * annF) * blend.blendCurrent,
-        bdt: p.bdt * blend.blendPrev + (c.bdt * annF) * blend.blendCurrent,
-        trn: p.trn * blend.blendPrev + (c.trn * annF) * blend.blendCurrent,
-        _blended: true,
-        _blendPrev: Math.round(blend.blendPrev*100),
-        _blendCurrent: Math.round(blend.blendCurrent*100),
-      };
-    });
-  } else {
-    // Explicit period selected — use it directly, annualise if partial
-    const periodMths = rmPeriodMonths(selectedPeriod);
-    const annF = periodMths < 12 ? 12 / periodMths : 1;
-    const rawMap = rmAggregateForPeriod(selectedPeriod);
-    siteData = {};
-    Object.entries(rawMap).forEach(([k,s]) => {
-      siteData[k] = {
-        ...s,
-        cos: s.cos * annF,
-        ds:  s.ds  * annF,
-        bdt: s.bdt * annF,
-        trn: s.trn * annF,
-        _annualised: annF > 1,
-      };
-    });
-  }
-
-  return Object.values(siteData)
-    .filter(s=>(s.cos+s.ds+s.bdt+s.trn)>0);
-}
-
-function rmRenderMixGrid(){
-  const g = document.getElementById('rm-mix-grid');
-  if(!g) return;
-  g.innerHTML = RM_MIX_BANDS.map(([label, maxCx, defPct])=>{
-    const ep = _rmMixOverrides[label] !== undefined ? _rmMixOverrides[label] : defPct;
-    const tp = 100 - ep;
-    const eW = Math.round(ep * 1.6);
-    const tW = Math.round(tp * 1.6);
-    return `<div class="rm-mix-row">
-      <div class="rm-mix-lbl">${label}</div>
-      <div class="rm-mix-bars">
-        <div class="rm-mix-e" style="width:${eW}px"></div>
-        <div class="rm-mix-t" style="width:${tW}px"></div>
-        <input type="range" min="0" max="100" value="${ep}" step="5" data-band="${label}"
-          style="margin-left:6px;width:100px" oninput="rmMixChange(this)">
-      </div>
-      <div class="rm-mix-pcts" style="color:#185FA5">${ep}% <span style="color:#0F6E56">/ ${tp}%</span></div>
-    </div>`;
-  }).join('');
-}
-
-function rmMixChange(el){
-  _rmMixOverrides[el.dataset.band] = +el.value;
-  rmSavePrefs();
-  rmRenderMixGrid();
-  rmRenderTable();
-  rmRenderSummary();
-}
-
-function rmWeightChange(){
-  const cos = +(document.getElementById('rm-w-cos')?.value||25);
-  const ds  = +(document.getElementById('rm-w-ds')?.value||35);
-  const bdt = +(document.getElementById('rm-w-bdt')?.value||25);
-  const trn = +(document.getElementById('rm-w-trn')?.value||15);
-  const el1 = document.getElementById('rm-w-cos-val'); if(el1) el1.textContent = cos+'%';
-  const el2 = document.getElementById('rm-w-ds-val');  if(el2) el2.textContent = ds+'%';
-  const el3 = document.getElementById('rm-w-bdt-val'); if(el3) el3.textContent = bdt+'%';
-  const el4 = document.getElementById('rm-w-trn-val'); if(el4) el4.textContent = trn+'%';
-  rmSavePrefs();
-  rmRenderTable();
-  rmRenderSummary();
-}
-
-function rmRenderTable(){
-  const tbody = document.getElementById('rm-site-tbody');
-  if(!tbody) return;
-  const stateF  = document.getElementById('rm-filter-state')?.value || 'ALL';
-  const sort    = document.getElementById('rm-sort')?.value || 'cx';
-  const period  = document.getElementById('rm-fy-filter')?.value || 'ALL';
-
-  const liveSites = rmBuildLiveSites();
-  const allSites = [
-    ...liveSites.map(s=>({...s,source:'live'})),
-    ..._rmManualSites.map(s=>({...s,source:'manual',trn:s.trn||0,key:s.name+'|||'+s.cust})),
-  ];
-
-  // Filter out hidden sites
-  const visibleSites = allSites.filter(s => !_rmHidden.has(s.key||s.name+'|||'+s.cust));
-  const hiddenSites  = allSites.filter(s =>  _rmHidden.has(s.key||s.name+'|||'+s.cust));
-
-  let rows = visibleSites.filter(s=>stateF==='ALL'||s.state===stateF);
-  rows = rows.map(s=>{
-    const f = rmCalcFTE(s.cos, s.ds, s.bdt, s.trn||0);
-    return {...s,...f};
-  });
-  if(sort==='cx')   rows.sort((a,b)=>b.cx-a.cx);
-  else if(sort==='name') rows.sort((a,b)=>a.name.localeCompare(b.name));
-  else if(sort==='eng')  rows.sort((a,b)=>b.engFte-a.engFte);
-  else if(sort==='hrs')  rows.sort((a,b)=>(b.cos+b.ds+b.bdt+(b.trn||0))-(a.cos+a.ds+a.bdt+(a.trn||0)));
-
-  // Blend indicator
-  const blend = rmGetFYBlend();
-  const isCurrentFY = period === `FY${blend.currentFY}` || period === 'ALL';
-  const isBlended = isCurrentFY && blend.mthsIntoCurrent > 0 && blend.mthsIntoCurrent < 12;
-  const isPartial = !isBlended && rmPeriodMonths(period) < 12;
-
-  if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#ADADAD;padding:24px;font-size:12px">No sites found.</td></tr>`;
-  } else {
-    const annNote = isBlended
-      ? ` <span style="font-size:9px;opacity:0.6">(blended)</span>`
-      : isPartial ? ` <span style="font-size:9px;opacity:0.6">(ann.)</span>` : '';
-
-    tbody.innerHTML = rows.map(s=>{
-      const trn = s.trn||0;
-      const totalHrs = Math.round(s.cos+s.ds+s.bdt+trn);
-      const cxCol = rmCxColor(s.cx);
-      const barW = Math.round(s.cx/10*66);
-      const siteKey = s.key || s.name+'|||'+s.cust;
-      const escapedKey = siteKey.replace(/'/g,"\\'");
-
-      const srcBadge = s.source==='live'
-        ? `<span class="rm-source-badge rm-source-live"><i class="ti ti-database"></i> Live</span>`
-        : `<span class="rm-source-badge rm-source-manual"><i class="ti ti-pencil"></i> Manual</span>`;
-      const trnPill = trn > 0
-        ? `<span class="rm-bp-pill" style="background:#E8F5E9;color:#1a6e40">Trn ${Math.round(trn)}h${annNote}</span>` : '';
-
-      // Blend label on tooltip
-      const blendTip = s._blended
-        ? `FY${blend.prevFY}: ${s._blendPrev}% · FY${blend.currentFY} YTD: ${s._blendCurrent}%`
-        : '';
-
-      const actionsHtml = s.source==='manual'
-        ? `<button class="rm-del-btn" onclick="rmDeleteSite(${s.id})" title="Remove manual site"><i class="ti ti-trash"></i></button>`
-        : `<button class="rm-del-btn" onclick="rmHideSite('${escapedKey}')" title="Hide from model"><i class="ti ti-eye-off"></i></button>`;
-
-      return `<tr>
-        <td>
-          <div class="rm-site-name">${s.name}${s._blended?` <span style="font-size:9px;background:#E6F1FB;color:#185FA5;padding:1px 5px;border-radius:4px;cursor:help" title="${blendTip}">blended</span>`:''}</div>
-          <div class="rm-site-cust">${s.cust} · ${s.state}</div>
-        </td>
-        <td>
-          <span class="rm-bp-pill rm-bp-cos">CoS ${Math.round(s.cos)}h${annNote}</span>
-          <span class="rm-bp-pill rm-bp-ds">DS ${Math.round(s.ds)}h${annNote}</span>
-          <span class="rm-bp-pill rm-bp-bdt">BD&T ${Math.round(s.bdt)}h${annNote}</span>
-          ${trnPill}
-        </td>
-        <td class="rm-td-r">${totalHrs.toLocaleString()}</td>
-        <td>
-          <div class="rm-cx-bar-wrap">
-            <div class="rm-cx-track"><div class="rm-cx-fill" style="width:${barW}px;background:${cxCol}"></div></div>
-            <span class="rm-cx-lbl" style="color:${cxCol}">${s.cx.toFixed(1)}</span>
-          </div>
-        </td>
-        <td class="rm-td-r"><span class="rm-chip rm-chip-eng">${s.engFte.toFixed(2)}</span></td>
-        <td class="rm-td-r"><span class="rm-chip rm-chip-tech">${s.techFte.toFixed(2)}</span></td>
-        <td class="rm-td-r">${srcBadge}</td>
-        <td style="text-align:center">${actionsHtml}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  // Hidden sites panel
-  const hiddenCount = _rmHidden.size;
-  const hiddenBtn = document.getElementById('rm-show-hidden-btn');
-  const hiddenCountEl = document.getElementById('rm-hidden-count');
-  if(hiddenCountEl) hiddenCountEl.textContent = hiddenCount;
-  if(hiddenBtn) hiddenBtn.style.opacity = hiddenCount > 0 ? '1' : '0.5';
-
-  const hiddenSection = document.getElementById('rm-hidden-sites-section');
-  const hiddenList = document.getElementById('rm-hidden-list');
-  if(hiddenSection) hiddenSection.style.display = _rmShowHidden && hiddenCount > 0 ? 'block' : 'none';
-  if(hiddenList && _rmShowHidden) {
-    hiddenList.innerHTML = hiddenSites.map(s => {
-      const k = s.key||s.name+'|||'+s.cust;
-      const ek = k.replace(/'/g,"\\'");
-      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:12px">
-        ${s.name} <span style="color:var(--muted);font-size:10px">${s.cust}</span>
-        <button onclick="rmUnhideSite('${ek}')" style="background:none;border:none;cursor:pointer;color:#1D9E75;font-size:11px;padding:0 2px" title="Restore to model"><i class="ti ti-eye"></i></button>
-      </span>`;
-    }).join('');
-  }
-
-  // Add blend info banner if applicable
-  const liveBannerEl = document.getElementById('rm-live-banner');
-  if(liveBannerEl && isBlended) {
-    liveBannerEl.innerHTML = `<i class="ti ti-blend-mode"></i>
-      <span>Blended complexity: ${blend._blendPrev||Math.round(blend.blendPrev*100)}% last FY (FY${blend.prevFY} full year) + ${blend._blendCurrent||Math.round(blend.blendCurrent*100)}% current FY (${blend.mthsIntoCurrent} months in, annualised). Weights shift automatically as FY${blend.currentFY} data accumulates.</span>
-      <button class="rm-btn-refresh" style="margin-left:auto" onclick="renderAdminResmod()"><i class="ti ti-refresh"></i> Refresh</button>`;
-  }
-}
-
-function rmRenderSummary(){
-  const stateF = document.getElementById('rm-filter-state')?.value || 'ALL';
-  const liveSites = rmBuildLiveSites();
-  const allSites = [
-    ...liveSites.map(s=>({...s,source:'live'})),
-    ..._rmManualSites.map(s=>({...s,source:'manual',trn:s.trn||0})),
-  ].filter(s=>stateF==='ALL'||s.state===stateF);
-
-  const calced = allSites.map(s=>({...s,...rmCalcFTE(s.cos,s.ds,s.bdt,s.trn||0)}));
-  const n = calced.length;
-  const avgCx = n ? calced.reduce((a,s)=>a+s.cx,0)/n : 0;
-  const totEng  = calced.reduce((a,s)=>a+s.engFte,0);
-  const totTech = calced.reduce((a,s)=>a+s.techFte,0);
-
-  const el1=document.getElementById('rm-stat-sites'); if(el1) el1.textContent = n;
-  const el2=document.getElementById('rm-stat-cx');    if(el2) el2.textContent = n ? avgCx.toFixed(1) : '—';
-  const el3=document.getElementById('rm-stat-eng');   if(el3) el3.textContent = n ? totEng.toFixed(1) : '—';
-  const el4=document.getElementById('rm-stat-tech');  if(el4) el4.textContent = n ? totTech.toFixed(1) : '—';
-
-  const hasLive = liveSites.length > 0;
-  const liveBanner = document.getElementById('rm-live-banner');
-  const noliveBanner = document.getElementById('rm-nolive-banner');
-  if(liveBanner)   liveBanner.style.display   = hasLive ? 'flex' : 'none';
-  if(noliveBanner) noliveBanner.style.display = hasLive ? 'none' : 'flex';
-}
-
-function rmAddSite(){
-  const name = (document.getElementById('rm-new-name')?.value||'').trim();
-  if(!name){ document.getElementById('rm-new-name')?.focus(); return; }
-  _rmManualSites.push({
-    id: _rmNextId++,
-    name,
-    cust: document.getElementById('rm-new-cust')?.value || 'Other',
-    state: document.getElementById('rm-new-state')?.value || 'NSW',
-    cos: +(document.getElementById('rm-new-cos')?.value||0),
-    ds:  +(document.getElementById('rm-new-ds')?.value||0),
-    bdt: +(document.getElementById('rm-new-bdt')?.value||0),
-    trn: 0,
-  });
-  const nameEl = document.getElementById('rm-new-name');
-  if(nameEl) nameEl.value = '';
-  rmSavePrefs();
-  rmRenderTable();
-  rmRenderSummary();
-}
-
-function rmDeleteSite(id){
-  _rmManualSites = _rmManualSites.filter(s=>s.id!==id);
-  rmSavePrefs();
-  rmRenderTable();
-  rmRenderSummary();
-}
-
-// ── Hide / unhide / toggle ───────────────────────────────────────
-function rmHideSite(key){
-  _rmHidden.add(key);
-  rmSavePrefs();
-  rmRenderTable();
-  rmRenderSummary();
-}
-function rmUnhideSite(key){
-  _rmHidden.delete(key);
-  rmSavePrefs();
-  rmRenderTable();
-  rmRenderSummary();
-}
-function rmToggleShowHidden(){
-  _rmShowHidden = !_rmShowHidden;
-  const btn = document.getElementById('rm-show-hidden-btn');
-  if(btn) btn.style.background = _rmShowHidden ? '#E6F0FA' : '';
-  rmRenderTable();
-}
-
-// ── Merge modal ──────────────────────────────────────────────────
-function rmOpenMergeModal(){
-  const modal = document.getElementById('rm-merge-modal');
-  if(!modal) return;
-  // Build site list from live data
-  const liveSites = rmBuildLiveSites();
-  const allSites  = [...liveSites, ..._rmManualSites];
-  const list = document.getElementById('rm-merge-site-list');
-  const canonSel = document.getElementById('rm-merge-canonical');
-  if(!list || !canonSel) return;
-
-  list.innerHTML = allSites.map(s => {
-    const k = s.key||s.name+'|||'+s.cust;
-    const ek = k.replace(/"/g,'&quot;');
-    const totalHrs = Math.round((s.cos||0)+(s.ds||0)+(s.bdt||0)+(s.trn||0));
-    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;border:1px solid transparent" 
-              onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-      <input type="checkbox" value="${ek}" data-name="${s.name.replace(/"/g,'&quot;')}" onchange="rmMergeSelChange()">
-      <span style="flex:1"><strong>${s.name}</strong> <span style="color:var(--muted)">${s.cust} · ${s.state}</span></span>
-      <span style="color:var(--muted);font-size:11px">${totalHrs}h</span>
-    </label>`;
-  }).join('');
-
-  canonSel.innerHTML = '<option value="">— select sites above first —</option>';
-  modal.style.display = 'flex';
-}
-
-function rmMergeSelChange(){
-  const checked = [...document.querySelectorAll('#rm-merge-site-list input:checked')];
-  const canonSel = document.getElementById('rm-merge-canonical');
-  if(!canonSel) return;
-  if(checked.length < 2){
-    canonSel.innerHTML = '<option value="">— select 2 or more sites —</option>';
-    return;
-  }
-  const names = checked.map(cb => ({key: cb.value, name: cb.dataset.name}));
-  canonSel.innerHTML = names.map(n =>
-    `<option value="${n.key.replace(/"/g,'&quot;')}">${n.name}</option>`
-  ).join('');
-}
-
-function rmCloseMergeModal(){
-  document.getElementById('rm-merge-modal').style.display = 'none';
-}
-
-function rmCommitMerge(){
-  const checked = [...document.querySelectorAll('#rm-merge-site-list input:checked')];
-  const canonKey = document.getElementById('rm-merge-canonical')?.value;
-  if(checked.length < 2 || !canonKey){
-    toast('Select at least 2 sites and choose a canonical name', 'error'); return;
-  }
-  // Map all non-canonical selected keys to the canonical
-  checked.forEach(cb => {
-    if(cb.value !== canonKey) {
-      _rmMerges[cb.value] = canonKey;
-    }
-  });
-  rmSavePrefs();
-  rmCloseMergeModal();
-  rmRenderTable();
-  rmRenderSummary();
-  const canonName = checked.find(cb=>cb.value===canonKey)?.dataset.name || canonKey.split('|||')[0];
-  toast(`✓ ${checked.length} sites merged into "${canonName}"`, 'success');
-}
-
-// ── Clear all merges (admin escape hatch) ────────────────────────
-function rmClearMerges(){
-  _rmMerges = {};
-  rmSavePrefs();
-  rmRenderTable();
-  rmRenderSummary();
-  toast('Merges cleared', 'success');
-}
-
-function rmSavePrefs(){
-  saveRefData('rm_weights', {
-    cos: +(document.getElementById('rm-w-cos')?.value||25),
-    ds:  +(document.getElementById('rm-w-ds')?.value||35),
-    bdt: +(document.getElementById('rm-w-bdt')?.value||25),
-    trn: +(document.getElementById('rm-w-trn')?.value||15),
-  });
-  saveRefData('rm_mix', _rmMixOverrides);
-  saveRefData('rm_manual_sites', _rmManualSites);
-  saveRefData('rm_next_id', _rmNextId);
-  saveRefData('rm_hidden', [..._rmHidden]);
-  saveRefData('rm_merges', _rmMerges);
-}
-
-function rmLoadPrefs(){
-  const w = getRefData('rm_weights', {cos:25,ds:35,bdt:25,trn:15});
-  const cosEl=document.getElementById('rm-w-cos'); const dsEl=document.getElementById('rm-w-ds');
-  const bdtEl=document.getElementById('rm-w-bdt'); const trnEl=document.getElementById('rm-w-trn');
-  if(cosEl){cosEl.value=w.cos; document.getElementById('rm-w-cos-val').textContent=w.cos+'%';}
-  if(dsEl) {dsEl.value=w.ds;   document.getElementById('rm-w-ds-val').textContent=w.ds+'%';}
-  if(bdtEl){bdtEl.value=w.bdt; document.getElementById('rm-w-bdt-val').textContent=w.bdt+'%';}
-  if(trnEl){trnEl.value=w.trn||15; const el=document.getElementById('rm-w-trn-val'); if(el) el.textContent=(w.trn||15)+'%';}
-  _rmMixOverrides = getRefData('rm_mix', {});
-  _rmManualSites  = getRefData('rm_manual_sites', []);
-  _rmNextId       = getRefData('rm_next_id', 1);
-  _rmHidden       = new Set(getRefData('rm_hidden', []));
-  _rmMerges       = getRefData('rm_merges', {});
-}
-
-function renderAdminResmod(){
-  rmLoadPrefs();
-  rmBuildFYFilter();
-  rmRenderMixGrid();
-  rmRenderTable();
-  rmRenderSummary();
-}
-
-// ════════════════════════════════════════════════════════════════════
-// VISUALS BUILDER
-// ════════════════════════════════════════════════════════════════════
-const VB_ORICA_COLORS = [
-  '#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5',
-  '#1D9E75','#27AE60','#F39C12','#E67E22','#8E44AD',
-  '#C0392B','#2C3E50','#16A085','#D35400','#7F8C8D',
-];
-
-// Persisted visual specs: [{id, type, dim, period, state, topn, title}]
-let _vbVisuals = [];
-let _vbCharts  = {}; // id → Chart.js instance
-let _vbNextId  = 1;
-let _vbSelectedType = 'bar';
-
-function vbLoad() {
-  _vbVisuals = getRefData('vb_visuals', []);
-  _vbNextId  = getRefData('vb_next_id', 1);
-}
-function vbSave() {
-  saveRefData('vb_visuals', _vbVisuals);
-  saveRefData('vb_next_id', _vbNextId);
-}
-
-// ── Populate period dropdown (reuses same logic as tab filters) ──
-function vbPopulatePeriod(selId) {
-  const sel = document.getElementById(selId);
-  if(!sel) return;
-  const years = getAvailableYears();
-  const now = new Date();
-  const currentFY = now.getMonth() >= 9 ? now.getFullYear()+1 : now.getFullYear();
-  const fys = [...new Set(years.flatMap(y=>[parseInt(y),parseInt(y)+1]))].sort((a,b)=>b-a);
-  let html = '<option value="ALL">All time</option>';
-  html += '<optgroup label="── Fiscal Year ──">';
-  fys.forEach(fy => { html+=`<option value="FY${fy}">${getFYLabel(fy)}</option>`; });
-  html += '</optgroup><optgroup label="── FY Quarters ──">';
-  fys.forEach(fy => {
-    html+=`<option value="FY${fy}Q1">FY${fy} Q1 Oct–Dec ${fy-1}</option>`;
-    html+=`<option value="FY${fy}Q2">FY${fy} Q2 Jan–Mar ${fy}</option>`;
-    html+=`<option value="FY${fy}Q3">FY${fy} Q3 Apr–Jun ${fy}</option>`;
-    html+=`<option value="FY${fy}Q4">FY${fy} Q4 Jul–Sep ${fy}</option>`;
-  });
-  html += '</optgroup><optgroup label="── Calendar Year ──">';
-  [...years].sort((a,b)=>b-a).forEach(y => { html+=`<option value="CY${y}">Calendar ${y}</option>`; });
-  html += '</optgroup><optgroup label="── Individual Months ──">';
-  [...years].sort((a,b)=>b-a).forEach(y => {
-    MONTHS.forEach(m => { html+=`<option value="${y}-${m}">${m} ${y}</option>`; });
-  });
-  html += '</optgroup>';
-  sel.innerHTML = html;
-  const def = sel.querySelector(`option[value="FY${currentFY}"]`);
-  if(def) def.selected = true;
-}
-
-// ── Get filtered + aggregated data for a visual spec ────────────
-function vbGetData(spec) {
-  const {dim, period, state: stateF, topn} = spec;
-  const passFilter = periodToFilter(period);
-  const employees = getEmployees();
-
-  // Aggregate
-  const totals = {}; // label → hours
-  const multiSeries = {}; // For cross-tab dims: {series: {label: hours}}
-
-  employees.forEach(emp => {
-    const empRec = getTeamRegistry().find(t=>t.name===emp);
-    if(!empRec || empRec.role==='admin') return;
-    if(stateF !== 'ALL' && empRec.state !== stateF) return;
-
-    MONTHS.forEach((month,mi) => {
-      loadEntries(emp, month).forEach(e => {
-        const yr = entryYear(e);
-        if(yr === null && period !== 'ALL') return;
-        if(!passFilter(e, month, yr||'0000')) return;
-        const hrs = parseFloat(e.total)||0;
-        if(hrs <= 0) return;
-
-        // Single-series dimensions
-        let label = null;
-        if(dim==='task')     label = e.task||'Other';
-        if(dim==='customer') label = e.customer||'Other';
-        if(dim==='site')     label = e.site||'Other';
-        if(dim==='bp')       label = BP_LABEL[e.bp]||e.bp||'Other';
-        if(dim==='employee') label = emp;
-        if(dim==='product')  label = e.product||'None';
-        if(dim==='month')    label = month;
-
-        if(label) {
-          totals[label] = (totals[label]||0) + hrs;
-          return;
-        }
-
-        // Cross-tab / multi-series dimensions
-        let mLabel = month;
-        let series = null;
-        if(dim==='month_bp')   series = BP_LABEL[e.bp]||e.bp||'Other';
-        if(dim==='month_task') series = e.task||'Other';
-        if(dim==='month_emp')  series = emp;
-        if(dim==='emp_bp')    { mLabel = emp; series = BP_LABEL[e.bp]||e.bp||'Other'; }
-
-        if(series) {
-          if(!multiSeries[series]) multiSeries[series] = {};
-          multiSeries[series][mLabel] = (multiSeries[series][mLabel]||0) + hrs;
-        }
-      });
-    });
-  });
-
-  // Single series
-  if(Object.keys(totals).length) {
-    let entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
-    // For month dimension keep calendar order
-    if(dim === 'month') entries = MONTHS.filter(m=>totals[m]).map(m=>[m,totals[m]]);
-    if(topn > 0) entries = entries.slice(0, topn);
-    return {
-      type: 'single',
-      labels: entries.map(([l])=>l),
-      values: entries.map(([,v])=>v),
-    };
-  }
-
-  // Multi series
-  // Determine label axis order
-  let allLabels = [];
-  if(dim.startsWith('month')) {
-    allLabels = MONTHS.filter(m => Object.values(multiSeries).some(s=>s[m]));
-  } else {
-    // emp_bp: sort employees by total
-    const empTotals = {};
-    Object.values(multiSeries).forEach(s=>Object.entries(s).forEach(([k,v])=>{empTotals[k]=(empTotals[k]||0)+v;}));
-    allLabels = Object.entries(empTotals).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
-  }
-  if(topn > 0 && !dim.startsWith('month')) allLabels = allLabels.slice(0, topn);
-
-  // For month_task, limit series to top 5
-  let seriesKeys = Object.keys(multiSeries);
-  if(dim==='month_task') {
-    const serTotals = {};
-    seriesKeys.forEach(s=>{ serTotals[s]=Object.values(multiSeries[s]).reduce((a,b)=>a+b,0); });
-    seriesKeys = seriesKeys.sort((a,b)=>serTotals[b]-serTotals[a]).slice(0, topn>0?Math.min(topn,8):8);
-  }
-
-  return {
-    type: 'multi',
-    labels: allLabels,
-    series: seriesKeys.map((name,i) => ({
-      name,
-      values: allLabels.map(l => multiSeries[name][l]||0),
-      color: VB_ORICA_COLORS[i % VB_ORICA_COLORS.length],
-    })),
-  };
-}
-
-// ── Build Chart.js config from spec + data ───────────────────────
-function vbBuildChartConfig(spec, data) {
-  const {type} = spec;
-  const isMulti = data.type === 'multi';
-  const colors = VB_ORICA_COLORS;
-
-  const baseOpts = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { display: isMulti || ['pie','doughnut','radar'].includes(type),
-                position:'bottom', labels:{boxWidth:12,font:{size:10}} },
-      tooltip: { callbacks: {
-        label: ctx => ` ${ctx.parsed.y??ctx.parsed??0} hrs`
-      }}
-    },
-    scales: {}
-  };
-
-  if(['pie','doughnut','radar'].includes(type)) {
-    delete baseOpts.scales;
-    if(type==='pie'||type==='doughnut') {
-      baseOpts.plugins.tooltip.callbacks.label = ctx =>
-        ` ${ctx.label}: ${ctx.raw.toFixed(0)}h (${Math.round(ctx.raw/ctx.dataset.data.reduce((a,b)=>a+b,0)*100)}%)`;
-    }
-  } else {
-    const isHoriz = type==='bar';
-    baseOpts.scales = {
-      x: { stacked: type==='stacked', grid:{display:false}, ticks:{font:{size:9},color:'#888'} },
-      y: { stacked: type==='stacked', beginAtZero:true,
-           grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:9},color:'#888'} }
-    };
-    if(isHoriz) { // swap axes for horizontal bar
-      baseOpts.indexAxis = 'y';
-      baseOpts.scales = {
-        x: { beginAtZero:true, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:9},color:'#888'} },
-        y: { grid:{display:false}, ticks:{font:{size:9},color:'#888'} }
-      };
-    }
-  }
-
-  let datasets;
-  if(isMulti) {
-    datasets = data.series.map((s,i) => ({
-      label: s.name.length > 18 ? s.name.slice(0,18)+'…' : s.name,
-      data: s.values,
-      backgroundColor: s.color + (type==='line'||type==='area'?'33':'CC'),
-      borderColor: s.color,
-      borderWidth: type==='line'||type==='area' ? 2 : 0,
-      fill: type==='area',
-      tension: 0.35,
-      borderRadius: type==='col'||type==='stacked' ? 3 : 0,
-    }));
-  } else {
-    const bgColors = type==='pie'||type==='doughnut'||type==='radar'
-      ? data.labels.map((_,i)=>colors[i%colors.length])
-      : colors[0];
-    datasets = [{
-      label: 'Hours',
-      data: data.values,
-      backgroundColor: Array.isArray(bgColors) ? bgColors : bgColors+'CC',
-      borderColor: Array.isArray(bgColors) ? bgColors : bgColors,
-      borderWidth: type==='line'||type==='area' ? 2 : 0,
-      fill: type==='area',
-      tension: 0.35,
-      borderRadius: type==='col'||type==='stacked'||type==='bar' ? 3 : 0,
-      pointBackgroundColor: Array.isArray(bgColors) ? bgColors : bgColors,
-    }];
-  }
-
-  const cjsType = {bar:'bar',col:'bar',line:'line',area:'line',
-                   pie:'pie',doughnut:'doughnut',stacked:'bar',radar:'radar'}[type] || 'bar';
-
-  return {
-    type: cjsType,
-    data: { labels: data.labels, datasets },
-    options: baseOpts,
-  };
-}
-
-// ── Auto-generate a chart title ──────────────────────────────────
-function vbAutoTitle(spec) {
-  const dimLabels = {
-    task:'By task', customer:'By customer', site:'By site', bp:'By purpose',
-    employee:'By employee', product:'By product', month:'Monthly trend',
-    month_bp:'Month × Purpose', month_task:'Month × Task', month_emp:'Month × Employee',
-    emp_bp:'Employee × Purpose',
-  };
-  const stateStr = spec.state!=='ALL' ? ` · ${spec.state}` : '';
-  let periodStr = spec.period==='ALL' ? 'All time' : spec.period;
-  // Make FY labels human-readable
-  periodStr = periodStr.replace(/^FY(\d{4})$/,'FY$1').replace(/^FY(\d{4})Q(\d)$/,'FY$1 Q$2');
-  return `${dimLabels[spec.dim]||spec.dim}${stateStr} — ${periodStr}`;
-}
-
-// ── Render one visual card ───────────────────────────────────────
-function vbRenderCard(spec) {
-  const board = document.getElementById('vb-board');
-  if(!board) return;
-
-  // Remove empty state
-  const empty = document.getElementById('vb-empty-state');
-  if(empty) empty.remove();
-
-  const card = document.createElement('div');
-  card.className = 'vb-card';
-  card.id = `vb-card-${spec.id}`;
-  const title = spec.title || vbAutoTitle(spec);
-
-  card.innerHTML = `
-    <div class="vb-card-hd">
-      <div>
-        <div class="vb-card-title">${title}</div>
-        <div class="vb-card-subtitle">${spec.type.charAt(0).toUpperCase()+spec.type.slice(1)} · ${spec.dim}</div>
-      </div>
-      <div class="vb-card-actions">
-        <button class="vb-icon-btn" onclick="vbCopyCard(${spec.id})" title="Copy as image"><i class="ti ti-copy"></i></button>
-        <button class="vb-icon-btn" onclick="vbDownloadCard(${spec.id})" title="Download PNG"><i class="ti ti-download"></i></button>
-        <button class="vb-icon-btn" onclick="vbExportSinglePptx(${spec.id})" title="Export to PowerPoint"><i class="ti ti-file-presentation"></i></button>
-        <button class="vb-icon-btn danger" onclick="vbRemoveCard(${spec.id})" title="Remove"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="vb-canvas-wrap" style="height:260px">
-      <canvas id="vb-canvas-${spec.id}"></canvas>
-    </div>`;
-
-  board.appendChild(card);
-
-  // Build chart
-  const data = vbGetData(spec);
-  const cfg  = vbBuildChartConfig(spec, data);
-  const ctx  = document.getElementById(`vb-canvas-${spec.id}`).getContext('2d');
-  if(_vbCharts[spec.id]) { _vbCharts[spec.id].destroy(); }
-  _vbCharts[spec.id] = new Chart(ctx, cfg);
-}
-
-// ── Re-render all cards (e.g. after period filter changes) ───────
-function renderAdminVisuals() {
-  vbLoad();
-  const board = document.getElementById('vb-board');
-  if(!board) return;
-  board.innerHTML = '';
-  if(!_vbVisuals.length) {
-    board.innerHTML = `<div class="vb-empty" id="vb-empty-state">
-      <i class="ti ti-chart-dots"></i>
-      No visuals yet — click <strong>Add visual</strong> to build your first chart.
-    </div>`;
-    return;
-  }
-  _vbVisuals.forEach(spec => vbRenderCard(spec));
-}
-
-// ── Modal open/close ─────────────────────────────────────────────
-function vbOpenAddModal() {
-  vbPopulatePeriod('vb-period');
-  // Reset selections
-  document.querySelectorAll('.vb-style-opt').forEach(el=>el.classList.remove('selected'));
-  document.querySelector('.vb-style-opt[data-type="bar"]')?.classList.add('selected');
-  _vbSelectedType = 'bar';
-  const titleEl = document.getElementById('vb-title');
-  if(titleEl) titleEl.value = '';
-  document.getElementById('vb-modal').style.display = 'flex';
-}
-function vbCloseModal() {
-  document.getElementById('vb-modal').style.display = 'none';
-}
-function vbSelectType(el, type) {
-  document.querySelectorAll('.vb-style-opt').forEach(e=>e.classList.remove('selected'));
-  el.classList.add('selected');
-  _vbSelectedType = type;
-}
-
-// ── Add chart ────────────────────────────────────────────────────
-function vbAddChart() {
-  const spec = {
-    id:     _vbNextId++,
-    type:   _vbSelectedType,
-    dim:    document.getElementById('vb-dim').value,
-    period: document.getElementById('vb-period').value,
-    state:  document.getElementById('vb-state').value,
-    topn:   parseInt(document.getElementById('vb-topn').value)||12,
-    title:  document.getElementById('vb-title').value.trim(),
-  };
-  _vbVisuals.push(spec);
-  vbSave();
-  vbCloseModal();
-  vbRenderCard(spec);
-}
-
-// ── Remove card ──────────────────────────────────────────────────
-function vbRemoveCard(id) {
-  if(_vbCharts[id]) { _vbCharts[id].destroy(); delete _vbCharts[id]; }
-  _vbVisuals = _vbVisuals.filter(s=>s.id!==id);
-  vbSave();
-  const card = document.getElementById(`vb-card-${id}`);
-  if(card) card.remove();
-  if(!_vbVisuals.length) {
-    const board = document.getElementById('vb-board');
-    if(board) board.innerHTML = `<div class="vb-empty" id="vb-empty-state">
-      <i class="ti ti-chart-dots"></i>No visuals yet — click <strong>Add visual</strong> to build your first chart.</div>`;
-  }
-}
-
-// ── Copy card as image to clipboard ─────────────────────────────
-async function vbCopyCard(id) {
-  const canvas = document.getElementById(`vb-canvas-${id}`);
-  if(!canvas) return;
-  try {
-    canvas.toBlob(async blob => {
-      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-      vbToast('✓ Copied to clipboard');
-    });
-  } catch(e) {
-    vbToast('Copy failed — try Download instead');
-  }
-}
-
-// ── Download card as PNG ─────────────────────────────────────────
-function vbDownloadCard(id) {
-  const canvas = document.getElementById(`vb-canvas-${id}`);
-  const spec   = _vbVisuals.find(s=>s.id===id);
-  if(!canvas) return;
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png', 1.0);
-  a.download = `Orica_${(spec?.title||vbAutoTitle(spec||{dim:'chart',period:'',state:'ALL'})).replace(/[^a-z0-9]/gi,'_')}.png`;
-  a.click();
-  vbToast('✓ PNG downloaded');
-}
-
-// ── Build PptxGenJS chart data from a spec ───────────────────────
-function vbBuildPptxChart(pres, slide, spec, x, y, w, h) {
-  const data = vbGetData(spec);
-  const title = spec.title || vbAutoTitle(spec);
-
-  // Map chart type to PptxGenJS type
-  const typeMap = {
-    bar:'bar', col:'bar', line:'line', area:'line',
-    pie:'pie', doughnut:'doughnut', stacked:'bar', radar:'radar'
-  };
-  const pptxType = pres.charts[typeMap[spec.type]?.toUpperCase()] || pres.charts.BAR;
-
-  const oricaHex = VB_ORICA_COLORS.map(c=>c.replace('#',''));
-
-  const chartOpts = {
-    x, y, w, h,
-    showTitle: true, title,
-    titleFontSize: 13, titleColor: '003087', titleFontBold: true,
-    chartArea: { fill: { color: 'FFFFFF' }, roundedCorners: false },
-    catAxisLabelColor: '6B6B6B', valAxisLabelColor: '6B6B6B',
-    valGridLine: { color: 'E8E8E8', size: 0.5 },
-    catGridLine: { style: 'none' },
-    legendPos: 'b', legendFontSize: 9,
-    dataLabelFontSize: 8,
-    barDir: spec.type==='col'||spec.type==='stacked' ? 'col' : 'bar',
-    barGrouping: spec.type==='stacked' ? 'stacked' : 'clustered',
-  };
-
-  let chartData;
-  if(data.type === 'multi') {
-    chartData = data.series.map(s => ({
-      name: s.name,
-      labels: data.labels.map(l=>String(l).slice(0,20)),
-      values: s.values,
-    }));
-    chartOpts.chartColors = data.series.map((_,i)=>oricaHex[i%oricaHex.length]);
-  } else {
-    chartData = [{
-      name: 'Hours',
-      labels: data.labels.map(l=>String(l).slice(0,20)),
-      values: data.values.map(v=>Math.round(v*10)/10),
-    }];
-    chartOpts.chartColors = oricaHex.slice(0, data.labels.length);
-    if(data.labels.length === 1) chartOpts.chartColors = [oricaHex[0]];
-  }
-
-  try {
-    slide.addChart(pptxType, chartData, chartOpts);
-  } catch(e) {
-    console.warn('addChart failed, falling back to image:', e);
-    // Fallback: embed canvas as PNG
-    const canvas = document.getElementById(`vb-canvas-${spec.id}`);
-    if(canvas) {
-      slide.addImage({ data: canvas.toDataURL('image/png'), x, y, w, h });
-    }
-  }
-}
-
-// ── Export single chart to PowerPoint ───────────────────────────
-async function vbExportSinglePptx(id) {
-  const spec = _vbVisuals.find(s=>s.id===id);
-  if(!spec) return;
-  const btn = document.getElementById('vb-pptx-btn');
-  vbToast('Building PowerPoint…');
-  try {
-    const pres = new PptxGenJS();
-    pres.layout = 'LAYOUT_16x9';
-    pres.title = spec.title || vbAutoTitle(spec);
-
-    const slide = pres.addSlide();
-    // Orica blue header bar
-    slide.addShape(pres.ShapeType.rect, {x:0,y:0,w:10,h:0.55,fill:{color:'003087'}});
-    slide.addText(spec.title||vbAutoTitle(spec),
-      {x:0.2,y:0,w:8,h:0.55,color:'FFFFFF',fontSize:16,bold:true,valign:'middle',margin:0});
-    slide.addText('Orica Technical Services · NSW & QLD Coal',
-      {x:0,y:0.55,w:10,h:0.3,color:'6B6B6B',fontSize:9,align:'right',margin:{right:0.15}});
-
-    vbBuildPptxChart(pres, slide, spec, 0.3, 1.0, 9.4, 4.2);
-
-    // Footer
-    slide.addText(`Generated ${new Date().toLocaleDateString('en-AU')}`,
-      {x:0,y:5.3,w:10,h:0.3,color:'ADADAD',fontSize:8,align:'right',margin:{right:0.15}});
-
-    await pres.writeFile({fileName:`Orica_${(spec.title||'chart').replace(/[^a-z0-9]/gi,'_')}.pptx`});
-    vbToast('✓ PowerPoint downloaded');
-  } catch(e) {
-    console.error('PPTX export error:', e);
-    vbToast('Export failed: '+e.message);
-  }
-}
-
-// ── Export ALL charts to one PowerPoint deck ─────────────────────
-async function vbExportAllPptx() {
-  if(!_vbVisuals.length) { toast('No visuals to export', 'info'); return; }
-  const btn = document.getElementById('vb-pptx-btn');
-  if(btn) { btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite;display:inline-block"></i> Building…'; btn.disabled=true; }
-  vbToast('Building PowerPoint deck…');
-  try {
-    const pres = new PptxGenJS();
-    pres.layout = 'LAYOUT_16x9';
-    pres.title  = 'Orica Technical Services — Timesheet Analytics';
-    pres.author = 'Orica NSW & QLD Coal';
-
-    // Title slide
-    const ts = pres.addSlide();
-    ts.addShape(pres.ShapeType.rect, {x:0,y:0,w:10,h:5.625,fill:{color:'003087'}});
-    ts.addText('Timesheet Analytics', {x:0.5,y:1.8,w:9,h:1,color:'FFFFFF',fontSize:36,bold:true,align:'center',margin:0});
-    ts.addText('Orica Technical Services · NSW & QLD Coal',
-      {x:0.5,y:2.9,w:9,h:0.5,color:'A8D4F5',fontSize:16,align:'center',margin:0});
-    ts.addText(`Generated ${new Date().toLocaleDateString('en-AU')}`,
-      {x:0.5,y:4.8,w:9,h:0.4,color:'7DC4F5',fontSize:11,align:'center',margin:0});
-
-    // One slide per visual (up to 1 chart per slide for readability)
-    _vbVisuals.forEach(spec => {
-      const slide = pres.addSlide();
-      slide.addShape(pres.ShapeType.rect, {x:0,y:0,w:10,h:0.55,fill:{color:'003087'}});
-      slide.addText(spec.title||vbAutoTitle(spec),
-        {x:0.2,y:0,w:8.5,h:0.55,color:'FFFFFF',fontSize:14,bold:true,valign:'middle',margin:0});
-      slide.addText('Orica Technical Services',
-        {x:8.5,y:0,w:1.5,h:0.55,color:'A8D4F5',fontSize:9,align:'right',valign:'middle',margin:{right:0.1}});
-      vbBuildPptxChart(pres, slide, spec, 0.3, 0.7, 9.4, 4.6);
-      slide.addText(`${new Date().toLocaleDateString('en-AU')}`,
-        {x:0,y:5.35,w:10,h:0.25,color:'ADADAD',fontSize:8,align:'right',margin:{right:0.15}});
-    });
-
-    await pres.writeFile({fileName:`Orica_Timesheet_Analytics_${new Date().toISOString().slice(0,10)}.pptx`});
-    vbToast(`✓ ${_vbVisuals.length} chart${_vbVisuals.length!==1?'s':''} exported to PowerPoint`);
-  } catch(e) {
-    console.error('PPTX export error:', e);
-    vbToast('Export failed: '+e.message);
-  } finally {
-    if(btn) { btn.innerHTML='<i class="ti ti-file-presentation"></i> Export all to PowerPoint'; btn.disabled=false; }
-  }
-}
-
-// ── Toast helper ─────────────────────────────────────────────────
-function vbToast(msg) {
-  let el = document.getElementById('vb-toast');
-  if(!el) {
-    el = document.createElement('div');
-    el.id = 'vb-toast';
-    el.className = 'vb-ppt-toast';
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
-  el.style.opacity = '1';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.opacity = '0'; }, 3000);
-}
 
 // ════════════════════════════════════════════════════════════════════
 // USER PERSONAL REPORTS v8  — PDF-style for individual
@@ -5324,12 +3771,10 @@ function parseXLSXUpload(wb, filename) {
     const dataF = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
 
     // ── Find header row: has 'Task' AND ('Business Purpose' or 'Bussiness Purpose') ──
-    // Note: 2025 legacy files use the misspelling 'Bussiness Purpose' (double-s before i)
-    // 'usiness' doesn't match 'bussiness', so we check 'iness'+'urpose' instead
     let hdrIdx = -1;
     for(let i=0; i<Math.min(12, data.length); i++) {
-      const row = (dataF[i]||[]).map(v=>v?String(v).trim().toLowerCase():'');
-      if(row.some(v=>v==='task') && row.some(v=>v.includes('iness') && v.includes('urpose'))) {
+      const row = (dataF[i]||[]).map(v=>v?String(v).trim():'');
+      if(row.some(v=>v==='Task') && row.some(v=>v.toLowerCase().includes('business purpose'))) {
         hdrIdx = i; break;
       }
     }
@@ -5343,7 +3788,7 @@ function parseXLSXUpload(wb, filename) {
       if(v==='Customer')                          ci.customer=i;
       if(v==='Site')                              ci.site=i;
       if(v==='Orica Function')                    ci.fn=i;
-      if(v.toLowerCase().includes('iness') && v.toLowerCase().includes('urpose')) ci.bp=i;
+      if(v.toLowerCase().includes('business purpose')) ci.bp=i;
       if(v==='Task')                              ci.task=i;
       if(v==='Sub Task')                          ci.subtask=i;
       if(v==='Product')                           ci.product=i;
@@ -5420,30 +3865,23 @@ function parseXLSXUpload(wb, filename) {
       const total = dayEntries.reduce((s,d)=>s+d.hrs, 0);
       if(total <= 0) continue;
 
-      // Year from actual dates is more reliable than filename
-      const entryYear = dayEntries[0].date.slice(0,4) || fileYear;
-      // Apply normalisation map (canonical name corrections)
-      const normMap = getRefData('norm_map', {});
-      const norm = v => (v && normMap[v]) ? normMap[v] : v;
-
       results.push({
         id: uid++,
         month: mName,
-        year: entryYear,
-        customer: norm(clean(rowF[ci.customer]) || 'Orica'),
-        site:     norm(clean(rowF[ci.site])),
+        customer: clean(rowF[ci.customer]) || 'Orica',
+        site:     clean(rowF[ci.site]),
         orica_fn: clean(rowF[ci.fn]),
         bp,
-        task:     norm(task),
+        task,
         subtask:  clean(rowF[ci.subtask]),
-        product:  norm(clean(rowF[ci.product])),
-        product2: norm(clean(rowF[ci.product2])),
+        product:  clean(rowF[ci.product]),
+        product2: clean(rowF[ci.product2]),
         comments: clean(rowF[ci.comments]),
         days: dayEntries,
         total,
         submitted: new Date().toISOString(),
         _empGuess: empGuess,
-        _year: entryYear
+        _year: fileYear
       });
     }
   });
@@ -5492,200 +3930,6 @@ function parseCSVUpload(text) {
     });
   }
   return results;
-}
-
-// ════════════════════════════════════════════════════════════════════
-// DATA NORMALISATION — canonical name map + duplicate review
-// ════════════════════════════════════════════════════════════════════
-
-// Built-in baseline corrections (typos + formatting known from legacy files)
-const NORM_DEFAULTS = {
-  // Sites
-  'mangoola':             'Mangoola',
-  'Mt Arthur South':      'Mt Arthur Coal',
-  'Busniess Development':  'Business Development',
-  'Glencore - All':       'Glencore',
-  // Customers — remove dot notation
-  'Anglo.American':       'Anglo American',
-  'Bloomfield.Group':     'Bloomfield Group',
-  'New.Hope':             'New Hope',
-  // Tasks — case variants
-  'Project support':      'Project Support',
-  'Blast design Service': 'Blast Design Service',
-  'Data gathering':       'Data Gathering',
-  // Products — case variants
-  'RHINO':                'Rhino™',
-  'Wildfire':             'Wildfire™',
-  'Vulcan':               'Vulcan™',
-};
-
-function getNormMap() {
-  const stored = getRefData('norm_map', {});
-  return {...NORM_DEFAULTS, ...stored};
-}
-
-function saveNormMap(map) {
-  // Only persist overrides beyond defaults
-  const overrides = {};
-  Object.entries(map).forEach(([k,v]) => {
-    if(NORM_DEFAULTS[k] !== v) overrides[k] = v;
-  });
-  saveRefData('norm_map', overrides);
-}
-
-// ── Import data cleaner modal ────────────────────────────────────
-// Shown after parsing when variants are detected; lets admin review
-// before committing. Also callable from "Review data" button.
-let _normPendingCallback = null;
-
-function showDataCleanerModal(parsed, onConfirm) {
-  _normPendingCallback = onConfirm;
-  const map = getNormMap();
-
-  // Collect all unique field values from parsed entries
-  const fields = {site:new Set(), customer:new Set(), task:new Set(), product:new Set()};
-  parsed.forEach(e => {
-    if(e.site)     fields.site.add(e.site);
-    if(e.customer) fields.customer.add(e.customer);
-    if(e.task)     fields.task.add(e.task);
-    if(e.product)  fields.product.add(e.product);
-  });
-
-  // Build table rows: show all known variants + defaults, let admin edit
-  const allKeys = new Set([...Object.keys(NORM_DEFAULTS), ...Object.keys(map)]);
-  // Also add any field values that look suspicious (mixed case, dot-separated, etc.)
-  Object.entries(fields).forEach(([fld, vals]) => {
-    vals.forEach(v => {
-      if(!v) return;
-      // Flag if: has dots, all-lowercase, or closely matches another value (case-only)
-      const vl = v.toLowerCase();
-      const hasDot = v.includes('.');
-      const isLower = v === vl && v.length > 3;
-      const dupeCase = [...vals].some(v2 => v2 !== v && v2.toLowerCase() === vl);
-      if(hasDot || isLower || dupeCase) allKeys.add(v);
-    });
-  });
-
-  // Build rows
-  let rows = [...allKeys].sort().map(k => {
-    const canonical = map[k] || k;
-    const isDefault = NORM_DEFAULTS[k] !== undefined;
-    const isCustom = map[k] !== undefined && !isDefault;
-    const badge = isDefault ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 5px;border-radius:4px;margin-left:4px">built-in</span>'
-                 : isCustom ? '<span style="font-size:10px;background:#FAEEDA;color:#633806;padding:1px 5px;border-radius:4px;margin-left:4px">custom</span>'
-                 : '';
-    return `<tr>
-      <td style="font-size:12px;padding:5px 8px;font-family:monospace">${k}${badge}</td>
-      <td style="padding:4px 8px">→</td>
-      <td style="padding:4px 6px"><input class="norm-input" data-key="${k.replace(/"/g,'&quot;')}" value="${canonical.replace(/"/g,'&quot;')}" style="width:100%;height:28px;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px"></td>
-      <td style="padding:4px 6px;text-align:center"><button onclick="normRemoveRow(this,'${k.replace(/'/g,"\\'")}')">✕</button></td>
-    </tr>`;
-  }).join('');
-
-  const modal = document.getElementById('data-cleaner-modal');
-  if(!modal) return;
-  document.getElementById('dcm-table-body').innerHTML = rows || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px;font-size:12px">No known variants found.</td></tr>';
-  document.getElementById('dcm-count').textContent = `${parsed.length} entries from import`;
-  modal.style.display = 'flex';
-}
-
-function normRemoveRow(btn, key) {
-  btn.closest('tr').remove();
-}
-
-function normAddRow() {
-  const from = document.getElementById('dcm-new-from')?.value.trim();
-  const to   = document.getElementById('dcm-new-to')?.value.trim();
-  if(!from || !to) return;
-  const tbody = document.getElementById('dcm-table-body');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td style="font-size:12px;padding:5px 8px;font-family:monospace">${from} <span style="font-size:10px;background:#FAEEDA;color:#633806;padding:1px 5px;border-radius:4px;margin-left:4px">custom</span></td>
-    <td style="padding:4px 8px">→</td>
-    <td style="padding:4px 6px"><input class="norm-input" data-key="${from}" value="${to}" style="width:100%;height:28px;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px"></td>
-    <td style="padding:4px 6px;text-align:center"><button onclick="normRemoveRow(this,'${from}')">✕</button></td>`;
-  tbody.appendChild(tr);
-  document.getElementById('dcm-new-from').value = '';
-  document.getElementById('dcm-new-to').value = '';
-}
-
-function normConfirm() {
-  // Build new map from table
-  const newMap = {};
-  document.querySelectorAll('#dcm-table-body .norm-input').forEach(input => {
-    const k = input.dataset.key;
-    const v = input.value.trim();
-    if(k && v && k !== v) newMap[k] = v;
-  });
-  saveNormMap(newMap);
-  document.getElementById('data-cleaner-modal').style.display = 'none';
-  if(_normPendingCallback) { _normPendingCallback(newMap); _normPendingCallback = null; }
-}
-
-function normCancel() {
-  document.getElementById('data-cleaner-modal').style.display = 'none';
-  _normPendingCallback = null;
-}
-
-// ── Review Duplicates — scan all loaded data for field variants ──
-function showDuplicateReview() {
-  const fields = {site:[], customer:[], task:[], product:[]};
-  getEmployees().forEach(emp => {
-    MONTHS.forEach(m => {
-      loadEntries(emp, m).forEach(e => {
-        if(e.site)     fields.site.push(e.site);
-        if(e.customer) fields.customer.push(e.customer);
-        if(e.task)     fields.task.push(e.task);
-        if(e.product && e.product !== 'Orica') fields.product.push(e.product);
-      });
-    });
-  });
-
-  // Find groups of values that differ only by case or minor variation
-  const findVariants = (vals) => {
-    const freq = {};
-    vals.forEach(v => { if(v) freq[v] = (freq[v]||0)+1; });
-    const groups = {};
-    Object.keys(freq).forEach(v => {
-      const key = v.toLowerCase().replace(/[.\s-]/g,'');
-      if(!groups[key]) groups[key] = [];
-      groups[key].push({v, n:freq[v]});
-    });
-    return Object.values(groups).filter(g => g.length > 1);
-  };
-
-  let html = '';
-  Object.entries(fields).forEach(([fld, vals]) => {
-    const variants = findVariants(vals);
-    if(!variants.length) return;
-    html += `<div style="font-size:11px;font-weight:700;color:#003087;text-transform:uppercase;letter-spacing:0.04em;padding:6px 0 4px">${fld}</div>`;
-    variants.forEach(group => {
-      const canonical = group.sort((a,b)=>b.n-a.n)[0].v; // most frequent = canonical
-      html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">`;
-      group.forEach(({v,n}) => {
-        const isCanon = v === canonical;
-        html += `<span style="font-size:12px;padding:2px 8px;border-radius:8px;background:${isCanon?'#E1F5EE':'#FDEDEB'};color:${isCanon?'#085041':'#8B1A1A'};cursor:pointer" 
-          title="Used ${n}x — click to set as canonical" 
-          onclick="normSetCanonical('${fld}',${JSON.stringify(group.map(x=>x.v))},'${v}')">${v} <span style="opacity:0.6">(${n})</span></span>`;
-      });
-      html += `</div>`;
-    });
-  });
-
-  const el = document.getElementById('dup-review-body');
-  if(el) el.innerHTML = html || '<div style="color:var(--muted);font-size:12px;padding:12px">No variants found — data looks clean ✓</div>';
-  document.getElementById('dup-review-modal')?.style && (document.getElementById('dup-review-modal').style.display = 'flex');
-}
-
-function normSetCanonical(field, group, canonical) {
-  const map = getNormMap();
-  group.forEach(v => { if(v !== canonical) map[v] = canonical; else delete map[v]; });
-  saveNormMap(map);
-  toast(`✓ "${canonical}" set as canonical for ${group.length} variants`,'success');
-  showDuplicateReview(); // re-render
-}
-
-function closeDupReview() {
-  document.getElementById('dup-review-modal').style.display = 'none';
 }
 
 function showUploadPreview(filename, parsed) {
@@ -5739,18 +3983,17 @@ function commitUpload() {
 
   let imported=0, skipped=0, dupes=0;
 
-  // Group entries by employee+year+month
+  // Group entries by employee+month
   const grouped={};
   uploadParsed.forEach(e=>{
     const empName=resolveEmployee(e._empGuess);
     if(!empName){ skipped++; return; }
-    const yr = e.year || e._year || '2026';
-    const key=empName+'||'+yr+'||'+(e.month||'');
-    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,year:yr,entries:[]};
-    grouped[key].entries.push({...e, _emp:empName, year:yr});
+    const key=empName+'||'+(e.month||'');
+    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,entries:[]};
+    grouped[key].entries.push({...e, _emp:empName});
   });
 
-  Object.values(grouped).forEach(({emp,month,year,entries})=>{
+  Object.values(grouped).forEach(({emp,month,entries})=>{
     if(!month||!MONTHS.includes(month)) return;
     const existing=loadEntries(emp,month);
 
@@ -6041,7 +4284,7 @@ async function loadEntriesAsync(emp, month) {
 async function refreshFromSupabase(emp, month) {
   if(!isOnline || !emp) return;
   await fetchEmployeeFromSupabase(emp);
-  if(curEmp===emp && editingEntryId===null) renderEntry();
+  if(curEmp===emp && editingEntryId===null && curSection==='entry') renderEntry();
 }
 
 // ── Polling: refresh current employee every 60s ──────────────────
@@ -8076,182 +6319,5 @@ console.log('Portal init complete.');
     </div>
   </div>
 </div>
-<!-- ══ DATA CLEANER MODAL ══════════════════════════════════════════ -->
-<div id="data-cleaner-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center">
-  <div style="background:var(--bg);border-radius:12px;width:min(680px,95vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-adjustments" style="margin-right:6px;color:#003087"></i>Review &amp; clean field names</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="dcm-count"></div>
-      </div>
-      <button onclick="normCancel()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
-    </div>
-    <div style="padding:12px 20px;font-size:12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)">
-      These mappings correct typos and standardise field values before import. Built-in rules apply automatically; you can add your own or remove any.
-    </div>
-    <div style="overflow-y:auto;flex:1;padding:12px 16px">
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr>
-          <th style="font-size:10px;font-weight:700;color:var(--muted);text-align:left;padding:4px 8px;text-transform:uppercase;letter-spacing:0.04em">Raw value (in file)</th>
-          <th></th>
-          <th style="font-size:10px;font-weight:700;color:var(--muted);text-align:left;padding:4px 8px;text-transform:uppercase;letter-spacing:0.04em">Replace with</th>
-          <th></th>
-        </tr></thead>
-        <tbody id="dcm-table-body"></tbody>
-      </table>
-    </div>
-    <div style="padding:10px 16px;border-top:1px solid var(--border);background:var(--surface2);display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-      <input id="dcm-new-from" placeholder="Raw value…" style="height:30px;font-size:12px;flex:1;min-width:120px">
-      <span style="color:var(--muted)">→</span>
-      <input id="dcm-new-to" placeholder="Canonical name…" style="height:30px;font-size:12px;flex:1;min-width:120px">
-      <button onclick="normAddRow()" class="btn btn-sm"><i class="ti ti-plus"></i> Add rule</button>
-      <div style="margin-left:auto;display:flex;gap:6px">
-        <button onclick="normCancel()" class="btn btn-sm">Cancel</button>
-        <button onclick="normConfirm()" class="btn btn-sm btn-primary"><i class="ti ti-check"></i> Save &amp; apply</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ DUPLICATE REVIEW MODAL ══════════════════════════════════════ -->
-<div id="dup-review-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center">
-  <div style="background:var(--bg);border-radius:12px;width:min(600px,95vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-eye" style="margin-right:6px;color:#003087"></i>Review field variants in loaded data</div>
-      <button onclick="closeDupReview()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
-    </div>
-    <div style="padding:12px 20px;font-size:12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)">
-      Groups of values that appear to be the same thing spelled differently. Click a value to promote it as the canonical form — others will be mapped to it.
-    </div>
-    <div style="overflow-y:auto;flex:1;padding:14px 20px" id="dup-review-body"></div>
-    <div style="padding:12px 20px;border-top:1px solid var(--border);background:var(--surface2);display:flex;justify-content:flex-end;gap:6px">
-      <button onclick="showDataCleanerModal([],null)" class="btn btn-sm"><i class="ti ti-adjustments"></i> Edit all rules</button>
-      <button onclick="closeDupReview()" class="btn btn-sm btn-primary">Done</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ VISUAL BUILDER MODAL ════════════════════════════════════════ -->
-<div id="vb-modal" style="display:none" class="vb-modal-overlay" onclick="if(event.target===this)vbCloseModal()">
-  <div class="vb-modal">
-    <div class="vb-modal-hd">
-      <div class="vb-modal-title"><i class="ti ti-chart-dots" style="margin-right:6px;color:#003087"></i>Add visual</div>
-      <button onclick="vbCloseModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
-    </div>
-    <div class="vb-modal-body">
-      <!-- Chart type -->
-      <div class="vb-field">
-        <label>Chart type</label>
-        <div class="vb-style-grid" id="vb-type-grid">
-          <div class="vb-style-opt selected" data-type="bar" onclick="vbSelectType(this,'bar')">
-            <i class="ti ti-chart-bar"></i><span>Bar</span>
-          </div>
-          <div class="vb-style-opt" data-type="col" onclick="vbSelectType(this,'col')">
-            <i class="ti ti-chart-bar" style="transform:rotate(90deg)"></i><span>Column</span>
-          </div>
-          <div class="vb-style-opt" data-type="line" onclick="vbSelectType(this,'line')">
-            <i class="ti ti-chart-line"></i><span>Line</span>
-          </div>
-          <div class="vb-style-opt" data-type="area" onclick="vbSelectType(this,'area')">
-            <i class="ti ti-chart-area"></i><span>Area</span>
-          </div>
-          <div class="vb-style-opt" data-type="pie" onclick="vbSelectType(this,'pie')">
-            <i class="ti ti-chart-pie"></i><span>Pie</span>
-          </div>
-          <div class="vb-style-opt" data-type="doughnut" onclick="vbSelectType(this,'doughnut')">
-            <i class="ti ti-circle-dotted"></i><span>Doughnut</span>
-          </div>
-          <div class="vb-style-opt" data-type="radar" onclick="vbSelectType(this,'radar')">
-            <i class="ti ti-chart-radar"></i><span>Radar</span>
-          </div>
-          <div class="vb-style-opt" data-type="stacked" onclick="vbSelectType(this,'stacked')">
-            <i class="ti ti-layout-rows"></i><span>Stacked bar</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Data dimension -->
-      <div class="vb-field">
-        <label>Show hours by</label>
-        <select id="vb-dim">
-          <option value="task">Task</option>
-          <option value="customer">Customer</option>
-          <option value="site">Site</option>
-          <option value="bp">Business purpose</option>
-          <option value="employee">Employee</option>
-          <option value="product">Product</option>
-          <option value="month">Month (trend)</option>
-          <option value="month_bp">Month × Business purpose</option>
-          <option value="month_task">Month × Task (top 5)</option>
-          <option value="month_emp">Month × Employee</option>
-          <option value="emp_bp">Employee × Business purpose</option>
-        </select>
-      </div>
-
-      <!-- Period -->
-      <div class="vb-field">
-        <label>Period</label>
-        <select id="vb-period"></select>
-      </div>
-
-      <!-- State filter -->
-      <div class="vb-field">
-        <label>State</label>
-        <select id="vb-state">
-          <option value="ALL">All states</option>
-          <option value="NSW">NSW</option>
-          <option value="QLD">QLD</option>
-        </select>
-      </div>
-
-      <!-- Top N -->
-      <div class="vb-field">
-        <label>Show top N items (0 = all)</label>
-        <input type="number" id="vb-topn" value="12" min="0" max="50" style="width:100px">
-      </div>
-
-      <!-- Chart title -->
-      <div class="vb-field">
-        <label>Chart title (optional)</label>
-        <input type="text" id="vb-title" placeholder="Auto-generated if blank">
-      </div>
-    </div>
-    <div class="vb-modal-ft">
-      <button class="vb-btn vb-btn-secondary" onclick="vbCloseModal()">Cancel</button>
-      <button class="vb-btn vb-btn-primary" onclick="vbAddChart()"><i class="ti ti-check"></i> Add chart</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ RM MERGE MODAL ══════════════════════════════════════════════ -->
-<div id="rm-merge-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
-  <div style="background:var(--bg);border-radius:12px;width:min(580px,95vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25)">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-git-merge" style="margin-right:6px;color:#003087"></i>Merge duplicate sites</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Select sites to merge, then choose which name to keep as canonical.</div>
-      </div>
-      <button onclick="rmCloseMergeModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
-    </div>
-    <div style="padding:14px 20px;font-size:12px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)">
-      <strong>How it works:</strong> Select 2+ sites below, pick the canonical name, and click Merge. Their hours are combined under one entry. The merge persists across reloads.
-    </div>
-    <div style="overflow-y:auto;flex:1;padding:14px 20px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Select sites to merge</div>
-      <div id="rm-merge-site-list" style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px"></div>
-      <div style="margin-top:14px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px">Keep this name as canonical</label>
-        <select id="rm-merge-canonical" style="width:100%;height:34px;font-size:13px">
-          <option value="">— select sites above first —</option>
-        </select>
-      </div>
-    </div>
-    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
-      <button onclick="rmCloseMergeModal()" class="btn btn-sm">Cancel</button>
-      <button onclick="rmCommitMerge()" class="btn btn-sm btn-primary"><i class="ti ti-git-merge"></i> Merge selected</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
