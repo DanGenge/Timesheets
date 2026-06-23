@@ -473,12 +473,50 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 .tab-filter-reset:hover { background:#E6F0FA; }
 
 /* User report tabs */
-.user-rpt-tabs { display:flex; gap:0; border-bottom:2px solid #E6F0FA; margin-bottom:12px; }
-.user-rpt-tab { padding:6px 14px; font-size:12px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
-.user-rpt-tab:hover { color:#003087; }
+.user-rpt-tabs { display:flex; gap:0; border-bottom:2px solid #E6F0FA; margin-bottom:14px; overflow-x:auto; }
+.user-rpt-tab { padding:8px 16px; font-size:12px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; display:flex; align-items:center; gap:5px; transition:color 0.15s; }
+.user-rpt-tab:hover { color:#003087; background:#f5f9ff; }
 .user-rpt-tab.active { color:#003087; border-bottom-color:#003087; font-weight:700; }
 .user-rpt-panel { display:none; }
 .user-rpt-panel.active { display:block; }
+
+/* User report hero */
+.ur-hero { background:linear-gradient(135deg,#003087 0%,#0057A8 100%); border-radius:var(--r); padding:18px 20px; margin-bottom:14px; color:#fff; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.ur-hero-avatar { width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0; border:2px solid rgba(255,255,255,0.35); }
+.ur-hero-text { flex:1; min-width:180px; }
+.ur-hero-name { font-size:18px; font-weight:700; line-height:1.2; }
+.ur-hero-sub  { font-size:12px; opacity:0.75; margin-top:3px; }
+.ur-hero-narrative { font-size:13px; opacity:0.9; margin-top:6px; line-height:1.5; }
+.ur-hero-kpis { display:flex; gap:14px; flex-wrap:wrap; }
+.ur-hero-kpi { text-align:center; }
+.ur-hero-kpi-val { font-size:22px; font-weight:700; line-height:1; }
+.ur-hero-kpi-lbl { font-size:10px; opacity:0.7; text-transform:uppercase; letter-spacing:0.4px; margin-top:2px; }
+
+/* Period pill selector */
+.ur-period-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+.ur-period-pill { padding:5px 12px; border-radius:100px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border-med); background:var(--surface); color:var(--muted); transition:all 0.12s; white-space:nowrap; }
+.ur-period-pill:hover { border-color:#003087; color:#003087; }
+.ur-period-pill.active { background:#003087; color:#fff; border-color:#003087; }
+.ur-period-pill.current { border-color:#0072CE; color:#0072CE; font-weight:700; }
+.ur-period-pill.current.active { background:#0072CE; color:#fff; }
+
+/* Progress bar for utilisation */
+.ur-progress-wrap { margin:10px 0 4px; }
+.ur-progress-bar { height:6px; background:#E6F0FA; border-radius:3px; overflow:hidden; }
+.ur-progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#003087,#0072CE); transition:width 0.4s ease; }
+
+/* Entry detail table in user reports */
+.ur-detail-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+.ur-detail-table th { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; padding:4px 8px; border-bottom:2px solid var(--border); text-align:left; }
+.ur-detail-table td { padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top; }
+.ur-detail-table tr:last-child td { border-bottom:none; }
+.ur-detail-table tr:hover td { background:var(--surface2); }
+
+/* Empty state */
+.ur-empty { text-align:center; padding:40px 20px; color:var(--muted); }
+.ur-empty i { font-size:32px; opacity:0.3; display:block; margin-bottom:8px; }
+.ur-empty-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.ur-empty-sub { font-size:12px; }
 
 /* ── ADMIN TABS ──────────────────────────────────────────────────── */
 .admin-tab-panel { display:none; }
@@ -1129,73 +1167,125 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
       </div>
       <!-- USER PERSONAL REPORTS (shown to non-admins) -->
       <div id="user-reports-section" style="display:none">
-        <!-- Month selector + stat row -->
-        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap">
-          <div class="tab-filter-group"><label>Month</label><select id="ur-month" onchange="showUserReports()" style="min-width:150px"></select></div>
-          <div class="tab-filter-group"><label>View</label>
-            <select id="ur-view" onchange="showUserReports()" style="min-width:120px">
-              <option value="month">This month</option>
-              <option value="year">Full year</option>
-            </select>
+
+        <!-- Hero card -->
+        <div class="ur-hero" id="ur-hero">
+          <div class="ur-hero-avatar" id="ur-hero-avatar">??</div>
+          <div class="ur-hero-text">
+            <div class="ur-hero-name" id="ur-hero-name">My Reports</div>
+            <div class="ur-hero-sub" id="ur-hero-sub">NSW &amp; QLD Coal · Technical Services</div>
+            <div class="ur-hero-narrative" id="ur-hero-narrative"></div>
+          </div>
+          <div class="ur-hero-kpis">
+            <div class="ur-hero-kpi"><div class="ur-hero-kpi-val" id="ur-kpi-ytd">—</div><div class="ur-hero-kpi-lbl">YTD hours</div></div>
+            <div class="ur-hero-kpi"><div class="ur-hero-kpi-val" id="ur-kpi-util">—</div><div class="ur-hero-kpi-lbl">Utilisation</div></div>
+            <div class="ur-hero-kpi"><div class="ur-hero-kpi-val" id="ur-kpi-entries">—</div><div class="ur-hero-kpi-lbl">Entries</div></div>
+            <div class="ur-hero-kpi"><div class="ur-hero-kpi-val" id="ur-kpi-cust">—</div><div class="ur-hero-kpi-lbl">Customers</div></div>
           </div>
         </div>
-        <div class="stat-grid" id="ur-stats"></div>
-        <!-- PDF-style tabs for user -->
+
+        <!-- Period pill selector -->
+        <div class="ur-period-row" id="ur-period-row"></div>
+
+        <!-- Utilisation progress bar -->
+        <div class="ur-progress-wrap" id="ur-progress-wrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:11px;font-weight:700;color:#003087" id="ur-prog-lbl">0h of 1,634h</span>
+            <span style="font-size:11px;color:var(--muted)" id="ur-prog-pct">0% of target</span>
+          </div>
+          <div class="ur-progress-bar"><div class="ur-progress-fill" id="ur-progress-fill" style="width:0%"></div></div>
+        </div>
+
+        <!-- Report tabs -->
         <div class="user-rpt-tabs">
-          <div class="user-rpt-tab active" onclick="switchUserTab('task',this)"><i class="ti ti-list"></i> By task</div>
-          <div class="user-rpt-tab" onclick="switchUserTab('bp',this)"><i class="ti ti-chart-pie"></i> By purpose</div>
+          <div class="user-rpt-tab active" onclick="switchUserTab('overview',this)"><i class="ti ti-layout-dashboard"></i> Overview</div>
+          <div class="user-rpt-tab" onclick="switchUserTab('task',this)"><i class="ti ti-list"></i> By task</div>
           <div class="user-rpt-tab" onclick="switchUserTab('customer',this)"><i class="ti ti-building"></i> By customer</div>
+          <div class="user-rpt-tab" onclick="switchUserTab('bp',this)"><i class="ti ti-chart-pie"></i> By purpose</div>
           <div class="user-rpt-tab" onclick="switchUserTab('daily',this)"><i class="ti ti-calendar"></i> Daily</div>
           <div class="user-rpt-tab" onclick="switchUserTab('leave',this)"><i class="ti ti-beach"></i> Leave</div>
-          <div class="user-rpt-tab" onclick="switchUserTab('trend',this)"><i class="ti ti-trending-up"></i> Trend</div>
+          <div class="user-rpt-tab" onclick="switchUserTab('trend',this)"><i class="ti ti-trending-up"></i> Year trend</div>
         </div>
-        <!-- Task panel (PDF p1 style) -->
-        <div class="user-rpt-panel active" id="urp-task">
+
+        <!-- Overview panel -->
+        <div class="user-rpt-panel active" id="urp-overview">
+          <div class="grid2">
+            <div class="rpt-card">
+              <h3>Hours by business purpose</h3>
+              <div style="display:flex;gap:16px;align-items:center;margin-top:6px">
+                <div style="position:relative;width:140px;height:140px;flex-shrink:0"><canvas id="ch-ur-bp-ov"></canvas></div>
+                <div id="ur-ov-bp-legend" style="flex:1;font-size:12px"></div>
+              </div>
+            </div>
+            <div class="rpt-card">
+              <h3>Top customers this period</h3>
+              <div id="ur-ov-cust-bars"></div>
+            </div>
+          </div>
           <div class="rpt-card">
-            <h3>Total hours by task</h3>
-            <div class="rpt-total-badge" id="ur-task-total">0h</div>
-            <div id="ur-task-bars"></div>
-            <div style="margin-top:14px"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Monthly breakdown</div><div id="ur-task-monthly" class="rpt-monthly-bar-row"></div></div>
+            <h3>Recent entries <span id="ur-ov-period-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)"></span></h3>
+            <div id="ur-ov-entries"></div>
           </div>
         </div>
-        <!-- Business purpose panel (PDF p2 style) -->
+
+        <!-- Task panel -->
+        <div class="user-rpt-panel" id="urp-task">
+          <div class="rpt-card">
+            <h3>Hours by task <span class="rpt-total-badge" id="ur-task-total">0h</span></h3>
+            <div id="ur-task-bars"></div>
+          </div>
+          <div class="rpt-card" style="margin-top:0">
+            <h3>Monthly breakdown</h3>
+            <div id="ur-task-monthly" class="rpt-monthly-bar-row"></div>
+          </div>
+        </div>
+
+        <!-- Customer panel -->
+        <div class="user-rpt-panel" id="urp-customer">
+          <div class="rpt-card">
+            <h3>Hours by customer <span class="rpt-total-badge" id="ur-cust-total">0h</span></h3>
+            <div id="ur-cust-bars"></div>
+          </div>
+          <div class="rpt-card">
+            <h3>Customer detail</h3>
+            <div id="ur-cust-detail"></div>
+          </div>
+        </div>
+
+        <!-- Business purpose panel -->
         <div class="user-rpt-panel" id="urp-bp">
           <div class="grid2">
             <div class="rpt-card">
-              <h3>Total hours by business purpose</h3>
-              <div class="rpt-total-badge" id="ur-bp-total">0h</div>
+              <h3>Hours by business purpose <span class="rpt-total-badge" id="ur-bp-total">0h</span></h3>
               <div style="display:flex;gap:20px;align-items:center;margin-top:8px">
                 <div style="position:relative;width:160px;height:160px;flex-shrink:0"><canvas id="ch-ur-bp2"></canvas></div>
                 <div class="rpt-bp-legend" id="ur-bp-legend" style="flex:1"></div>
               </div>
             </div>
             <div class="rpt-card">
-              <h3>Hours by task within purpose</h3>
+              <h3>Tasks within purpose</h3>
               <div id="ur-bp-tasks"></div>
             </div>
           </div>
         </div>
-        <!-- Customer panel (PDF p3 style) -->
-        <div class="user-rpt-panel" id="urp-customer">
-          <div class="rpt-card">
-            <h3>Total hours by customer</h3>
-            <div class="rpt-total-badge" id="ur-cust-total">0h</div>
-            <div id="ur-cust-bars"></div>
-          </div>
-        </div>
+
         <!-- Daily panel -->
         <div class="user-rpt-panel" id="urp-daily">
           <div class="rpt-card">
             <h3>Daily hours — <span id="ur-daily-mth"></span></h3>
             <div style="position:relative;height:220px"><canvas id="ch-ur-daily2"></canvas></div>
           </div>
+          <div class="rpt-card">
+            <h3>Day-by-day log</h3>
+            <div id="ur-daily-log"></div>
+          </div>
         </div>
-        <!-- Leave panel (PDF p8 style) -->
+
+        <!-- Leave panel -->
         <div class="user-rpt-panel" id="urp-leave">
           <div class="grid2">
             <div class="rpt-card">
-              <h3>Leave by type</h3>
-              <div class="rpt-total-badge" id="ur-leave-total">0h</div>
+              <h3>Leave by type <span class="rpt-total-badge" id="ur-leave-total">0h</span></h3>
               <div style="display:flex;gap:20px;align-items:center;margin-top:8px">
                 <div style="position:relative;width:150px;height:150px;flex-shrink:0"><canvas id="ch-ur-leave"></canvas></div>
                 <div class="rpt-bp-legend" id="ur-leave-legend" style="flex:1"></div>
@@ -1207,15 +1297,19 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             </div>
           </div>
         </div>
-        <!-- Trend panel -->
+
+        <!-- Year trend panel -->
         <div class="user-rpt-panel" id="urp-trend">
           <div class="rpt-card">
-            <h3>My monthly hours — 2026</h3>
-            <div class="rpt-total-badge" id="ur-trend-total">0h</div>
-            <div style="position:relative;height:220px"><canvas id="ch-ur-trend2"></canvas></div>
-            <div id="ur-trend-monthly" class="rpt-monthly-bar-row" style="margin-top:10px"></div>
+            <h3>My monthly hours — 2026 <span class="rpt-total-badge" id="ur-trend-total">0h</span></h3>
+            <div style="position:relative;height:240px"><canvas id="ch-ur-trend2"></canvas></div>
+          </div>
+          <div class="rpt-card">
+            <h3>Month-by-month</h3>
+            <div id="ur-trend-monthly" class="rpt-monthly-bar-row"></div>
           </div>
         </div>
+
       </div>
       <!-- ADMIN TEAM REPORTS (shown to admins) -->
       <div id="admin-reports-section" style="display:none">
@@ -3568,9 +3662,18 @@ function exportReport(){
 
 
 // ════════════════════════════════════════════════════════════════════
-// USER PERSONAL REPORTS v8  — PDF-style for individual
+// USER REPORTS — enhanced
 // ════════════════════════════════════════════════════════════════════
-let userRptTab = 'task';
+let userRptTab = 'overview';
+let _urPeriod = null;  // null = full year, or monthIdx (0-11)
+
+function urSetPeriod(val){
+  _urPeriod = val;
+  document.querySelectorAll('.ur-period-pill').forEach(p=>p.classList.remove('active'));
+  const id = val===null ? 'urp-pill-year' : 'urp-pill-'+val;
+  document.getElementById(id)?.classList.add('active');
+  showUserReports();
+}
 
 function switchUserTab(tab, el){
   userRptTab = tab;
@@ -3584,86 +3687,202 @@ function switchUserTab(tab, el){
 function showUserReports(){
   if(!currentUser) return;
   const emp = currentUser.name;
-  // Init month select
-  const sel = document.getElementById('ur-month');
-  if(sel && !sel.children.length){
-    MONTHS.forEach((m,i)=>{let o=document.createElement('option');o.value=i;o.textContent=m+' 2026';if(i===new Date().getMonth())o.selected=true;sel.appendChild(o);});
-  }
-  document.getElementById('user-reports-section').style.display='block';
-  document.getElementById('admin-reports-section').style.display='none';
-  document.getElementById('rpt-page-title').textContent = 'My reports — '+emp.split(' ')[0];
-  document.getElementById('rpt-page-meta').textContent = 'Personal timesheet summary';
 
-  const monthIdx = parseInt(document.getElementById('ur-month').value||new Date().getMonth());
-  const view = document.getElementById('ur-view')?.value||'month';
-  const mName = MONTHS[monthIdx];
-  const entries = view==='year'
+  // ── Build period pills once ──────────────────────────────────────
+  const pillRow = document.getElementById('ur-period-row');
+  if(pillRow && !pillRow.children.length){
+    const curMo = new Date().getMonth();
+    let html = `<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-right:2px">Period</span>`;
+    html += `<div class="ur-period-pill" id="urp-pill-year" onclick="urSetPeriod(null)">Full year</div>`;
+    MONTHS.forEach((m,i)=>{
+      const isCur = i===curMo;
+      html += `<div class="ur-period-pill${isCur?' current':''}" id="urp-pill-${i}" onclick="urSetPeriod(${i})">${m.slice(0,3)}</div>`;
+    });
+    pillRow.innerHTML = html;
+    // Default: current month
+    if(_urPeriod===null) _urPeriod = curMo;
+    document.getElementById('urp-pill-'+_urPeriod)?.classList.add('active');
+  }
+
+  // ── Load entries ─────────────────────────────────────────────────
+  const isYear = _urPeriod===null;
+  const monthIdx = isYear ? new Date().getMonth() : _urPeriod;
+  const entries = isYear
     ? MONTHS.flatMap((m,i)=>loadEntries(emp,m).map(e=>({...e,_monthIdx:i,_month:m})))
-    : loadEntries(emp,mName).map(e=>({...e,_monthIdx:monthIdx,_month:mName}));
+    : loadEntries(emp,MONTHS[monthIdx]).map(e=>({...e,_monthIdx:monthIdx,_month:MONTHS[monthIdx]}));
+
   const total = entries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
   const allYearEntries = MONTHS.flatMap(m=>loadEntries(emp,m));
   const totalYear = allYearEntries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
-  const days = view==='year'?365:new Date(2026,monthIdx+1,0).getDate();
-  const util = Math.round(total/(view==='year'?12*160:160)*100);
+  const uniqCusts = new Set(entries.map(e=>e.customer).filter(Boolean)).size;
 
-  document.getElementById('ur-stats').innerHTML =
-    `<div class="stat accent"><div class="stat-lbl">Year total</div><div class="stat-val">${fmtK(totalYear)}</div><div class="stat-sub">all months</div></div>`+
-    `<div class="stat"><div class="stat-lbl">${view==='year'?'Year':'Month'} hours</div><div class="stat-val">${fmtK(total)}</div><div class="stat-sub">${entries.length} entries</div></div>`+
-    `<div class="stat blue"><div class="stat-lbl">Utilisation</div><div class="stat-val">${Math.min(util,999)}%</div><div class="stat-sub">vs capacity</div></div>`+
-    `<div class="stat"><div class="stat-lbl">Daily avg</div><div class="stat-val">${(total/days).toFixed(1)}h</div><div class="stat-sub">incl. weekends</div></div>`;
+  // ── Hero ─────────────────────────────────────────────────────────
+  const profile  = getEmpProfile(emp);
+  const hrsTarget = (ROSTER_HRS[profile.roster||'52']||1634);
+  const targetPeriod = isYear ? hrsTarget : Math.round(hrsTarget/12);
+  const utilPct  = targetPeriod>0 ? Math.round(total/targetPeriod*100) : 0;
+  const color    = EMP_COLORS[EMPLOYEES.indexOf(emp)%EMP_COLORS.length]||'#003087';
+  const ini      = emp.split(' ').map(w=>w[0]).join('').slice(0,2);
+  const periodLbl = isYear ? '2026' : MONTHS[monthIdx]+' 2026';
 
-  // Store entries for tab renders
-  window._urEntries = entries;
+  // Narrative sentence
+  const narratives = [
+    utilPct >= 100 ? `🎯 On track — you\'ve hit your ${isYear?'annual':'monthly'} target.` : '',
+    utilPct >= 80  && utilPct<100 ? `📈 Almost there — ${utilPct}% of your ${isYear?'annual':'monthly'} target logged.` : '',
+    utilPct >= 50  && utilPct<80  ? `⏳ ${utilPct}% utilisation — keep adding entries to stay on track.` : '',
+    utilPct <  50  && total>0     ? `⚠️ ${utilPct}% utilisation — ${(targetPeriod-total).toFixed(0)}h still to log for this period.` : '',
+    total === 0 ? `No entries found for ${periodLbl}. Switch to Entry to log your hours.` : ''
+  ].find(s=>s) || '';
+
+  const av = document.getElementById('ur-hero-avatar');
+  if(av){av.textContent=ini;av.style.background='rgba(255,255,255,0.18)';}
+  const nm = document.getElementById('ur-hero-name'); if(nm) nm.textContent = emp.split(' ')[0]+'\'s reports';
+  const sb = document.getElementById('ur-hero-sub');
+  if(sb) sb.textContent = (profile.title||'Technical Services')+' · '+(profile.region||'NSW')+' · '+periodLbl;
+  const nr = document.getElementById('ur-hero-narrative'); if(nr) nr.textContent = narratives;
+  const kytd=document.getElementById('ur-kpi-ytd');    if(kytd)  kytd.textContent  = fmtK(totalYear)+'h';
+  const kutil=document.getElementById('ur-kpi-util');   if(kutil) kutil.textContent = utilPct+'%';
+  const kent=document.getElementById('ur-kpi-entries'); if(kent)  kent.textContent  = entries.length;
+  const kcust=document.getElementById('ur-kpi-cust');   if(kcust) kcust.textContent = uniqCusts;
+
+  // ── Progress bar ─────────────────────────────────────────────────
+  const pw = document.getElementById('ur-progress-wrap');
+  if(pw){
+    pw.style.display = 'block';
+    const fill = document.getElementById('ur-progress-fill');
+    if(fill) fill.style.width = Math.min(utilPct,100)+'%';
+    const pl = document.getElementById('ur-prog-lbl');
+    if(pl) pl.textContent = fmtK(total)+'h of '+fmtK(targetPeriod)+'h';
+    const pp = document.getElementById('ur-prog-pct');
+    if(pp) pp.textContent = utilPct+'% of '+periodLbl+' target';
+  }
+
+  document.getElementById('user-reports-section').style.display='block';
+  document.getElementById('admin-reports-section').style.display='none';
+  document.getElementById('rpt-page-title').textContent = emp.split(' ')[0]+'\'s reports';
+  document.getElementById('rpt-page-meta').textContent = 'Personal timesheet summary';
+
+  window._urEntries  = entries;
   window._urMonthIdx = monthIdx;
-  window._urView = view;
-  window._urEmp = emp;
+  window._urView     = isYear ? 'year' : 'month';
+  window._urEmp      = emp;
+  window._urTotal    = total;
 
   renderUserTab(userRptTab);
 }
 
 function renderUserTab(tab){
   if(!window._urEntries) return;
-  const entries=window._urEntries, total=entries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
+  const entries=window._urEntries, total=window._urTotal||0;
   const monthIdx=window._urMonthIdx, view=window._urView, emp=window._urEmp;
+  const LEAVE_TASKS=['Annual Leave','Sick Leave','Time off in Lieu','Public Holiday','Parental Leave','Carers Leave','RDO','Study Leave'];
+  const BP_COLOR_MAP={'Cost of Service':'#003087','Direct Sales':'#0072CE','BD & Technology':'#4BA8E8','Training':'#7FBFE8','Administration':'#B0D4F0','Leave':'#ccc'};
 
-  if(tab==='task'){
+  function emptyState(msg){ return `<div class="ur-empty"><i class="ti ti-inbox"></i><div class="ur-empty-title">No data</div><div class="ur-empty-sub">${msg}</div></div>`; }
+
+  if(tab==='overview'){
+    // BP doughnut
+    const byBP={};entries.forEach(e=>{if(!LEAVE_TASKS.includes(e.task))byBP[e.bp]=(byBP[e.bp]||0)+(parseFloat(e.total)||0);});
+    renderBPDoughnut('ch-ur-bp-ov','ur-ov-bp-legend','',byBP,total);
+    // Top customers
+    const byCust={};entries.forEach(e=>{if(e.customer&&!LEAVE_TASKS.includes(e.task))byCust[e.customer]=(byCust[e.customer]||0)+(parseFloat(e.total)||0);});
+    const custSorted=Object.entries(byCust).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    renderHorizBars('ur-ov-cust-bars',custSorted,RPT_COLORS,8);
+    // Recent entries table
+    const recent=[...entries].sort((a,b)=>{
+      const da=a.days?.[0]?.date||'';const db=b.days?.[0]?.date||'';return db.localeCompare(da);
+    }).slice(0,12);
+    const ov=document.getElementById('ur-ov-entries');
+    const lbl=document.getElementById('ur-ov-period-lbl');
+    if(lbl) lbl.textContent=view==='year'?'full year — 12 most recent':'this month — all entries';
+    if(ov){
+      if(!recent.length){ov.innerHTML=emptyState('No entries for this period. Head to the Entry page to start logging.');return;}
+      ov.innerHTML=`<table class="ur-detail-table">
+        <thead><tr><th>Date</th><th>Customer</th><th>Task</th><th>Purpose</th><th style="text-align:right">Hours</th></tr></thead>
+        <tbody>${recent.map(e=>{
+          const d=e.days?.[0]?.date||''; const dFmt=d?new Date(d+'T00:00:00').toLocaleDateString('en-AU',{day:'2-digit',month:'short'}):'—';
+          const bpC=BP_COLOR_MAP[e.bp]||'#888';
+          return `<tr><td style="color:var(--muted);white-space:nowrap">${dFmt}</td><td style="font-weight:500">${e.customer||'—'}</td><td>${e.task||'—'}</td><td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${bpC}18;color:${bpC};font-weight:600">${e.bp||'—'}</span></td><td style="text-align:right;font-weight:700">${parseFloat(e.total||0).toFixed(1)}h</td></tr>`;
+        }).join('')}</tbody></table>`;
+    }
+  }
+  else if(tab==='task'){
     const byTask={};entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
-    renderHorizBars('ur-task-bars',Object.entries(byTask),RPT_COLORS,15);
-    const tb=document.getElementById('ur-task-total');if(tb)tb.textContent=fmtK(total)+' Total Hours';
+    if(!Object.keys(byTask).length){ const el=document.getElementById('ur-task-bars'); if(el)el.innerHTML=emptyState('No task entries for this period.'); return; }
+    renderHorizBars('ur-task-bars',Object.entries(byTask).sort((a,b)=>b[1]-a[1]),RPT_COLORS,15);
+    const tb=document.getElementById('ur-task-total'); if(tb)tb.textContent=fmtK(total)+' hrs';
     renderMonthlyBars('ur-task-monthly',entries.map(e=>({...e,_monthIdx:e._monthIdx})),0,11);
+  }
+  else if(tab==='customer'){
+    const byCust={};entries.forEach(e=>{if(e.customer)byCust[e.customer]=(byCust[e.customer]||0)+(parseFloat(e.total)||0);});
+    const custSorted=Object.entries(byCust).sort((a,b)=>b[1]-a[1]);
+    if(!custSorted.length){ const el=document.getElementById('ur-cust-bars'); if(el)el.innerHTML=emptyState('No customer entries for this period.'); return; }
+    renderHorizBars('ur-cust-bars',custSorted,RPT_COLORS,12);
+    const cb=document.getElementById('ur-cust-total'); if(cb) cb.textContent=fmtK(total)+' hrs';
+    // Customer detail table with sites
+    const det=document.getElementById('ur-cust-detail');
+    if(det){
+      const byCustSite={};
+      entries.forEach(e=>{
+        const c=e.customer||'Unknown';
+        if(!byCustSite[c]) byCustSite[c]={total:0,sites:{}};
+        byCustSite[c].total+=(parseFloat(e.total)||0);
+        const s=e.site||'(no site)';
+        byCustSite[c].sites[s]=(byCustSite[c].sites[s]||0)+(parseFloat(e.total)||0);
+      });
+      det.innerHTML=`<table class="ur-detail-table">
+        <thead><tr><th>Customer / Site</th><th style="text-align:right">Hours</th><th style="text-align:right">% of total</th></tr></thead>
+        <tbody>${Object.entries(byCustSite).sort((a,b)=>b[1].total-a[1].total).map(([c,cd])=>{
+          const pct=total>0?Math.round(cd.total/total*100):0;
+          const siteRows=Object.entries(cd.sites).sort((a,b)=>b[1]-a[1]).map(([s,sh])=>
+            `<tr><td style="padding-left:18px;color:var(--muted);font-size:11px">↳ ${s}</td><td style="text-align:right;color:var(--muted);font-size:11px">${sh.toFixed(0)}h</td><td></td></tr>`
+          ).join('');
+          return `<tr><td style="font-weight:700">${c}</td><td style="text-align:right;font-weight:700">${cd.total.toFixed(0)}h</td><td style="text-align:right"><div style="display:inline-flex;align-items:center;gap:6px"><div style="width:50px;height:5px;background:#E6F0FA;border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#003087;border-radius:3px"></div></div><span style="font-size:11px;color:var(--muted)">${pct}%</span></div></td></tr>${siteRows}`;
+        }).join('')}</tbody></table>`;
+    }
   }
   else if(tab==='bp'){
     const byBP={};entries.forEach(e=>{byBP[e.bp]=(byBP[e.bp]||0)+(parseFloat(e.total)||0);});
     renderBPDoughnut('ch-ur-bp2','ur-bp-legend','ur-bp-total',byBP,total);
-    // Tasks within BP
     const byTask={};entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
-    renderHorizBars('ur-bp-tasks',Object.entries(byTask),RPT_COLORS,10);
-  }
-  else if(tab==='customer'){
-    const byCust={};entries.forEach(e=>{byCust[e.customer]=(byCust[e.customer]||0)+(parseFloat(e.total)||0);});
-    renderHorizBars('ur-cust-bars',Object.entries(byCust),RPT_COLORS,12);
-    const cb=document.getElementById('ur-cust-total');if(cb)cb.textContent=fmtK(total)+' Total Hours';
+    renderHorizBars('ur-bp-tasks',Object.entries(byTask).sort((a,b)=>b[1]-a[1]),RPT_COLORS,10);
   }
   else if(tab==='daily'){
-    const days=new Date(2026,monthIdx+1,0).getDate();
+    const mIdx = monthIdx;
+    const days=new Date(2026,mIdx+1,0).getDate();
     const daily=new Array(days).fill(0);
-    const mEntries=view==='year'?loadEntries(emp,MONTHS[monthIdx]).map(e=>({...e})):entries;
+    const dayEntries=[];
+    const mEntries=view==='year'?loadEntries(emp,MONTHS[mIdx]).map(e=>({...e})):entries;
     mEntries.forEach(e=>{(e.days||[]).forEach(d=>{
       const di=new Date(d.date+'T00:00:00').getDate()-1;
-      if(di>=0&&di<days)daily[di]+=(parseFloat(d.hrs)||0);
+      if(di>=0&&di<days){ daily[di]+=(parseFloat(d.hrs)||0); dayEntries.push({date:d.date,hrs:parseFloat(d.hrs)||0,task:e.task,customer:e.customer}); }
     });});
-    document.getElementById('ur-daily-mth').textContent=MONTHS[monthIdx]+' 2026';
+    document.getElementById('ur-daily-mth').textContent=MONTHS[mIdx]+' 2026';
     destroyChart('ch-ur-daily2');
     const el=document.getElementById('ch-ur-daily2');
     if(el){charts['ch-ur-daily2']=new Chart(el.getContext('2d'),{type:'bar',
       data:{labels:Array.from({length:days},(_,i)=>i+1),
-        datasets:[{data:daily,backgroundColor:daily.map(v=>v>0?'#003087':'#E6F0FA'),borderRadius:2,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        datasets:[{data:daily,backgroundColor:daily.map(v=>v>0?'#003087':'#E6F0FA'),borderRadius:3,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+'h'}}},
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},
           x:{grid:{display:false},ticks:{color:'#888',font:{size:9},autoSkip:true,maxTicksLimit:16}}}}});}
+    // Day log
+    const log=document.getElementById('ur-daily-log');
+    if(log){
+      const byDate={};
+      dayEntries.forEach(d=>{if(!byDate[d.date])byDate[d.date]=[];byDate[d.date].push(d);});
+      const datesSorted=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+      if(!datesSorted.length){log.innerHTML=emptyState('No entries for '+MONTHS[mIdx]+'.');return;}
+      log.innerHTML=`<table class="ur-detail-table"><thead><tr><th>Date</th><th>Task</th><th>Customer</th><th style="text-align:right">Hours</th></tr></thead><tbody>${
+        datesSorted.map(date=>{
+          const dFmt=new Date(date+'T00:00:00').toLocaleDateString('en-AU',{weekday:'short',day:'2-digit',month:'short'});
+          const dayTotal=byDate[date].reduce((s,d)=>s+d.hrs,0);
+          return byDate[date].map((d,i)=>`<tr><td style="color:var(--muted);white-space:nowrap">${i===0?dFmt:''}</td><td>${d.task||'—'}</td><td style="color:var(--muted)">${d.customer||'—'}</td><td style="text-align:right;font-weight:${i===byDate[date].length-1?700:400}">${i===byDate[date].length-1&&byDate[date].length>1?dayTotal.toFixed(1)+'h ↑':d.hrs.toFixed(1)+'h'}</td></tr>`).join('');
+        }).join('')
+      }</tbody></table>`;
+    }
   }
   else if(tab==='leave'){
-    const LEAVE_TASKS=['Annual Leave','Sick Leave','Time off in Lieu','Public Holiday','Parental Leave','Carers Leave'];
     const leaveEntries=entries.filter(e=>LEAVE_TASKS.includes(e.task));
     const leaveTotal=leaveEntries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
     const byType={};leaveEntries.forEach(e=>{byType[e.task]=(byType[e.task]||0)+(parseFloat(e.total)||0);});
@@ -3672,35 +3891,40 @@ function renderUserTab(tab){
     const el=document.getElementById('ch-ur-leave');
     if(el&&typeSorted.length){charts['ch-ur-leave']=new Chart(el.getContext('2d'),{type:'doughnut',
       data:{labels:typeSorted.map(([k])=>k),datasets:[{data:typeSorted.map(([,v])=>v),backgroundColor:LEAVE_COLORS.slice(0,typeSorted.length),borderWidth:0,hoverOffset:4}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});}
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw.toFixed(0)+'h'}}}}});}
     const legEl=document.getElementById('ur-leave-legend');
-    if(legEl){legEl.innerHTML=typeSorted.map(([k,v],i)=>`<div class="rpt-bp-row"><span class="rpt-bp-dot" style="background:${LEAVE_COLORS[i]}"></span><span class="rpt-bp-name">${k}</span><span class="rpt-bp-val">${v.toFixed(0)}</span><span class="rpt-bp-pct">(${leaveTotal>0?Math.round(v/leaveTotal*100):0}%)</span></div>`).join('');}
-    const lb=document.getElementById('ur-leave-total');if(lb)lb.textContent=fmtK(leaveTotal)+' Total Hours';
-    // Monthly leave
+    if(legEl){legEl.innerHTML=typeSorted.length?typeSorted.map(([k,v],i)=>`<div class="rpt-bp-row"><span class="rpt-bp-dot" style="background:${LEAVE_COLORS[i]}"></span><span class="rpt-bp-name">${k}</span><span class="rpt-bp-val">${v.toFixed(0)}h</span><span class="rpt-bp-pct">(${leaveTotal>0?Math.round(v/leaveTotal*100):0}%)</span></div>`).join(''):emptyState('No leave entries.');}
+    const lb=document.getElementById('ur-leave-total'); if(lb)lb.textContent=fmtK(leaveTotal)+' hrs';
     const allLeave=MONTHS.flatMap((m,i)=>loadEntries(emp,m).filter(e=>LEAVE_TASKS.includes(e.task)).map(e=>({...e,_monthIdx:i})));
     const mLeave=MONTHS.map((_,i)=>allLeave.filter(e=>e._monthIdx===i).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
     destroyChart('ch-ur-leavemonth');
     const elm=document.getElementById('ch-ur-leavemonth');
     if(elm){charts['ch-ur-leavemonth']=new Chart(elm.getContext('2d'),{type:'bar',
-      data:{labels:MONTHS.map(m=>m.slice(0,3)),datasets:[{data:mLeave,backgroundColor:'#003087',borderRadius:2,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      data:{labels:MONTHS.map(m=>m.slice(0,3)),datasets:[{data:mLeave,backgroundColor:'#003087',borderRadius:3,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(0)+'h'}}},
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});}
   }
   else if(tab==='trend'){
     const myTrend=MONTHS.map((m,i)=>loadEntries(emp,m).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
     const totalYear=myTrend.reduce((a,b)=>a+b,0);
-    const tb=document.getElementById('ur-trend-total');if(tb)tb.textContent=fmtK(totalYear)+' Total Hours 2026';
+    const profile=getEmpProfile(emp);
+    const target=(ROSTER_HRS[profile.roster||'52']||1634)/12;
+    const tb=document.getElementById('ur-trend-total'); if(tb)tb.textContent=fmtK(totalYear)+' hrs YTD';
     destroyChart('ch-ur-trend2');
     const el=document.getElementById('ch-ur-trend2');
-    const maxV=Math.max(...myTrend,1);
     if(el){charts['ch-ur-trend2']=new Chart(el.getContext('2d'),{type:'bar',
       data:{labels:MONTHS.map(m=>m.slice(0,3)),
-        datasets:[{data:myTrend,backgroundColor:myTrend.map(v=>v===maxV?'#003087':'#4BA8E8'),borderRadius:3,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(0)+'h'}}},
+        datasets:[
+          {label:'Hours',data:myTrend,backgroundColor:myTrend.map(v=>v>=target?'#003087':'#4BA8E8'),borderRadius:3,borderSkipped:false,order:2},
+          {label:'Monthly target',data:MONTHS.map(()=>target),type:'line',borderColor:'#C0392B',borderWidth:1.5,borderDash:[4,3],pointRadius:0,fill:false,order:1}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',labels:{boxWidth:10,font:{size:10}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw.toFixed(0)+'h'}}},
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});}
     renderMonthlyBars('ur-trend-monthly',MONTHS.map((_,i)=>({_monthIdx:i,total:myTrend[i]})),0,11);
   }
 }
+
 
 
 // ════════════════════════════════════════════════════════════════════
