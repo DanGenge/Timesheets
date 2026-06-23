@@ -472,7 +472,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 .tab-filter-reset { height:28px; padding:0 10px; font-size:11px; font-weight:600; border:1px solid rgba(0,48,135,0.3); border-radius:var(--r-sm); background:transparent; color:#003087; cursor:pointer; font-family:inherit; margin-top:16px; align-self:flex-end; }
 .tab-filter-reset:hover { background:#E6F0FA; }
 
-/* User report tabs */
+/* Year filter pills */
+.yr-pill { display:inline-flex; align-items:center; padding:4px 11px; border-radius:100px; font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border-med); background:var(--surface); color:var(--muted); transition:all 0.12s; margin:2px; user-select:none; }
+.yr-pill:hover { border-color:#003087; color:#003087; }
+.yr-pill.active { background:#003087; color:#fff; border-color:#003087; }
+.year-filter-wrap { display:flex; align-items:center; gap:6px; padding:7px 12px; background:#EBF4FF; border:1px solid rgba(0,48,135,0.15); border-radius:var(--r-sm); margin-bottom:10px; flex-wrap:wrap; }
+.year-filter-badge { font-size:10px; font-weight:700; color:#003087; background:#c8dcf7; padding:1px 6px; border-radius:10px; margin-left:4px; }
 .user-rpt-tabs { display:flex; gap:0; border-bottom:2px solid #E6F0FA; margin-bottom:14px; overflow-x:auto; }
 .user-rpt-tab { padding:8px 16px; font-size:12px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; display:flex; align-items:center; gap:5px; transition:color 0.15s; }
 .user-rpt-tab:hover { color:#003087; background:#f5f9ff; }
@@ -1184,6 +1189,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
         </div>
 
+        <!-- Year filter (shared state with admin) -->
+        <div class="year-filter-wrap" id="ur-year-filter-wrap">
+          <i class="ti ti-calendar-stats" style="color:#003087;font-size:13px;flex-shrink:0"></i>
+          <div id="ur-year-filter-panel" style="display:flex;flex-wrap:wrap;gap:2px;align-items:center"></div>
+        </div>
+
         <!-- Period pill selector -->
         <div class="ur-period-row" id="ur-period-row"></div>
 
@@ -1313,6 +1324,12 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
       </div>
       <!-- ADMIN TEAM REPORTS (shown to admins) -->
       <div id="admin-reports-section" style="display:none">
+      <!-- Year filter -->
+      <div class="year-filter-wrap" id="year-filter-panel-wrap">
+        <i class="ti ti-calendar-stats" style="color:#003087;font-size:14px;flex-shrink:0"></i>
+        <div id="year-filter-panel" style="display:flex;flex-wrap:wrap;gap:2px;align-items:center"></div>
+        <span id="year-filter-badge" style="display:none;font-size:10px;color:var(--muted);margin-left:4px"></span>
+      </div>
       <!-- REPORT TABS -->
       <div class="report-tabs">
         <div class="report-tab active" onclick="switchRTab('summary',this)"><i class="ti ti-chart-pie"></i> Summary</div>
@@ -2300,11 +2317,85 @@ let adminBPTab = 'Cost.of.Service';
 // ════════════════════════════════════════════════════════════════════
 // STORAGE
 // ════════════════════════════════════════════════════════════════════
-function storKey(emp, month) { return `nsw26|${emp}|${month}`; }
+function storKey(emp, month, year) {
+  const yy = String(year||2026).slice(-2);
+  return `nsw${yy}|${emp}|${month}`;
+}
 
+// ── Discover all years with data in localStorage ──────────────────
+function getAvailableYears(){
+  const years = new Set([2026]);
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k) continue;
+      const m=k.match(/^nsw(\d{2})\|/);
+      if(m){ const yr=parseInt('20'+m[1]); if(yr>=2024&&yr<=2035) years.add(yr); }
+    }
+  }catch{}
+  return [...years].sort();
+}
+
+// Active year selection (pivot-style — null means all)
+let _activeYears = null; // null = all available
+function getActiveYears(){
+  const avail = getAvailableYears();
+  if(!_activeYears) return avail;
+  return avail.filter(y=>_activeYears.has(y));
+}
+function yearFilterIsAll(){ return !_activeYears || _activeYears.size===getAvailableYears().length; }
+function setYearFilter(years){ // years = null (all) or Set of years
+  _activeYears = years;
+  renderYearFilterUI();
+  // Re-render the active admin tab
+  const activeTab = document.querySelector('#admin-reports-section .report-tab.active');
+  if(activeTab) renderAdminTab(activeTab.getAttribute('onclick')?.match(/'(\w+)'/)?.[1]||'summary');
+}
+
+function renderYearFilterUI(){
+  const avail = getAvailableYears();
+  const allActive = yearFilterIsAll();
+  const pillsHtml = `
+    <div class="yr-pill ${allActive?'active':''}" onclick="setYearFilter(null)">All years</div>
+    ${avail.map(yr=>`<div class="yr-pill ${(!allActive&&_activeYears?.has(yr))?'active':''}" onclick="toggleYearPill(${yr})">${yr}</div>`).join('')}
+  `;
+  // Admin panel
+  const container = document.getElementById('year-filter-panel');
+  if(container) container.innerHTML = pillsHtml;
+  // User reports panel
+  const urContainer = document.getElementById('ur-year-filter-panel');
+  if(urContainer) urContainer.innerHTML = pillsHtml.replace(/onclick="setYearFilter\(null\)"/,'onclick="urYearFilter(null)"').replace(/onclick="toggleYearPill\((\d+)\)"/g,'onclick="urYearFilter($1)"');
+  // Badge
+  const badge = document.getElementById('year-filter-badge');
+  if(badge){
+    if(!allActive && _activeYears){
+      badge.style.display='inline';
+      badge.textContent = [..._activeYears].sort().join(', ');
+    } else {
+      badge.style.display='none';
+    }
+  }
+}
+
+// User reports year filter — same state, triggers showUserReports
+function urYearFilter(yr){
+  if(yr===null){ setYearFilter(null); } else { toggleYearPill(yr); }
+  showUserReports();
+}
+
+function toggleYearPill(yr){
+  const avail = getAvailableYears();
+  if(!_activeYears) _activeYears = new Set(avail); // start from all
+  if(_activeYears.has(yr)) _activeYears.delete(yr); else _activeYears.add(yr);
+  if(_activeYears.size===0) _activeYears = new Set([yr]); // always keep at least one
+  if(_activeYears.size===avail.length) _activeYears = null; // back to "all"
+  setYearFilter(_activeYears);
+}
 
 function allEntries(emp) {
-  return MONTHS.flatMap(m => loadEntries(emp, m));
+  return getAvailableYears().flatMap(yr=>
+    MONTHS.flatMap(m => loadEntries(emp, m, yr))
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -2437,6 +2528,7 @@ function showSection(name, el) {
       document.getElementById('user-reports-section').style.display='none';
       document.getElementById('admin-reports-section').style.display='block';
       initTabFilters();
+      renderYearFilterUI();
       // Fetch all employee data from Supabase first
       if(isOnline) {
         fetchAllFromSupabase().then(()=>renderAdminSummary());
@@ -3025,19 +3117,24 @@ function getTabEntries(tid){
   const stateF=s?.state||'ALL';
   const emps=s?.emps ? [...s.emps] : getEmployees();
 
+  // ── Year filter ──────────────────────────────────────────────────
+  const activeYears = getActiveYears();
+
   let all=[];
-  emps.forEach(emp=>{
-    const empRec=getTeamRegistry().find(t=>t.name===emp);
-    if(!empRec) return;
-    if(stateF!=='ALL'&&empRec.state!==stateF) return;
-    for(let mi=mFrom;mi<=mTo;mi++){
-      loadEntries(emp,MONTHS[mi]).forEach(e=>{
-        if(custF!=='ALL'&&e.customer!==custF) return;
-        if(siteF!=='ALL'&&e.site!==siteF) return;
-        if(bpF!=='ALL'&&e.bp!==bpF) return;
-        all.push({...e,_emp:emp,_month:MONTHS[mi],_monthIdx:mi});
-      });
-    }
+  activeYears.forEach(yr=>{
+    emps.forEach(emp=>{
+      const empRec=getTeamRegistry().find(t=>t.name===emp);
+      if(!empRec) return;
+      if(stateF!=='ALL'&&empRec.state!==stateF) return;
+      for(let mi=mFrom;mi<=mTo;mi++){
+        loadEntries(emp,MONTHS[mi],yr).forEach(e=>{
+          if(custF!=='ALL'&&e.customer!==custF) return;
+          if(siteF!=='ALL'&&e.site!==siteF) return;
+          if(bpF!=='ALL'&&e.bp!==bpF) return;
+          all.push({...e,_emp:emp,_month:MONTHS[mi],_monthIdx:mi,_year:yr});
+        });
+      }
+    });
   });
   return all;
 }
@@ -3707,12 +3804,18 @@ function showUserReports(){
   // ── Load entries ─────────────────────────────────────────────────
   const isYear = _urPeriod===null;
   const monthIdx = isYear ? new Date().getMonth() : _urPeriod;
-  const entries = isYear
-    ? MONTHS.flatMap((m,i)=>loadEntries(emp,m).map(e=>({...e,_monthIdx:i,_month:m})))
-    : loadEntries(emp,MONTHS[monthIdx]).map(e=>({...e,_monthIdx:monthIdx,_month:MONTHS[monthIdx]}));
+  const activeYrs = getActiveYears();
 
+  const entries = activeYrs.flatMap(yr => {
+    if(isYear){
+      return MONTHS.flatMap((m,i)=>loadEntries(emp,m,yr).map(e=>({...e,_monthIdx:i,_month:m,_year:yr})));
+    } else {
+      return loadEntries(emp,MONTHS[monthIdx],yr).map(e=>({...e,_monthIdx:monthIdx,_month:MONTHS[monthIdx],_year:yr}));
+    }
+  });
+
+  const allYearEntries = activeYrs.flatMap(yr=>MONTHS.flatMap(m=>loadEntries(emp,m,yr)));
   const total = entries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
-  const allYearEntries = MONTHS.flatMap(m=>loadEntries(emp,m));
   const totalYear = allYearEntries.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
   const uniqCusts = new Set(entries.map(e=>e.customer).filter(Boolean)).size;
 
@@ -3761,6 +3864,7 @@ function showUserReports(){
   document.getElementById('admin-reports-section').style.display='none';
   document.getElementById('rpt-page-title').textContent = emp.split(' ')[0]+'\'s reports';
   document.getElementById('rpt-page-meta').textContent = 'Personal timesheet summary';
+  renderYearFilterUI();
 
   window._urEntries  = entries;
   window._urMonthIdx = monthIdx;
@@ -4765,7 +4869,7 @@ async function fetchEmployeeFromSupabase(emp) {
 
     // Cache each month to localStorage
     Object.entries(byMonth).forEach(([month, entries]) => {
-      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
+      try { localStorage.setItem(storKey(emp,month,2026), JSON.stringify(entries)); } catch(e){}
     });
 
     console.log(`Fetched ${data.length} entries for ${emp} from Supabase`);
@@ -4792,7 +4896,7 @@ async function fetchAllFromSupabase() {
     // Group by employee + month and cache
     const counts = {};
     data.forEach(row => {
-      const key = `nsw26|${row.employee}|${row.month}`;
+      const key = storKey(row.employee, row.month, 2026);
       const cached = JSON.parse(localStorage.getItem(key)||'[]');
       // Replace if Supabase has data (Supabase is source of truth)
       counts[key] = counts[key] || [];
@@ -4811,16 +4915,16 @@ async function fetchAllFromSupabase() {
 }
 
 // ── loadEntries: read from localStorage cache ────────────────────
-function loadEntries(emp, month) {
+function loadEntries(emp, month, year) {
   try {
-    const v = localStorage.getItem(`nsw26|${emp}|${month}`);
+    const v = localStorage.getItem(storKey(emp, month, year||2026));
     return v ? JSON.parse(v) : [];
   } catch(e) { return []; }
 }
 
 // ── saveEntries: localStorage only (no Supabase) ─────────────────
-function saveEntries(emp, month, entries) {
-  try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
+function saveEntries(emp, month, entries, year) {
+  try { localStorage.setItem(storKey(emp, month, year||2026), JSON.stringify(entries)); } catch(e){}
 }
 
 // ── saveEntriesAndSync: localStorage + push to Supabase ──────────
@@ -6107,7 +6211,7 @@ async function fetchAllFromSupabase() {
       });
     });
     Object.values(grouped).forEach(({emp, month, entries}) => {
-      try { localStorage.setItem(`nsw26|${emp}|${month}`, JSON.stringify(entries)); } catch(e){}
+      try { localStorage.setItem(storKey(emp,month,2026), JSON.stringify(entries)); } catch(e){}
     });
     console.log(`Fetched ${data.length} entries from Supabase for all employees`);
   } catch(e) {
