@@ -3553,11 +3553,14 @@ function renderAdminTrend(){
 function rmLoadEntries(emps){
   const entries = [];
   const months12 = new Set();
+  const activeYrs = getActiveYears();
   emps.forEach(emp=>{
-    MONTHS.forEach((m,mi)=>{
-      loadEntries(emp,m).forEach(e=>{
-        entries.push({...e,_emp:emp,_monthIdx:mi});
-        months12.add(mi);
+    activeYrs.forEach(yr=>{
+      MONTHS.forEach((m,mi)=>{
+        loadEntries(emp,m,yr).forEach(e=>{
+          entries.push({...e,_emp:emp,_monthIdx:mi,_year:yr});
+          months12.add(mi);
+        });
       });
     });
   });
@@ -3999,7 +4002,8 @@ function renderUserTab(tab){
     const legEl=document.getElementById('ur-leave-legend');
     if(legEl){legEl.innerHTML=typeSorted.length?typeSorted.map(([k,v],i)=>`<div class="rpt-bp-row"><span class="rpt-bp-dot" style="background:${LEAVE_COLORS[i]}"></span><span class="rpt-bp-name">${k}</span><span class="rpt-bp-val">${v.toFixed(0)}h</span><span class="rpt-bp-pct">(${leaveTotal>0?Math.round(v/leaveTotal*100):0}%)</span></div>`).join(''):emptyState('No leave entries.');}
     const lb=document.getElementById('ur-leave-total'); if(lb)lb.textContent=fmtK(leaveTotal)+' hrs';
-    const allLeave=MONTHS.flatMap((m,i)=>loadEntries(emp,m).filter(e=>LEAVE_TASKS.includes(e.task)).map(e=>({...e,_monthIdx:i})));
+    const activeYrs2 = getActiveYears();
+    const allLeave=activeYrs2.flatMap(yr=>MONTHS.flatMap((m,i)=>loadEntries(emp,m,yr).filter(e=>LEAVE_TASKS.includes(e.task)).map(e=>({...e,_monthIdx:i}))));
     const mLeave=MONTHS.map((_,i)=>allLeave.filter(e=>e._monthIdx===i).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
     destroyChart('ch-ur-leavemonth');
     const elm=document.getElementById('ch-ur-leavemonth');
@@ -4009,7 +4013,8 @@ function renderUserTab(tab){
         scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#888',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}}}}});}
   }
   else if(tab==='trend'){
-    const myTrend=MONTHS.map((m,i)=>loadEntries(emp,m).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
+    const activeYrs3 = getActiveYears();
+    const myTrend=MONTHS.map((m,i)=>activeYrs3.flatMap(yr=>loadEntries(emp,m,yr)).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
     const totalYear=myTrend.reduce((a,b)=>a+b,0);
     const profile=getEmpProfile(emp);
     const target=(ROSTER_HRS[profile.roster||'52']||1634)/12;
@@ -4631,29 +4636,32 @@ function showUploadPreview(filename, parsed) {
   document.getElementById('upload-preview').style.display='block';
   document.getElementById('upload-filename').textContent = filename;
 
-  // Summary by employee + month
+  // Summary by employee + month + year
   const byEmpMonth={};
   parsed.forEach(e=>{
-    const key=(e._empGuess||'Unknown')+' / '+(e.month||'?');
+    const yr=e._year||'2026';
+    const key=(e._empGuess||'Unknown')+' / '+yr+' '+( e.month||'?');
     byEmpMonth[key]=(byEmpMonth[key]||0)+1;
   });
   const totalHrs=parsed.reduce((s,e)=>s+(e.total||0),0);
+  const years=[...new Set(parsed.map(e=>e._year||'2026'))].sort();
   document.getElementById('upload-summary').innerHTML =
     `<strong style="color:#003087">${parsed.length}</strong> entries found · `+
-    `<strong style="color:#003087">${totalHrs.toFixed(0)}h</strong> total<br>`+
+    `<strong style="color:#003087">${totalHrs.toFixed(0)}h</strong> total · `+
+    `year${years.length>1?'s':''}: <strong style="color:#003087">${years.join(', ')}</strong><br>`+
     `<span style="font-size:11px">`+Object.entries(byEmpMonth).map(([k,n])=>`${k}: ${n} entries`).join(' · ')+'</span>';
 
   const tbl=document.getElementById('upload-preview-table');
-  tbl.innerHTML='<thead><tr><th>Employee</th><th>Month</th><th>Customer</th><th>Task</th><th>Days</th><th>Hours</th></tr></thead>';
+  tbl.innerHTML='<thead><tr><th>Employee</th><th>Year</th><th>Month</th><th>Customer</th><th>Task</th><th>Days</th><th>Hours</th></tr></thead>';
   const tb=document.createElement('tbody');
   parsed.slice(0,20).forEach(e=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${e._empGuess||'?'}</td><td>${e.month}</td><td>${e.customer}</td><td>${e.task}</td><td>${(e.days||[]).length}</td><td>${(e.total||0).toFixed(1)}h</td>`;
+    tr.innerHTML=`<td>${e._empGuess||'?'}</td><td>${e._year||'2026'}</td><td>${e.month}</td><td>${e.customer}</td><td>${e.task}</td><td>${(e.days||[]).length}</td><td>${(e.total||0).toFixed(1)}h</td>`;
     tb.appendChild(tr);
   });
   if(parsed.length>20){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td colspan="6" style="color:var(--muted);font-style:italic;text-align:center">…and ${parsed.length-20} more entries</td>`;
+    tr.innerHTML=`<td colspan="7" style="color:var(--muted);font-style:italic;text-align:center">…and ${parsed.length-20} more entries</td>`;
     tb.appendChild(tr);
   }
   tbl.appendChild(tb);
@@ -4675,22 +4683,22 @@ function commitUpload() {
 
   let imported=0, skipped=0, dupes=0;
 
-  // Group entries by employee+month
+  // Group entries by employee + month + year
   const grouped={};
   uploadParsed.forEach(e=>{
     const empName=resolveEmployee(e._empGuess);
     if(!empName){ skipped++; return; }
-    const key=empName+'||'+(e.month||'');
-    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,entries:[]};
+    const yr = parseInt(e._year||2026);
+    const key=empName+'||'+(e.month||'')+'||'+yr;
+    if(!grouped[key]) grouped[key]={emp:empName,month:e.month,year:yr,entries:[]};
     grouped[key].entries.push({...e, _emp:empName});
   });
 
-  Object.values(grouped).forEach(({emp,month,entries})=>{
+  Object.values(grouped).forEach(({emp,month,year,entries})=>{
     if(!month||!MONTHS.includes(month)) return;
-    const existing=loadEntries(emp,month);
+    const existing=loadEntries(emp,month,year);  // ← use correct year bucket
 
     // Dedup key: task + date + hrs + customer
-    // Same date is allowed for DIFFERENT tasks
     const existingKeys=new Set();
     existing.forEach(e=>{
       (e.days||[]).forEach(d=>{
@@ -4712,7 +4720,7 @@ function commitUpload() {
       }
     });
 
-    if(toAdd.length) saveEntries(emp, month, [...existing, ...toAdd]);
+    if(toAdd.length) saveEntries(emp, month, [...existing, ...toAdd], year);  // ← use correct year bucket
   });
 
   if(log) log.innerHTML=`<span style="color:#1D9E75">✓ Imported ${imported} day-entries`+
