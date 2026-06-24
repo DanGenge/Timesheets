@@ -538,16 +538,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 .ref-item-edit:hover { background:#EBF4FF; color:#003087; border-color:#003087; }
 .ref-item-del { width:26px; height:26px; border:none; background:transparent; cursor:pointer; color:var(--faint); border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .ref-item-del:hover { background:var(--red-light); color:var(--red); }
-.integrity-row { display:flex; align-items:flex-start; flex-wrap:wrap; gap:8px; padding:10px 12px; background:var(--surface2); border-radius:var(--r); margin-bottom:8px; border-left:3px solid var(--border-med); }
-.integrity-badge { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; padding:2px 7px; border-radius:3px; flex-shrink:0; margin-top:1px; }
-.badge-warn  { background:#FFF3CD; color:#856404; }
-.badge-dupe  { background:#CCE5FF; color:#004085; }
-.badge-ok    { background:#D4EDDA; color:#155724; }
-.integrity-value { font-size:12px; font-weight:600; flex:1; min-width:160px; }
-.integrity-meta  { font-size:11px; color:var(--muted); }
-.integrity-suggestion { font-size:11px; color:#0057A8; }
-.integrity-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:2px; width:100%; }
-.integrity-select { height:30px; font-size:12px; border:1px solid var(--border); border-radius:var(--r-sm); padding:0 8px; background:var(--bg); color:var(--text); min-width:220px; flex:1; }
 .ref-item-input { flex:1; height:28px; padding:0 8px; border:1px solid #003087; border-radius:4px; font-size:13px; font-family:inherit; background:#EBF4FF; color:#003087; }
 .ref-item-save { height:26px; padding:0 10px; background:#003087; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600; font-family:inherit; }
 .ref-item-save:hover { background:#002268; }
@@ -853,7 +843,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <table class="dt" id="upload-preview-table" style="font-size:11px"></table>
           </div>
         </div>
-        <div id="upload-log" style="font-size:12px;color:var(--muted);margin-top:8px;max-height:80px;overflow-y:auto"></div>
+        <div id="upload-log" style="font-size:11px;color:var(--muted);margin-top:8px;max-height:280px;overflow-y:auto;font-family:monospace;background:var(--surface2);border-radius:var(--r-sm);padding:8px;white-space:pre-wrap;word-break:break-all"></div>
       </div>
 
     </div>
@@ -1077,7 +1067,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="user-rpt-tab" id="etab-products"  onclick="switchEditTab('products',this)"><i class="ti ti-box"></i> Products</div>
         <div class="user-rpt-tab" id="etab-functions" onclick="switchEditTab('functions',this)"><i class="ti ti-building-factory-2"></i> Orica Functions</div>
         <div class="user-rpt-tab" id="etab-users"     onclick="switchEditTab('users',this)"><i class="ti ti-users"></i> Team</div>
-        <div class="user-rpt-tab" id="etab-integrity" onclick="switchEditTab('integrity',this)"><i class="ti ti-shield-check"></i> Data Integrity</div>
       </div>
 
       <!-- CUSTOMERS -->
@@ -1171,20 +1160,6 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
           </select>
           <button class="add-ref-btn" onclick="addTeamMember()"><i class="ti ti-user-plus"></i> Add member</button>
         </div>
-      </div>
-
-      <!-- DATA INTEGRITY -->
-      <div class="admin-tab-panel" id="epanel-integrity">
-        <div class="admin-section-title"><i class="ti ti-shield-check"></i> Data Integrity Review</div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
-          Scans all stored entry data and surfaces values that don't match the reference lists — typos, spelling variants,
-          and near-duplicates. Click any row to remap the bad value to the correct one across <strong>all entries</strong>.
-        </p>
-        <button class="btn btn-sm btn-primary" onclick="runIntegrityCheck()" style="margin-bottom:14px">
-          <i class="ti ti-search"></i> Run integrity scan
-        </button>
-        <div id="integrity-status" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
-        <div id="integrity-results"></div>
       </div>
 
     </div>
@@ -1928,7 +1903,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <table class="dt" id="upload-preview-table" style="font-size:11px"></table>
           </div>
         </div>
-        <div id="upload-log" style="font-size:12px;color:var(--muted);margin-top:8px;max-height:80px;overflow-y:auto"></div>
+        <div id="upload-log" style="font-size:11px;color:var(--muted);margin-top:8px;max-height:280px;overflow-y:auto;font-family:monospace;background:var(--surface2);border-radius:var(--r-sm);padding:8px;white-space:pre-wrap;word-break:break-all"></div>
       </div>
 
     </div>
@@ -2482,11 +2457,10 @@ function buildSidebar() {
       list.appendChild(btn);
     });
   });
-  // Restore active state for the currently selected employee after rebuild
   if(curEmp) {
     const idx2 = EMPLOYEES.indexOf(curEmp);
-    const activeBtn = document.getElementById('eb-'+idx2);
-    if(activeBtn) activeBtn.classList.add('active');
+    const ab = document.getElementById('eb-'+idx2);
+    if(ab) ab.classList.add('active');
   }
 }
 
@@ -4452,63 +4426,96 @@ function handleUploadFile(input) {
 }
 
 function parseXLSXUpload(wb, filename) {
-  // Handles 2024 (.xlsm), 2025 (.xlsx), 2026 (.xlsx) formats
-  // All use same structure: dates in the row ABOVE the column-header row
-  // Employee name in R1C4 (2025/2026) or R2C3 (2024)
-
   const MONTHS_ALL = ["January","February","March","April","May","June",
     "July","August","September","October","November","December"];
   const results = [];
-
-  // Detect year from filename for fallback
   const yearMatch = filename.match(/(\d{4})/);
   const fileYear = yearMatch ? yearMatch[1] : '2026';
 
+  const log = document.getElementById('upload-log');
+  const dbg = (msg) => {
+    console.log('[Import]', msg);
+    if(log) log.innerHTML += '<div>' + msg + '</div>';
+  };
+
+  dbg(`File: ${filename} · Sheets: ${wb.SheetNames.join(', ')}`);
+
   wb.SheetNames.forEach(sheetName => {
-    // Accept any month-named sheet regardless of year
     const mName = MONTHS_ALL.find(m => sheetName.startsWith(m));
-    if(!mName) return;
+    if(!mName) { dbg(`⟳ Skipped sheet "${sheetName}" — not a month name`); return; }
 
     const ws = wb.Sheets[sheetName];
-    if(!ws) return;
+    if(!ws) { dbg(`⟳ Skipped sheet "${sheetName}" — empty`); return; }
+
+    dbg(`── Sheet: ${sheetName}`);
 
     // ── Detect employee name ──────────────────────────────────────
-    // Try multiple locations: D1 (2025/2026), C2 (2024), filename
     let empGuess = filename
       .replace(/\.(xlsm|xlsx|xls|csv)$/i,'')
       .replace(/[_\s]?(2024|2025|2026|2027|2028)$/,'')
       .replace(/_/g,' ').trim();
 
-    const nameCells = ['D1','C2','D2'];
+    const nameCells = ['D1','C2','D2','E1','B1'];
     for(const addr of nameCells) {
       const cell = ws[addr];
       if(cell && cell.v && typeof cell.v === 'string') {
         const v = cell.v.trim();
-        // Make sure it's actually a person's name (not a label like "Name" or a date)
         if(v.length > 3 && v.length < 50 &&
-           !['Name','Date','Month','First','Last','Days','Monday','Tuesday'].includes(v) &&
+           !['Name','Date','Month','First','Last','Days','Monday','Tuesday','Employee'].includes(v) &&
            !/^\d/.test(v)) {
           empGuess = v;
+          dbg(`  Employee from cell ${addr}: "${v}"`);
           break;
         }
       }
     }
+    if(!nameCells.some(a => ws[a]?.v)) {
+      dbg(`  Employee from filename: "${empGuess}"`);
+    }
 
     // ── Get sheet as 2D array ─────────────────────────────────────
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+    const data  = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
     const dataF = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
 
-    // ── Find header row: has 'Task' AND ('Business Purpose' or 'Bussiness Purpose') ──
+    dbg(`  Rows in sheet: ${data.length}`);
+
+    // Dump first 15 rows for diagnosis
+    const previewRows = Math.min(15, data.length);
+    for(let i=0;i<previewRows;i++){
+      const rowStr=(dataF[i]||[]).slice(0,10).map(v=>v===null?'_':String(v).slice(0,18)).join(' | ');
+      dbg(`  row${i}: ${rowStr}`);
+    }
+
+    // ── Find header row ───────────────────────────────────────────
+    // Accepts: 'Task' AND any of: 'Business Purpose', 'Bussiness Purpose',
+    //          'Business Purpse', 'BusinessPurpose' etc.
     let hdrIdx = -1;
-    for(let i=0; i<Math.min(12, data.length); i++) {
+    for(let i=0; i<Math.min(20, data.length); i++) {
       const row = (dataF[i]||[]).map(v=>v?String(v).trim():'');
-      if(row.some(v=>v==='Task') && row.some(v=>{ const lv=v.toLowerCase(); return lv.includes('iness')&&lv.includes('urpose'); })) {
-        hdrIdx = i; break;
+      const hasTask = row.some(v=>v==='Task');
+      const hasBP   = row.some(v=>{ const lv=v.toLowerCase(); return lv.includes('iness')&&lv.includes('urpose'); });
+      // Also try: just 'Task' plus 'Customer' as a fallback for minimal sheets
+      const hasCust = row.some(v=>v==='Customer');
+      if(hasTask && (hasBP || hasCust)) {
+        hdrIdx = i;
+        dbg(`  Header row at index ${i}: has Task=${hasTask}, BP=${hasBP}, Cust=${hasCust}`);
+        break;
       }
     }
-    if(hdrIdx < 0) { console.log('No header in '+sheetName); return; }
+    if(hdrIdx < 0) {
+      dbg(`  ✗ No header row found — checked rows 0-${Math.min(20,data.length)-1}`);
+      // Show what was in each row to help diagnose
+      for(let i=0;i<Math.min(20,data.length);i++){
+        const row=(dataF[i]||[]).map(v=>v?String(v).trim():'');
+        const hasTask=row.some(v=>v==='Task');
+        const bpCols=row.filter(v=>{ const lv=(v||'').toLowerCase(); return lv.includes('purp')||lv.includes('busi'); });
+        if(hasTask||bpCols.length) dbg(`    row${i}: Task=${hasTask}, BP-like cols=${JSON.stringify(bpCols)}`);
+      }
+      return;
+    }
 
     const hdr = (dataF[hdrIdx]||[]).map(v=>v?String(v).trim():'');
+    dbg(`  Header cols: ${hdr.filter(Boolean).join(' | ')}`);
 
     // ── Column map ────────────────────────────────────────────────
     const ci = {};
@@ -4524,41 +4531,52 @@ function parseXLSXUpload(wb, filename) {
       if(v==='Comments')                          ci.comments=i;
       if(v==='Total')                             ci.total=i;
     });
-    if(ci.task===undefined || ci.bp===undefined) return;
+    dbg(`  Column map: ${JSON.stringify(ci)}`);
+    if(ci.task===undefined) { dbg('  ✗ No Task column found'); return; }
+    if(ci.bp===undefined)   { dbg('  ✗ No Business Purpose column found'); return; }
 
-    // ── Find date row: the row directly above the header ─────────
-    // For all formats (2024/2025/2026) actual dates are one row above header
-    // In 2026 format, dates also appear IN the header row itself
-    const colDate = {}; // colIndex → 'YYYY-MM-DD'
+    // ── Find date row ─────────────────────────────────────────────
+    const colDate = {};
 
-    const tryDateRow = (rowIdx) => {
+    const tryDateRow = (rowIdx, label) => {
       if(rowIdx < 0) return;
       const rowRaw = data[rowIdx] || [];
+      let found = 0;
       rowRaw.forEach((v, ci2) => {
-        if(ci2 in colDate) return; // already have a date for this col
+        if(ci2 in colDate) return;
         let ds = null;
         if(v instanceof Date) {
           ds = v.toISOString().slice(0,10);
         } else if(typeof v === 'number' && v > 40000 && v < 60000) {
-          // Excel serial → JS date
           const d = new Date(Math.round((v - 25569) * 86400 * 1000));
           ds = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
         } else if(typeof v === 'string') {
-          const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
-          if(m) ds = m[1];
+          // Try multiple date string formats
+          let m;
+          if((m=v.match(/^(\d{4}-\d{2}-\d{2})/))) ds=m[1];
+          else if((m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) ds=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+          else if((m=v.match(/^(\d{1,2})-(\w{3})-(\d{2,4})/i))) {
+            const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+            const yr=m[3].length===2?'20'+m[3]:m[3];
+            ds=`${yr}-${months[m[2].toLowerCase()]||'01'}-${m[1].padStart(2,'0')}`;
+          }
         }
-        if(ds) colDate[ci2] = ds;
+        if(ds) { colDate[ci2]=ds; found++; }
       });
+      if(found) dbg(`  Date row at index ${rowIdx} (${label}): ${found} dates found`);
+      else dbg(`  Date row ${rowIdx} (${label}): 0 dates — raw: ${(rowRaw||[]).slice(0,8).map(v=>JSON.stringify(v)).join(', ')}`);
     };
 
-    // Check row above header first (all formats), then header row itself (2026)
-    tryDateRow(hdrIdx - 1);
-    tryDateRow(hdrIdx);
-    // Also check 2 rows above (some older formats)
-    if(Object.keys(colDate).length < 5) tryDateRow(hdrIdx - 2);
+    tryDateRow(hdrIdx - 2, '2-above-hdr');
+    tryDateRow(hdrIdx - 1, '1-above-hdr');
+    tryDateRow(hdrIdx,     'hdr-row');
+    tryDateRow(hdrIdx + 1, '1-below-hdr');
 
-    console.log(sheetName+': hdr='+hdrIdx+', dates='+Object.keys(colDate).length+', emp='+empGuess);
-    if(Object.keys(colDate).length === 0) { console.warn('No dates in '+sheetName); return; }
+    dbg(`  Total date columns found: ${Object.keys(colDate).length}`);
+    if(Object.keys(colDate).length === 0) {
+      dbg(`  ✗ No date columns found — cannot parse hours`);
+      return;
+    }
 
     // ── Parse data rows ───────────────────────────────────────────
     const clean = v => {
@@ -4567,6 +4585,7 @@ function parseXLSXUpload(wb, filename) {
       return ['nan','null','0','none',''].includes(s.toLowerCase()) ? '' : s;
     };
     let uid = Date.now() + Math.floor(Math.random()*100000);
+    let rowsParsed = 0;
 
     for(let r = hdrIdx+1; r < data.length; r++) {
       const rowR = data[r] || [];
@@ -4575,8 +4594,6 @@ function parseXLSXUpload(wb, filename) {
       const task = clean(rowF[ci.task]);
       const bp   = clean(rowF[ci.bp]);
       if(!task || !bp) continue;
-
-      // Skip summary/total rows
       if(['total','subtotal','grand total'].includes(task.toLowerCase())) continue;
 
       const dayEntries = [];
@@ -4593,6 +4610,7 @@ function parseXLSXUpload(wb, filename) {
       const total = dayEntries.reduce((s,d)=>s+d.hrs, 0);
       if(total <= 0) continue;
 
+      rowsParsed++;
       results.push({
         id: uid++,
         month: mName,
@@ -4600,21 +4618,22 @@ function parseXLSXUpload(wb, filename) {
         site:     clean(rowF[ci.site]),
         orica_fn: clean(rowF[ci.fn]),
         bp,
-        task,
-        subtask:  clean(rowF[ci.subtask]),
-        product:  clean(rowF[ci.product]),
-        product2: clean(rowF[ci.product2]),
-        comments: clean(rowF[ci.comments]),
-        days: dayEntries,
+        task:     task,
+        subtask:  ci.subtask!==undefined ? clean(rowF[ci.subtask]) : '',
+        product:  ci.product!==undefined ? clean(rowF[ci.product]) : '',
+        product2: ci.product2!==undefined ? clean(rowF[ci.product2]) : '',
+        comments: ci.comments!==undefined ? clean(rowF[ci.comments]) : '',
+        days:     dayEntries,
         total,
         submitted: new Date().toISOString(),
         _empGuess: empGuess,
         _year: fileYear
       });
     }
+    dbg(`  ✓ Parsed ${rowsParsed} task rows from "${sheetName}"`);
   });
 
-  console.log('Parsed '+results.length+' entries from '+filename);
+  dbg(`── Total entries parsed: ${results.length}`);
   return results;
 }
 
@@ -5156,280 +5175,6 @@ async function initSupabase() {
 // mirrors admin panel functions but using edit- prefixed IDs
 // ════════════════════════════════════════════════════════════════════
 let editBPTab = 'Cost.of.Service';
-
-
-// ════════════════════════════════════════════════════════════════════
-// DATA INTEGRITY — scan entries for unknown/duplicate values
-// ════════════════════════════════════════════════════════════════════
-
-function runIntegrityCheck() {
-  const statusEl = document.getElementById('integrity-status');
-  const resultsEl = document.getElementById('integrity-results');
-  statusEl.textContent = 'Scanning…';
-  resultsEl.innerHTML = '';
-
-  // Build canonical sets from reference data
-  const canonCustomers = new Set(getCustomers().map(v=>v.trim()));
-  const canonSites     = new Set(Object.values(getCustomerSites()).flat().map(v=>v.trim()));
-  const canonProducts  = new Set(getProducts().map(v=>v.trim()));
-  const allTasks       = Object.values(getRefData('tasks', TASKS_DEFAULT)).flat();
-  const canonTasks     = new Set(allTasks.map(v=>v.trim()));
-  const canonFns       = new Set(getOricaFunctions().map(v=>v.trim()));
-
-  // Collect all values from entry data
-  const counts = {
-    customer: {}, site: {}, task: {}, product: {}, orica_fn: {}
-  };
-
-  const emps = getEmployees();
-  let totalEntries = 0;
-
-  emps.forEach(emp => {
-    MONTHS.forEach(month => {
-      const entries = loadEntries(emp, month);
-      entries.forEach(e => {
-        totalEntries++;
-        const add = (field, val) => {
-          if(!val||val==='') return;
-          const v = String(val).trim();
-          if(!counts[field][v]) counts[field][v] = 0;
-          counts[field][v]++;
-        };
-        // customer can be comma-separated (multi-select)
-        (e.customer||'').split(',').forEach(c => add('customer', c.trim()));
-        (e.site||'').split(',').forEach(s => add('site', s.trim()));
-        add('task', e.task);
-        add('product', e.product);
-        if(e.orica_fn) add('orica_fn', e.orica_fn);
-      });
-    });
-  });
-
-  // Build issues list
-  const issues = [];
-
-  const checkField = (field, valCounts, canonSet, label) => {
-    const vals = Object.keys(valCounts);
-
-    // 1. Unknown values (not in canonical list)
-    vals.forEach(v => {
-      if(v===''||v==='Orica') return; // skip empty / generic
-      if(!canonSet.has(v)) {
-        // Find the closest canonical match for suggestion
-        const suggestion = findClosestMatch(v, [...canonSet]);
-        issues.push({
-          type: 'unknown',
-          field, label,
-          value: v,
-          count: valCounts[v],
-          suggestion
-        });
-      }
-    });
-
-    // 2. Near-duplicates within the values actually used in entries
-    // Group by normalised key (lowercase, strip punctuation/spaces)
-    const norm = v => v.toLowerCase().replace(/[^a-z0-9]/g,'');
-    const groups = {};
-    vals.forEach(v => {
-      if(v==='') return;
-      const k = norm(v);
-      if(!groups[k]) groups[k] = [];
-      groups[k].push(v);
-    });
-    Object.values(groups).forEach(group => {
-      if(group.length > 1) {
-        // Only flag if at least 2 distinct spellings
-        issues.push({
-          type: 'duplicate',
-          field, label,
-          values: group,
-          counts: group.map(v=>valCounts[v]||0)
-        });
-      }
-    });
-  };
-
-  checkField('customer',  counts.customer,  canonCustomers, 'Customer');
-  checkField('site',      counts.site,      canonSites,     'Site');
-  checkField('task',      counts.task,      canonTasks,     'Task');
-  checkField('product',   counts.product,   canonProducts,  'Product');
-  checkField('orica_fn',  counts.orica_fn,  canonFns,       'Orica Function');
-
-  statusEl.textContent = `Scanned ${totalEntries} entries across ${emps.length} employees · ${issues.length} issue${issues.length!==1?'s':''} found`;
-
-  if(!issues.length) {
-    resultsEl.innerHTML = '<div style="color:#1D9E75;font-size:13px;font-weight:600;padding:12px 0"><i class="ti ti-circle-check"></i> All clean — no issues found!</div>';
-    return;
-  }
-
-  // Render issues grouped by field
-  const fields = ['customer','site','task','product','orica_fn'];
-  const fieldIssues = {};
-  fields.forEach(f => fieldIssues[f] = issues.filter(i=>i.field===f));
-
-  let html = '';
-  fields.forEach(field => {
-    const fi = fieldIssues[field];
-    if(!fi.length) return;
-    const label = fi[0].label;
-    html += `<div style="margin-bottom:18px">
-      <div style="font-size:12px;font-weight:700;color:#003087;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #E6F0FA">${label}</div>`;
-    fi.forEach((issue, idx) => {
-      const issueId = `issue_${field}_${idx}`;
-      if(issue.type==='unknown') {
-        html += `<div class="integrity-row" id="${issueId}">
-          <div class="integrity-badge badge-warn">Unknown</div>
-          <div class="integrity-value">"${esc(issue.value)}"</div>
-          <div class="integrity-meta">${issue.count} entr${issue.count!==1?'ies':'y'}</div>
-          ${issue.suggestion ? `<div class="integrity-suggestion">→ did you mean <em>"${esc(issue.suggestion)}"</em>?</div>` : ''}
-          <div class="integrity-actions">
-            <select class="integrity-select" id="sel_${issueId}">
-              <option value="">— remap to —</option>
-              ${[...getCanonList(field)].sort().map(c=>`<option value="${esc(c)}" ${c===issue.suggestion?'selected':''}>${esc(c)}</option>`).join('')}
-              <option value="__keep__">Keep as-is (suppress)</option>
-            </select>
-            <button class="btn btn-sm btn-primary" onclick="applyRemap('${field}','${esc(issue.value)}','sel_${issueId}')">Apply</button>
-          </div>
-        </div>`;
-      } else if(issue.type==='duplicate') {
-        html += `<div class="integrity-row" id="${issueId}">
-          <div class="integrity-badge badge-dupe">Near-duplicate</div>
-          <div class="integrity-value">${issue.values.map((v,i)=>`"${esc(v)}" (${issue.counts[i]})`).join(' · ')}</div>
-          <div class="integrity-meta">Consolidate all to:</div>
-          <div class="integrity-actions">
-            <select class="integrity-select" id="dup_${issueId}">
-              <option value="">— choose canonical —</option>
-              ${issue.values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('')}
-              ${[...getCanonList(field)].sort().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
-            </select>
-            <button class="btn btn-sm btn-primary" onclick="applyDupeConsolidate('${field}',${JSON.stringify(issue.values)},'dup_${issueId}')">Consolidate</button>
-          </div>
-        </div>`;
-      }
-    });
-    html += '</div>';
-  });
-
-  resultsEl.innerHTML = html;
-}
-
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function getCanonList(field) {
-  if(field==='customer')  return new Set(getCustomers());
-  if(field==='site')      return new Set(Object.values(getCustomerSites()).flat());
-  if(field==='task')      return new Set(Object.values(getRefData('tasks',TASKS_DEFAULT)).flat());
-  if(field==='product')   return new Set(getProducts());
-  if(field==='orica_fn')  return new Set(getOricaFunctions());
-  return new Set();
-}
-
-function findClosestMatch(val, candidates) {
-  if(!candidates.length) return null;
-  const normVal = val.toLowerCase().replace(/[^a-z0-9]/g,'');
-  let best = null, bestScore = Infinity;
-  candidates.forEach(c => {
-    const normC = c.toLowerCase().replace(/[^a-z0-9]/g,'');
-    const d = levenshtein(normVal, normC);
-    // Only suggest if within 40% edit distance
-    if(d < bestScore && d <= Math.max(3, Math.floor(normVal.length * 0.4))) {
-      bestScore = d; best = c;
-    }
-  });
-  return best;
-}
-
-function levenshtein(a, b) {
-  const m=a.length, n=b.length;
-  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
-    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
-  return dp[m][n];
-}
-
-function applyRemap(field, oldVal, selectId) {
-  const sel = document.getElementById(selectId);
-  const newVal = sel?.value;
-  if(!newVal) { toast('Select a target value first','error'); return; }
-  if(newVal==='__keep__') {
-    // Just remove the row visually
-    const row = sel.closest('.integrity-row');
-    if(row) { row.style.opacity='0.4'; row.style.pointerEvents='none'; }
-    toast('Suppressed — value kept as-is','info');
-    return;
-  }
-  const count = rewriteEntryField(field, oldVal, newVal);
-  const row = sel.closest('.integrity-row');
-  if(row) {
-    row.innerHTML = `<div class="integrity-badge badge-ok">Fixed</div>
-      <div class="integrity-value" style="color:var(--muted)"><s>${esc(oldVal)}</s> → <strong>${esc(newVal)}</strong> (${count} entr${count!==1?'ies':'y'} updated)</div>`;
-  }
-  toast(`✓ Remapped ${count} entr${count!==1?'ies':'y'}: "${oldVal}" → "${newVal}"`, 'success');
-}
-
-function applyDupeConsolidate(field, values, selectId) {
-  const sel = document.getElementById(selectId);
-  const canonical = sel?.value;
-  if(!canonical) { toast('Choose which spelling to keep','error'); return; }
-  let totalCount = 0;
-  values.forEach(v => {
-    if(v!==canonical) totalCount += rewriteEntryField(field, v, canonical);
-  });
-  const row = sel.closest('.integrity-row');
-  if(row) {
-    row.innerHTML = `<div class="integrity-badge badge-ok">Fixed</div>
-      <div class="integrity-value" style="color:var(--muted)">Consolidated to <strong>${esc(canonical)}</strong> (${totalCount} entr${totalCount!==1?'ies':'y'} updated)</div>`;
-  }
-  toast(`✓ Consolidated ${totalCount} entr${totalCount!==1?'ies':'y'} to "${canonical}"`, 'success');
-}
-
-function rewriteEntryField(field, oldVal, newVal) {
-  // field: 'customer'|'site'|'task'|'product'|'orica_fn'
-  const emps = getEmployees();
-  let count = 0;
-  const affectedKeys = [];
-
-  emps.forEach(emp => {
-    MONTHS.forEach(month => {
-      const entries = loadEntries(emp, month);
-      let changed = false;
-      const updated = entries.map(e => {
-        let mod = {...e};
-        if(field==='customer') {
-          // customer is comma-separated
-          const parts = (e.customer||'').split(',').map(s=>s.trim());
-          const newParts = parts.map(p => p===oldVal ? newVal : p);
-          if(newParts.join(',')!==parts.join(',')) { mod.customer=newParts.join(', '); changed=true; count++; }
-        } else if(field==='site') {
-          const parts = (e.site||'').split(',').map(s=>s.trim());
-          const newParts = parts.map(p => p===oldVal ? newVal : p);
-          if(newParts.join(',')!==parts.join(',')) { mod.site=newParts.join(', '); changed=true; count++; }
-        } else if(field==='task' && e.task===oldVal) {
-          mod.task=newVal; changed=true; count++;
-        } else if(field==='product' && e.product===oldVal) {
-          mod.product=newVal; changed=true; count++;
-        } else if(field==='orica_fn' && e.orica_fn===oldVal) {
-          mod.orica_fn=newVal; changed=true; count++;
-        }
-        return mod;
-      });
-      if(changed) {
-        saveEntries(emp, month, updated);
-        affectedKeys.push({emp, month, entries: updated});
-      }
-    });
-  });
-
-  // Push changes to Supabase in background
-  if(isOnline && affectedKeys.length) {
-    affectedKeys.forEach(({emp, month, entries}) => {
-      bulkImportToSupabase(emp, month, entries).catch(e=>console.warn('Integrity sync error:', e));
-    });
-  }
-
-  return count;
-}
 
 function switchEditTab(name, el) {
   document.querySelectorAll('[id^=epanel-]').forEach(p=>p.classList.remove('active'));
