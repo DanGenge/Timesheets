@@ -7,6 +7,7 @@
   <!-- v13.9 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -538,6 +539,63 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
 .ref-item-edit:hover { background:#EBF4FF; color:#003087; border-color:#003087; }
 .ref-item-del { width:26px; height:26px; border:none; background:transparent; cursor:pointer; color:var(--faint); border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .ref-item-del:hover { background:var(--red-light); color:var(--red); }
+
+/* ── Report Builder ────────────────────────────────────────────── */
+.bldr-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; }
+.bldr-card-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap; }
+.bldr-card-hdr > span { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; }
+.bldr-card-controls { display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+.bldr-ctrl { font-size:10px; padding:2px 8px; border-radius:3px; border:1px solid var(--border-med); background:var(--surface); color:var(--muted); cursor:pointer; font-family:inherit; transition:all 0.1s; }
+.bldr-ctrl:hover { border-color:#003087; color:#003087; }
+.bldr-ctrl.active { background:#003087; color:#fff; border-color:#003087; }
+.bldr-pill { font-size:10px; padding:3px 10px; border-radius:100px; border:1px solid rgba(255,255,255,0.3); background:transparent; color:rgba(255,255,255,0.7); cursor:pointer; font-family:inherit; transition:all 0.1s; }
+.bldr-pill:hover { background:rgba(255,255,255,0.15); }
+.bldr-pill.active { background:#fff; color:#003087; border-color:#fff; font-weight:700; }
+.bldr-kpi { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px 16px; }
+.bldr-kpi-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.bldr-kpi-value { font-size:26px; font-weight:800; letter-spacing:-1px; color:var(--text); line-height:1; }
+.bldr-kpi-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+.bldr-kpi.accent .bldr-kpi-value { color:#003087; }
+.bldr-kpi.green .bldr-kpi-value { color:#1D9E75; }
+.bldr-hbar { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+.bldr-hbar-label { font-size:11px; color:var(--text); min-width:100px; max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+.bldr-hbar-track { flex:1; height:14px; background:var(--surface2); border-radius:3px; overflow:hidden; min-width:40px; }
+.bldr-hbar-fill { height:100%; border-radius:3px; transition:width 0.4s; }
+.bldr-hbar-val { font-size:11px; font-weight:700; color:var(--text); min-width:36px; text-align:right; flex-shrink:0; }
+.bldr-hbar-pct { font-size:10px; color:var(--muted); min-width:32px; text-align:right; flex-shrink:0; }
+.bldr-treemap { display:flex; flex-wrap:wrap; gap:3px; padding:4px; }
+.bldr-treemap-cell { border-radius:4px; display:flex; align-items:center; justify-content:center; flex-direction:column; cursor:default; transition:opacity 0.15s; overflow:hidden; }
+.bldr-treemap-cell:hover { opacity:0.85; }
+.bldr-treemap-label { font-size:9px; font-weight:700; color:rgba(255,255,255,0.95); text-align:center; padding:2px; line-height:1.2; }
+.bldr-treemap-val { font-size:9px; color:rgba(255,255,255,0.8); }
+.bldr-heat-grid { display:inline-grid; gap:2px; }
+.bldr-heat-cell { width:16px; height:16px; border-radius:2px; font-size:7px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.9); cursor:default; }
+.bldr-heat-label { font-size:9px; color:var(--muted); text-align:center; }
+.bldr-bubble-legend { font-size:10px; color:var(--muted); margin-top:6px; text-align:center; }
+/* Builder v2 */
+.bldr-mode-tab { font-size:11px; font-weight:600; padding:4px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:rgba(255,255,255,0.65); cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:5px; transition:all 0.15s; white-space:nowrap; }
+.bldr-mode-tab:hover { background:rgba(255,255,255,0.12); color:#fff; }
+.bldr-mode-tab.active { background:#fff; color:#003087; border-color:#fff; }
+.bldr-mode-panel { display:none; }
+.bldr-mode-panel.active { display:block; }
+.bldr-sep { width:1px; height:18px; background:rgba(255,255,255,0.18); flex-shrink:0; }
+.bldr-vsep { width:1px; height:14px; background:var(--border-med); }
+.dash-pal-btn { font-size:10px; font-weight:600; padding:3px 9px; border-radius:4px; border:1px solid var(--border-med); background:var(--surface); color:var(--muted); cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:4px; transition:all 0.12s; white-space:nowrap; }
+.dash-pal-btn:hover { border-color:#003087; color:#003087; background:#E6F0FA; }
+.dash-widget { transition:box-shadow 0.15s; }
+.dash-widget:hover { box-shadow:0 2px 12px rgba(0,48,135,0.12); }
+.pv-slicer-btn { font-size:10px; padding:2px 8px; border-radius:3px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; font-family:inherit; transition:all 0.1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.pv-slicer-btn:hover { border-color:#0072CE; color:#0072CE; }
+.pv-slicer-btn.active { background:#003087; color:#fff; border-color:#003087; }
+.pv-tbl th { position:sticky; top:0; background:var(--surface); z-index:2; white-space:nowrap; }
+.pv-tbl td { white-space:nowrap; }
+.bldr-filter-sel { height:24px; font-size:11px; border-radius:4px; border:none; padding:0 6px; background:rgba(255,255,255,0.15); color:#fff; max-width:140px; cursor:pointer; flex-shrink:0; }
+.bldr-filter-sel option { background:#003087; color:#fff; }
+.bldr-filter-sel:focus { outline:none; background:rgba(255,255,255,0.25); }
+#bldr-toolbar select option { background:#003087; color:#fff; }
+@media(max-width:900px){ #bldr-grid { grid-template-columns:1fr 1fr; } .bldr-card { grid-column:span 2 !important; } }
+@media(max-width:600px){ #bldr-grid { grid-template-columns:1fr; } .bldr-card { grid-column:span 1 !important; } }
+
 .ref-item-input { flex:1; height:28px; padding:0 8px; border:1px solid #003087; border-radius:4px; font-size:13px; font-family:inherit; background:#EBF4FF; color:#003087; }
 .ref-item-save { height:26px; padding:0 10px; background:#003087; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600; font-family:inherit; }
 .ref-item-save:hover { background:#002268; }
@@ -788,6 +846,9 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
       <div class="nav-link" id="nav-weekly" onclick="showSection('weekly',this)"><i class="ti ti-pencil"></i> Edit</div>
     </div>
     <div class="nav-link" id="nav-reports" onclick="showSection('reports',this)"><i class="ti ti-chart-bar"></i> Reports</div>
+    <div id="nav-builder-tab" style="display:none">
+      <div class="nav-link" id="nav-builder" onclick="showSection('builder',this)"><i class="ti ti-layout-dashboard"></i> Builder</div>
+    </div>
   </div>
   <div class="nav-right">
     <span id="conn-badge" style="font-size:11px;font-weight:700;color:#E24B4A;margin-right:8px;cursor:default" title="Checking connection…">● Connecting…</span>
@@ -843,7 +904,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <table class="dt" id="upload-preview-table" style="font-size:11px"></table>
           </div>
         </div>
-        <div id="upload-log" style="font-size:11px;color:var(--muted);margin-top:8px;max-height:280px;overflow-y:auto;font-family:monospace;background:var(--surface2);border-radius:var(--r-sm);padding:8px;white-space:pre-wrap;word-break:break-all"></div>
+        <div id="upload-log" style="font-size:12px;color:var(--muted);margin-top:8px;max-height:80px;overflow-y:auto"></div>
       </div>
 
     </div>
@@ -1868,6 +1929,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
       </div><!-- /rpanel-resmodel -->
 
 
+
     </div><!-- /admin-reports-section -->
 
       <!-- ADMIN PAGE → Upload only -->
@@ -1903,7 +1965,7 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
             <table class="dt" id="upload-preview-table" style="font-size:11px"></table>
           </div>
         </div>
-        <div id="upload-log" style="font-size:11px;color:var(--muted);margin-top:8px;max-height:280px;overflow-y:auto;font-family:monospace;background:var(--surface2);border-radius:var(--r-sm);padding:8px;white-space:pre-wrap;word-break:break-all"></div>
+        <div id="upload-log" style="font-size:12px;color:var(--muted);margin-top:8px;max-height:80px;overflow-y:auto"></div>
       </div>
 
     </div>
@@ -2098,6 +2160,403 @@ select:disabled, input:disabled { opacity: 0.45; cursor: not-allowed; }
     </div>
     <!-- ══ END DASHBOARD ═════════════════════════════════════════════ -->
   </div><!-- /main -->
+    <!-- ══ REPORT BUILDER PAGE ══════════════════════════════════════ -->
+    <div class="page" id="page-builder" style="padding:0;display:flex;flex-direction:column;height:calc(100vh - 58px);overflow:hidden">
+
+      <!-- ── TOP NAV BAR ─────────────────────────────────────────── -->
+      <div id="bldr-topbar" style="background:#003087;border-bottom:2px solid #0072CE;flex-shrink:0;z-index:60">
+
+        <!-- Row 1: title + tabs + actions -->
+        <div style="display:flex;align-items:center;gap:0;height:44px;padding:0 16px">
+          <span style="font-size:13px;font-weight:800;color:#fff;letter-spacing:-0.3px;margin-right:16px;white-space:nowrap;flex-shrink:0">
+            <i class="ti ti-layout-dashboard" style="margin-right:4px"></i>Report Builder
+          </span>
+
+          <!-- Mode tabs -->
+          <div style="display:flex;gap:2px;margin-right:auto">
+            <button class="bldr-mode-tab active" id="bmode-overview" onclick="bldrSwitchMode('overview',this)"><i class="ti ti-chart-bar"></i> Overview</button>
+            <button class="bldr-mode-tab" id="bmode-dashboard" onclick="bldrSwitchMode('dashboard',this)"><i class="ti ti-layout-grid"></i> Dashboard</button>
+            <button class="bldr-mode-tab" id="bmode-waterfall" onclick="bldrSwitchMode('waterfall',this)"><i class="ti ti-waterfall"></i> Waterfall</button>
+            <button class="bldr-mode-tab" id="bmode-pivot" onclick="bldrSwitchMode('pivot',this)"><i class="ti ti-table-options"></i> Pivot</button>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <div id="bldr-entry-count" style="font-size:11px;color:rgba(255,255,255,0.6);padding:2px 8px;background:rgba(255,255,255,0.1);border-radius:4px;white-space:nowrap">— entries</div>
+            <button class="btn btn-sm" onclick="bldrExportAll()" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.3);color:#fff;font-size:11px;height:28px"><i class="ti ti-file-export"></i> Export all</button>
+            <button class="btn btn-sm" onclick="bldrReset()" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);font-size:11px;height:28px"><i class="ti ti-refresh"></i></button>
+          </div>
+        </div>
+
+        <!-- Row 2: filters (always visible) -->
+        <div id="bldr-filterbar" style="display:flex;align-items:center;gap:6px;padding:4px 16px 6px;overflow-x:auto;flex-wrap:nowrap">
+          <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.5px;flex-shrink:0">STATE</span>
+          <button class="bldr-pill active" id="bpill-all" onclick="bldrSetState('ALL')">All</button>
+          <button class="bldr-pill" id="bpill-nsw" onclick="bldrSetState('NSW')">NSW</button>
+          <button class="bldr-pill" id="bpill-qld" onclick="bldrSetState('QLD')">QLD</button>
+          <div class="bldr-sep"></div>
+          <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.5px;flex-shrink:0">PERIOD</span>
+          <select id="bldr-mfrom" onchange="bldrRender()" class="bldr-filter-sel" style="max-width:65px"></select>
+          <span style="color:rgba(255,255,255,0.35);font-size:10px">→</span>
+          <select id="bldr-mto"   onchange="bldrRender()" class="bldr-filter-sel" style="max-width:65px"></select>
+          <div class="bldr-sep"></div>
+          <select id="bldr-emp"     onchange="bldrRender()" class="bldr-filter-sel"></select>
+          <select id="bldr-cust"    onchange="bldrRender()" class="bldr-filter-sel"></select>
+          <select id="bldr-bp"      onchange="bldrRender()" class="bldr-filter-sel"></select>
+          <select id="bldr-site"    onchange="bldrRender()" class="bldr-filter-sel"></select>
+          <select id="bldr-task"    onchange="bldrRender()" class="bldr-filter-sel"></select>
+          <select id="bldr-product" onchange="bldrRender()" class="bldr-filter-sel"></select>
+          <!-- Slider filter for hours range -->
+          <div class="bldr-sep"></div>
+          <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);flex-shrink:0">HRS ≥</span>
+          <input type="range" id="bldr-hrs-min" min="0" max="200" value="0" step="10" oninput="document.getElementById('bldr-hrs-min-val').textContent=this.value;bldrRender()" style="width:80px;accent-color:#4BA8E8;cursor:pointer;flex-shrink:0">
+          <span id="bldr-hrs-min-val" style="font-size:10px;color:#fff;min-width:26px;flex-shrink:0">0</span>
+        </div>
+      </div>
+
+      <!-- ── CONTENT AREA ────────────────────────────────────────── -->
+      <div id="bldr-content" style="flex:1;overflow-y:auto;overflow-x:hidden">
+
+        <!-- ════ MODE: OVERVIEW (static grid) ════ -->
+        <div id="bldr-mode-overview" class="bldr-mode-panel active">
+          <div id="bldr-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 16px 0"></div>
+          <div id="bldr-grid" style="display:grid;grid-template-columns:repeat(12,1fr);gap:10px;padding:12px 16px 24px;align-items:start">
+
+            <div class="bldr-card" style="grid-column:span 8">
+              <div class="bldr-card-hdr"><span><i class="ti ti-trending-up"></i> Monthly Hours Trend</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrSetTrendMode('bar',this)">Bar</button>
+                  <button class="bldr-ctrl" onclick="bldrSetTrendMode('line',this)">Line</button>
+                  <button class="bldr-ctrl" onclick="bldrSetTrendMode('area',this)">Area</button>
+                  <button class="bldr-ctrl" onclick="bldrSetTrendMode('stacked',this)">Stacked</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-trend-chart')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-trend-chart','Monthly_Trend')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div style="position:relative;height:220px"><canvas id="bldr-trend-chart"></canvas></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 4">
+              <div class="bldr-card-hdr"><span><i class="ti ti-chart-pie-2"></i> Business Purpose Mix</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrBPMode('doughnut',this)">Donut</button>
+                  <button class="bldr-ctrl" onclick="bldrBPMode('pie',this)">Pie</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-bp-chart')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-bp-chart','BP_Mix')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div style="position:relative;height:160px"><canvas id="bldr-bp-chart"></canvas></div>
+              <div id="bldr-bp-legend" style="margin-top:6px;font-size:10px;display:flex;flex-direction:column;gap:3px"></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 6">
+              <div class="bldr-card-hdr"><span><i class="ti ti-chart-treemap"></i> Hours by Task</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrSetTaskMode('bars',this)">Bars</button>
+                  <button class="bldr-ctrl" onclick="bldrSetTaskMode('treemap',this)">Treemap</button>
+                  <button class="bldr-ctrl" onclick="bldrSetTaskMode('funnel',this)">Funnel</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-task-wrap')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-task-wrap','Hours_by_Task')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div id="bldr-task-wrap" style="max-height:300px;overflow-y:auto"></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 6">
+              <div class="bldr-card-hdr"><span><i class="ti ti-trophy"></i> Employee Leaderboard</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrSetEmpMode('bars',this)">Bars</button>
+                  <button class="bldr-ctrl" onclick="bldrSetEmpMode('radar',this)">Radar</button>
+                  <button class="bldr-ctrl" onclick="bldrSetEmpMode('bubble',this)">Bubble</button>
+                  <button class="bldr-ctrl" onclick="bldrSetEmpMode('scatter',this)">Scatter</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-emp-wrap')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-emp-wrap','Employee_Leaderboard')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div id="bldr-emp-wrap" style="max-height:300px;overflow-y:auto">
+                <canvas id="bldr-emp-chart" style="display:none;max-height:270px"></canvas>
+              </div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 5">
+              <div class="bldr-card-hdr"><span><i class="ti ti-building"></i> Customer Breakdown</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrCustMode('bars',this)">Bars</button>
+                  <button class="bldr-ctrl" onclick="bldrCustMode('polar',this)">Polar</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-cust-wrap')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-cust-wrap','Customers')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div id="bldr-cust-wrap">
+                <div id="bldr-cust-bars" style="max-height:200px;overflow-y:auto"></div>
+                <canvas id="bldr-cust-chart" style="display:none;max-height:200px"></canvas>
+              </div>
+              <div style="margin-top:8px">
+                <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Top Sites</div>
+                <div id="bldr-site-bars" style="max-height:140px;overflow-y:auto"></div>
+              </div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 3">
+              <div class="bldr-card-hdr"><span><i class="ti ti-calendar-week"></i> Day of Week</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-dow-chart')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-dow-chart','Day_of_Week')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div style="position:relative;height:200px"><canvas id="bldr-dow-chart"></canvas></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 4">
+              <div class="bldr-card-hdr"><span><i class="ti ti-activity"></i> Intensity Heatmap</span>
+                <div class="bldr-card-controls">
+                  <select id="bldr-heat-emp" onchange="bldrRenderHeatmap()" style="font-size:10px;height:22px;border:1px solid var(--border);border-radius:3px;padding:0 4px;background:var(--bg);color:var(--text)"></select>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-heatmap')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-heatmap','Heatmap')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div id="bldr-heatmap" style="overflow-x:auto"></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 4">
+              <div class="bldr-card-hdr"><span><i class="ti ti-box"></i> Product Mix</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrProdMode('polar',this)">Polar</button>
+                  <button class="bldr-ctrl" onclick="bldrProdMode('bar',this)">Bar</button>
+                  <button class="bldr-ctrl" onclick="bldrProdMode('doughnut',this)">Donut</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-prod-chart')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-prod-chart','Product_Mix')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div style="position:relative;height:200px"><canvas id="bldr-prod-chart"></canvas></div>
+              <div id="bldr-prod-legend" style="margin-top:4px;font-size:10px;display:flex;flex-direction:column;gap:2px"></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 8">
+              <div class="bldr-card-hdr"><span><i class="ti ti-wave-square"></i> Employee × Month</span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl active" onclick="bldrEmpMonthMode('line',this)">Line</button>
+                  <button class="bldr-ctrl" onclick="bldrEmpMonthMode('bar',this)">Bar</button>
+                  <button class="bldr-ctrl" onclick="bldrEmpMonthMode('area',this)">Area</button>
+                  <div class="bldr-vsep"></div>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-emp-monthly-chart')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" title="PNG" onclick="bldrExportCard('bldr-emp-monthly-chart','Emp_Monthly')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div style="position:relative;height:200px"><canvas id="bldr-emp-monthly-chart"></canvas></div>
+            </div>
+
+            <div class="bldr-card" style="grid-column:span 12">
+              <div class="bldr-card-hdr">
+                <span><i class="ti ti-table"></i> Raw Entry Table</span>
+                <div class="bldr-card-controls">
+                  <select id="bldr-tbl-group" onchange="bldrRenderTable()" style="font-size:10px;height:22px;border:1px solid var(--border);border-radius:3px;padding:0 4px;background:var(--bg);color:var(--text)">
+                    <option value="none">No grouping</option>
+                    <option value="employee">By employee</option>
+                    <option value="customer">By customer</option>
+                    <option value="task">By task</option>
+                    <option value="month">By month</option>
+                    <option value="site">By site</option>
+                    <option value="product">By product</option>
+                  </select>
+                  <button class="bldr-ctrl" onclick="bldrExportTable()"><i class="ti ti-download"></i> CSV</button>
+                  <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('bldr-table')"><i class="ti ti-copy"></i></button>
+                </div>
+              </div>
+              <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
+                <table class="dt" id="bldr-table" style="font-size:11px;min-width:900px"></table>
+              </div>
+              <div id="bldr-table-footer" style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right"></div>
+            </div>
+
+          </div>
+        </div><!-- /overview -->
+
+        <!-- ════ MODE: DASHBOARD (drag-to-add widget canvas) ════ -->
+        <div id="bldr-mode-dashboard" class="bldr-mode-panel">
+          <div id="dash-toolbar" style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap">
+            <span style="font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">ADD WIDGET</span>
+            <div id="dash-widget-palette" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
+            <button class="btn btn-sm btn-primary" onclick="dashSaveLayout()" style="flex-shrink:0"><i class="ti ti-device-floppy"></i> Save layout</button>
+            <button class="btn btn-sm" onclick="dashClearLayout()" style="flex-shrink:0"><i class="ti ti-trash"></i> Clear</button>
+            <button class="btn btn-sm" onclick="bldrExportAll()" style="flex-shrink:0"><i class="ti ti-file-export"></i> Export</button>
+          </div>
+          <div id="dash-canvas" style="display:grid;grid-template-columns:repeat(12,1fr);gap:10px;padding:14px 16px 24px;align-items:start;min-height:400px">
+            <div id="dash-empty" style="grid-column:span 12;text-align:center;padding:60px 20px;color:var(--muted)">
+              <i class="ti ti-plus-circle" style="font-size:36px;display:block;margin-bottom:10px;opacity:0.4"></i>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">Click a widget above to add it to your dashboard</div>
+              <div style="font-size:11px">Mix and match chart types, resize with the handle, remove with ×</div>
+            </div>
+          </div>
+        </div><!-- /dashboard -->
+
+        <!-- ════ MODE: WATERFALL ════ -->
+        <div id="bldr-mode-waterfall" class="bldr-mode-panel">
+          <div style="padding:14px 16px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="bldr-card" style="flex:1;min-width:260px">
+              <div class="bldr-card-hdr"><span><i class="ti ti-settings"></i> Waterfall Configuration</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px">GROUP BY</label>
+                  <select id="wf-groupby" onchange="bldrRenderWaterfall()" style="width:100%;height:30px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-sm);padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="month">Month</option>
+                    <option value="customer">Customer</option>
+                    <option value="task">Task</option>
+                    <option value="employee">Employee</option>
+                    <option value="site">Site</option>
+                    <option value="bp">Business Purpose</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px">MEASURE</label>
+                  <select id="wf-measure" onchange="bldrRenderWaterfall()" style="width:100%;height:30px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-sm);padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="hours">Total Hours</option>
+                    <option value="billable">Billable Days</option>
+                    <option value="entries">Entry Count</option>
+                    <option value="employees">Distinct Employees</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px">SORT</label>
+                  <select id="wf-sort" onchange="bldrRenderWaterfall()" style="width:100%;height:30px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-sm);padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="natural">Natural order</option>
+                    <option value="desc">Largest first</option>
+                    <option value="asc">Smallest first</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px">SHOW TOTAL</label>
+                  <select id="wf-total" onchange="bldrRenderWaterfall()" style="width:100%;height:30px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-sm);padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="bldr-card" style="flex:1;min-width:200px">
+              <div class="bldr-card-hdr"><span><i class="ti ti-invoice"></i> Billable Days Input</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Enter invoiced billable days per month to overlay on the waterfall</div>
+              <div id="wf-billable-inputs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;max-height:140px;overflow-y:auto"></div>
+            </div>
+          </div>
+          <div style="padding:12px 16px">
+            <div class="bldr-card">
+              <div class="bldr-card-hdr">
+                <span><i class="ti ti-waterfall"></i> <span id="wf-title">Hours Waterfall</span></span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl" onclick="bldrCopyCard('bldr-waterfall')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" onclick="bldrExportCard('bldr-waterfall','Waterfall')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div id="bldr-waterfall" style="height:420px"></div>
+            </div>
+          </div>
+        </div><!-- /waterfall -->
+
+        <!-- ════ MODE: PIVOT ════ -->
+        <div id="bldr-mode-pivot" class="bldr-mode-panel">
+          <div style="padding:14px 16px 0;display:flex;gap:10px;flex-wrap:wrap">
+            <div class="bldr-card" style="flex:0 0 auto;min-width:240px">
+              <div class="bldr-card-hdr"><span><i class="ti ti-table-options"></i> Pivot Configuration</span></div>
+              <div style="font-size:12px;display:flex;flex-direction:column;gap:8px">
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">ROWS</label>
+                  <select id="pv-rows" onchange="bldrRenderPivot()" style="width:100%;height:28px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="employee">Employee</option>
+                    <option value="customer">Customer</option>
+                    <option value="task">Task</option>
+                    <option value="month">Month</option>
+                    <option value="site">Site</option>
+                    <option value="bp">Business Purpose</option>
+                    <option value="product">Product</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">COLUMNS</label>
+                  <select id="pv-cols" onchange="bldrRenderPivot()" style="width:100%;height:28px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="month">Month</option>
+                    <option value="employee">Employee</option>
+                    <option value="customer">Customer</option>
+                    <option value="task">Task</option>
+                    <option value="site">Site</option>
+                    <option value="bp">Business Purpose</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">VALUES</label>
+                  <select id="pv-vals" onchange="bldrRenderPivot()" style="width:100%;height:28px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="hours">Sum of Hours</option>
+                    <option value="count">Count of Entries</option>
+                    <option value="avg">Avg Hours/Entry</option>
+                    <option value="pct">% of Total</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">CHART TYPE</label>
+                  <select id="pv-chart" onchange="bldrRenderPivot()" style="width:100%;height:28px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text)">
+                    <option value="table">Table only</option>
+                    <option value="bar">Grouped bars</option>
+                    <option value="stackedbar">Stacked bars</option>
+                    <option value="line">Line</option>
+                    <option value="area">Area</option>
+                    <option value="heatmap">Heatmap grid</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <div style="flex:1">
+                    <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">TOP N ROWS</label>
+                    <input type="number" id="pv-topn" value="20" min="1" max="100" onchange="bldrRenderPivot()" style="width:100%;height:28px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text);text-align:center">
+                  </div>
+                  <div style="flex:1">
+                    <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">TOP N COLS</label>
+                    <input type="number" id="pv-topcols" value="12" min="1" max="50" onchange="bldrRenderPivot()" style="width:100%;height:28px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text);text-align:center">
+                  </div>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-sm btn-primary" style="flex:1;font-size:11px" onclick="bldrRenderPivot()"><i class="ti ti-refresh"></i> Refresh</button>
+                  <button class="bldr-ctrl" onclick="bldrExportPivot()"><i class="ti ti-download"></i> CSV</button>
+                </div>
+              </div>
+            </div>
+            <!-- Pivot slider filters -->
+            <div class="bldr-card" style="flex:1;min-width:240px">
+              <div class="bldr-card-hdr"><span><i class="ti ti-adjustments-horizontal"></i> Slice &amp; Dice</span></div>
+              <div id="pv-slicers" style="display:flex;flex-direction:column;gap:10px"></div>
+            </div>
+          </div>
+          <div style="padding:12px 16px">
+            <div class="bldr-card">
+              <div class="bldr-card-hdr">
+                <span><i class="ti ti-chart-bar"></i> <span id="pv-chart-title">Pivot Chart</span></span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl" onclick="bldrCopyCard('pv-chart-wrap')"><i class="ti ti-copy"></i></button>
+                  <button class="bldr-ctrl" onclick="bldrExportCard('pv-chart-wrap','Pivot_Chart')"><i class="ti ti-download"></i></button>
+                </div>
+              </div>
+              <div id="pv-chart-wrap" style="height:320px;display:none"></div>
+            </div>
+            <div class="bldr-card" style="margin-top:10px">
+              <div class="bldr-card-hdr">
+                <span><i class="ti ti-table"></i> <span id="pv-table-title">Pivot Table</span></span>
+                <div class="bldr-card-controls">
+                  <button class="bldr-ctrl" onclick="bldrExportPivot()"><i class="ti ti-download"></i> CSV</button>
+                  <button class="bldr-ctrl" onclick="bldrCopyCard('pv-table-wrap')"><i class="ti ti-copy"></i></button>
+                </div>
+              </div>
+              <div id="pv-table-wrap" style="overflow-x:auto;max-height:420px;overflow-y:auto"></div>
+            </div>
+          </div>
+        </div><!-- /pivot -->
+
+      </div><!-- /bldr-content -->
+    </div><!-- /page-builder -->
+
 </div><!-- /layout -->
 
 <!-- TOAST -->
@@ -2457,11 +2916,7 @@ function buildSidebar() {
       list.appendChild(btn);
     });
   });
-  if(curEmp) {
-    const idx2 = EMPLOYEES.indexOf(curEmp);
-    const ab = document.getElementById('eb-'+idx2);
-    if(ab) ab.classList.add('active');
-  }
+  if(curEmp){const idx2=EMPLOYEES.indexOf(curEmp);const ab=document.getElementById('eb-'+idx2);if(ab)ab.classList.add('active');}
 }
 
 function selectEmp(emp, idx) {
@@ -2511,18 +2966,21 @@ function showSection(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   curSection=name;
   if(name==='admin'){
+    document.querySelector('.sidebar').style.display='';
     document.getElementById('no-sel').style.display='none';
     document.getElementById('page-admin').classList.add('active');
     renderAdminUsers();
     return;
   }
     if(name==='weekly'){
+    document.querySelector('.sidebar').style.display='';
     document.getElementById('no-sel').style.display='none';
     document.getElementById('page-weekly').classList.add('active');
     renderEditPage();
     return;
   }
   if(name==='reports'){
+    document.querySelector('.sidebar').style.display='';
     document.getElementById('no-sel').style.display='none';
     document.getElementById('page-reports').classList.add('active');
     if(currentUser && currentUser.role!=='admin'){
@@ -2543,6 +3001,19 @@ function showSection(name, el) {
     }
     return;
   }
+  if(name==='builder'){
+    document.getElementById('no-sel').style.display='none';
+    document.querySelector('.sidebar').style.display='none';
+    document.getElementById('page-builder').classList.add('active');
+    if(isOnline) {
+      fetchAllFromSupabase().then(()=>initBuilder());
+    } else {
+      initBuilder();
+    }
+    return;
+  }
+  // Restore sidebar when leaving builder
+  document.querySelector('.sidebar').style.display='';
   if(!curEmp){document.getElementById('no-sel').style.display='block';return;}
   document.getElementById('no-sel').style.display='none';
   document.getElementById('page-'+name).classList.add('active');
@@ -4426,96 +4897,63 @@ function handleUploadFile(input) {
 }
 
 function parseXLSXUpload(wb, filename) {
+  // Handles 2024 (.xlsm), 2025 (.xlsx), 2026 (.xlsx) formats
+  // All use same structure: dates in the row ABOVE the column-header row
+  // Employee name in R1C4 (2025/2026) or R2C3 (2024)
+
   const MONTHS_ALL = ["January","February","March","April","May","June",
     "July","August","September","October","November","December"];
   const results = [];
+
+  // Detect year from filename for fallback
   const yearMatch = filename.match(/(\d{4})/);
   const fileYear = yearMatch ? yearMatch[1] : '2026';
 
-  const log = document.getElementById('upload-log');
-  const dbg = (msg) => {
-    console.log('[Import]', msg);
-    if(log) log.innerHTML += '<div>' + msg + '</div>';
-  };
-
-  dbg(`File: ${filename} · Sheets: ${wb.SheetNames.join(', ')}`);
-
   wb.SheetNames.forEach(sheetName => {
+    // Accept any month-named sheet regardless of year
     const mName = MONTHS_ALL.find(m => sheetName.startsWith(m));
-    if(!mName) { dbg(`⟳ Skipped sheet "${sheetName}" — not a month name`); return; }
+    if(!mName) return;
 
     const ws = wb.Sheets[sheetName];
-    if(!ws) { dbg(`⟳ Skipped sheet "${sheetName}" — empty`); return; }
-
-    dbg(`── Sheet: ${sheetName}`);
+    if(!ws) return;
 
     // ── Detect employee name ──────────────────────────────────────
+    // Try multiple locations: D1 (2025/2026), C2 (2024), filename
     let empGuess = filename
       .replace(/\.(xlsm|xlsx|xls|csv)$/i,'')
       .replace(/[_\s]?(2024|2025|2026|2027|2028)$/,'')
       .replace(/_/g,' ').trim();
 
-    const nameCells = ['D1','C2','D2','E1','B1'];
+    const nameCells = ['D1','C2','D2'];
     for(const addr of nameCells) {
       const cell = ws[addr];
       if(cell && cell.v && typeof cell.v === 'string') {
         const v = cell.v.trim();
+        // Make sure it's actually a person's name (not a label like "Name" or a date)
         if(v.length > 3 && v.length < 50 &&
-           !['Name','Date','Month','First','Last','Days','Monday','Tuesday','Employee'].includes(v) &&
+           !['Name','Date','Month','First','Last','Days','Monday','Tuesday'].includes(v) &&
            !/^\d/.test(v)) {
           empGuess = v;
-          dbg(`  Employee from cell ${addr}: "${v}"`);
           break;
         }
       }
     }
-    if(!nameCells.some(a => ws[a]?.v)) {
-      dbg(`  Employee from filename: "${empGuess}"`);
-    }
 
     // ── Get sheet as 2D array ─────────────────────────────────────
-    const data  = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
     const dataF = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
 
-    dbg(`  Rows in sheet: ${data.length}`);
-
-    // Dump first 15 rows for diagnosis
-    const previewRows = Math.min(15, data.length);
-    for(let i=0;i<previewRows;i++){
-      const rowStr=(dataF[i]||[]).slice(0,10).map(v=>v===null?'_':String(v).slice(0,18)).join(' | ');
-      dbg(`  row${i}: ${rowStr}`);
-    }
-
-    // ── Find header row ───────────────────────────────────────────
-    // Accepts: 'Task' AND any of: 'Business Purpose', 'Bussiness Purpose',
-    //          'Business Purpse', 'BusinessPurpose' etc.
+    // ── Find header row: has 'Task' AND ('Business Purpose' or 'Bussiness Purpose') ──
     let hdrIdx = -1;
-    for(let i=0; i<Math.min(20, data.length); i++) {
+    for(let i=0; i<Math.min(12, data.length); i++) {
       const row = (dataF[i]||[]).map(v=>v?String(v).trim():'');
-      const hasTask = row.some(v=>v==='Task');
-      const hasBP   = row.some(v=>{ const lv=v.toLowerCase(); return lv.includes('iness')&&lv.includes('urpose'); });
-      // Also try: just 'Task' plus 'Customer' as a fallback for minimal sheets
-      const hasCust = row.some(v=>v==='Customer');
-      if(hasTask && (hasBP || hasCust)) {
-        hdrIdx = i;
-        dbg(`  Header row at index ${i}: has Task=${hasTask}, BP=${hasBP}, Cust=${hasCust}`);
-        break;
+      if(row.some(v=>v==='Task') && row.some(v=>{ const lv=v.toLowerCase(); return lv.includes('iness')&&lv.includes('urpose'); })) {
+        hdrIdx = i; break;
       }
     }
-    if(hdrIdx < 0) {
-      dbg(`  ✗ No header row found — checked rows 0-${Math.min(20,data.length)-1}`);
-      // Show what was in each row to help diagnose
-      for(let i=0;i<Math.min(20,data.length);i++){
-        const row=(dataF[i]||[]).map(v=>v?String(v).trim():'');
-        const hasTask=row.some(v=>v==='Task');
-        const bpCols=row.filter(v=>{ const lv=(v||'').toLowerCase(); return lv.includes('purp')||lv.includes('busi'); });
-        if(hasTask||bpCols.length) dbg(`    row${i}: Task=${hasTask}, BP-like cols=${JSON.stringify(bpCols)}`);
-      }
-      return;
-    }
+    if(hdrIdx < 0) { console.log('No header in '+sheetName); return; }
 
     const hdr = (dataF[hdrIdx]||[]).map(v=>v?String(v).trim():'');
-    dbg(`  Header cols: ${hdr.filter(Boolean).join(' | ')}`);
 
     // ── Column map ────────────────────────────────────────────────
     const ci = {};
@@ -4531,52 +4969,41 @@ function parseXLSXUpload(wb, filename) {
       if(v==='Comments')                          ci.comments=i;
       if(v==='Total')                             ci.total=i;
     });
-    dbg(`  Column map: ${JSON.stringify(ci)}`);
-    if(ci.task===undefined) { dbg('  ✗ No Task column found'); return; }
-    if(ci.bp===undefined)   { dbg('  ✗ No Business Purpose column found'); return; }
+    if(ci.task===undefined || ci.bp===undefined) return;
 
-    // ── Find date row ─────────────────────────────────────────────
-    const colDate = {};
+    // ── Find date row: the row directly above the header ─────────
+    // For all formats (2024/2025/2026) actual dates are one row above header
+    // In 2026 format, dates also appear IN the header row itself
+    const colDate = {}; // colIndex → 'YYYY-MM-DD'
 
-    const tryDateRow = (rowIdx, label) => {
+    const tryDateRow = (rowIdx) => {
       if(rowIdx < 0) return;
       const rowRaw = data[rowIdx] || [];
-      let found = 0;
       rowRaw.forEach((v, ci2) => {
-        if(ci2 in colDate) return;
+        if(ci2 in colDate) return; // already have a date for this col
         let ds = null;
         if(v instanceof Date) {
           ds = v.toISOString().slice(0,10);
         } else if(typeof v === 'number' && v > 40000 && v < 60000) {
+          // Excel serial → JS date
           const d = new Date(Math.round((v - 25569) * 86400 * 1000));
           ds = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
         } else if(typeof v === 'string') {
-          // Try multiple date string formats
-          let m;
-          if((m=v.match(/^(\d{4}-\d{2}-\d{2})/))) ds=m[1];
-          else if((m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) ds=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-          else if((m=v.match(/^(\d{1,2})-(\w{3})-(\d{2,4})/i))) {
-            const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-            const yr=m[3].length===2?'20'+m[3]:m[3];
-            ds=`${yr}-${months[m[2].toLowerCase()]||'01'}-${m[1].padStart(2,'0')}`;
-          }
+          const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+          if(m) ds = m[1];
         }
-        if(ds) { colDate[ci2]=ds; found++; }
+        if(ds) colDate[ci2] = ds;
       });
-      if(found) dbg(`  Date row at index ${rowIdx} (${label}): ${found} dates found`);
-      else dbg(`  Date row ${rowIdx} (${label}): 0 dates — raw: ${(rowRaw||[]).slice(0,8).map(v=>JSON.stringify(v)).join(', ')}`);
     };
 
-    tryDateRow(hdrIdx - 2, '2-above-hdr');
-    tryDateRow(hdrIdx - 1, '1-above-hdr');
-    tryDateRow(hdrIdx,     'hdr-row');
-    tryDateRow(hdrIdx + 1, '1-below-hdr');
+    // Check row above header first (all formats), then header row itself (2026)
+    tryDateRow(hdrIdx - 1);
+    tryDateRow(hdrIdx);
+    // Also check 2 rows above (some older formats)
+    if(Object.keys(colDate).length < 5) tryDateRow(hdrIdx - 2);
 
-    dbg(`  Total date columns found: ${Object.keys(colDate).length}`);
-    if(Object.keys(colDate).length === 0) {
-      dbg(`  ✗ No date columns found — cannot parse hours`);
-      return;
-    }
+    console.log(sheetName+': hdr='+hdrIdx+', dates='+Object.keys(colDate).length+', emp='+empGuess);
+    if(Object.keys(colDate).length === 0) { console.warn('No dates in '+sheetName); return; }
 
     // ── Parse data rows ───────────────────────────────────────────
     const clean = v => {
@@ -4585,7 +5012,6 @@ function parseXLSXUpload(wb, filename) {
       return ['nan','null','0','none',''].includes(s.toLowerCase()) ? '' : s;
     };
     let uid = Date.now() + Math.floor(Math.random()*100000);
-    let rowsParsed = 0;
 
     for(let r = hdrIdx+1; r < data.length; r++) {
       const rowR = data[r] || [];
@@ -4594,6 +5020,8 @@ function parseXLSXUpload(wb, filename) {
       const task = clean(rowF[ci.task]);
       const bp   = clean(rowF[ci.bp]);
       if(!task || !bp) continue;
+
+      // Skip summary/total rows
       if(['total','subtotal','grand total'].includes(task.toLowerCase())) continue;
 
       const dayEntries = [];
@@ -4610,7 +5038,6 @@ function parseXLSXUpload(wb, filename) {
       const total = dayEntries.reduce((s,d)=>s+d.hrs, 0);
       if(total <= 0) continue;
 
-      rowsParsed++;
       results.push({
         id: uid++,
         month: mName,
@@ -4618,22 +5045,21 @@ function parseXLSXUpload(wb, filename) {
         site:     clean(rowF[ci.site]),
         orica_fn: clean(rowF[ci.fn]),
         bp,
-        task:     task,
-        subtask:  ci.subtask!==undefined ? clean(rowF[ci.subtask]) : '',
-        product:  ci.product!==undefined ? clean(rowF[ci.product]) : '',
-        product2: ci.product2!==undefined ? clean(rowF[ci.product2]) : '',
-        comments: ci.comments!==undefined ? clean(rowF[ci.comments]) : '',
-        days:     dayEntries,
+        task,
+        subtask:  clean(rowF[ci.subtask]),
+        product:  clean(rowF[ci.product]),
+        product2: clean(rowF[ci.product2]),
+        comments: clean(rowF[ci.comments]),
+        days: dayEntries,
         total,
         submitted: new Date().toISOString(),
         _empGuess: empGuess,
         _year: fileYear
       });
     }
-    dbg(`  ✓ Parsed ${rowsParsed} task rows from "${sheetName}"`);
   });
 
-  dbg(`── Total entries parsed: ${results.length}`);
+  console.log('Parsed '+results.length+' entries from '+filename);
   return results;
 }
 
@@ -5175,6 +5601,1004 @@ async function initSupabase() {
 // mirrors admin panel functions but using edit- prefixed IDs
 // ════════════════════════════════════════════════════════════════════
 let editBPTab = 'Cost.of.Service';
+
+// ════════════════════════════════════════════════════════════════════
+// REPORT BUILDER v2 — modes: overview / dashboard / waterfall / pivot
+// ════════════════════════════════════════════════════════════════════
+
+let bldrState = 'ALL';
+let bldrTrendMode = 'bar';
+let bldrTaskMode = 'bars';
+let bldrEmpMode = 'bars';
+let bldrBPChartMode = 'doughnut';
+let bldrProdChartMode = 'polar';
+let bldrCustChartMode = 'bars';
+let bldrEmpMonthChartMode = 'line';
+let bldrCurrentMode = 'overview';
+const BLDR_PALETTE = ['#003087','#0057A8','#0072CE','#4BA8E8','#7DC4F5','#1D9E75','#639922','#d85a30','#d4537e','#ba7517','#534ab7','#0f6e56','#993c1d','#2e7d9a','#8b5a2b','#2c7a3a','#7b3fa0'];
+
+// Dashboard widget definitions
+const DASH_WIDGETS = [
+  {id:'dw-trend',    label:'Monthly Trend',  icon:'ti-trending-up',   span:8, render:'dashWidgetTrend'},
+  {id:'dw-bp',       label:'BP Mix',          icon:'ti-chart-pie-2',   span:4, render:'dashWidgetBP'},
+  {id:'dw-task',     label:'By Task',         icon:'ti-list',          span:6, render:'dashWidgetTask'},
+  {id:'dw-emp',      label:'Employee',        icon:'ti-users',         span:6, render:'dashWidgetEmp'},
+  {id:'dw-cust',     label:'Customer',        icon:'ti-building',      span:5, render:'dashWidgetCust'},
+  {id:'dw-dow',      label:'Day of Week',     icon:'ti-calendar-week', span:3, render:'dashWidgetDOW'},
+  {id:'dw-heat',     label:'Heatmap',         icon:'ti-activity',      span:4, render:'dashWidgetHeat'},
+  {id:'dw-prod',     label:'Product',         icon:'ti-box',           span:4, render:'dashWidgetProd'},
+  {id:'dw-empm',     label:'Emp × Month',     icon:'ti-wave-square',   span:8, render:'dashWidgetEmpM'},
+  {id:'dw-kpi',      label:'KPI Strip',       icon:'ti-dashboard',     span:12,render:'dashWidgetKPI'},
+  {id:'dw-scatter',  label:'Scatter',         icon:'ti-chart-dots',    span:6, render:'dashWidgetScatter'},
+  {id:'dw-violin',   label:'Box Plot',        icon:'ti-chart-candle',  span:6, render:'dashWidgetBox'},
+  {id:'dw-sankey',   label:'Sankey',          icon:'ti-arrows-split',  span:8, render:'dashWidgetSankey'},
+  {id:'dw-wf',       label:'Waterfall',       icon:'ti-waterfall',     span:12,render:'dashWidgetWF'},
+  {id:'dw-table',    label:'Table',           icon:'ti-table',         span:12,render:'dashWidgetTable'},
+];
+let dashInstances = []; // [{defId, instanceId, span, chartType, config}]
+let dashIdSeq = 0;
+
+// ── Helpers ───────────────────────────────────────────────────────
+function bldrGetEntries() {
+  const mFrom = parseInt(document.getElementById('bldr-mfrom')?.value ?? 0);
+  const mTo   = parseInt(document.getElementById('bldr-mto')?.value ?? 11);
+  const empF  = document.getElementById('bldr-emp')?.value || 'ALL';
+  const custF = document.getElementById('bldr-cust')?.value || 'ALL';
+  const bpF   = document.getElementById('bldr-bp')?.value || 'ALL';
+  const siteF = document.getElementById('bldr-site')?.value || 'ALL';
+  const taskF = document.getElementById('bldr-task')?.value || 'ALL';
+  const prodF = document.getElementById('bldr-product')?.value || 'ALL';
+  const hrsMin = parseFloat(document.getElementById('bldr-hrs-min')?.value || 0);
+  const activeYrs = getActiveYears();
+  const registry = getTeamRegistry();
+  const emps = getEmployees();
+  const all = [];
+  activeYrs.forEach(yr => {
+    emps.forEach(emp => {
+      const rec = registry.find(t => t.name === emp);
+      if(!rec) return;
+      if(bldrState !== 'ALL' && rec.state !== bldrState) return;
+      if(empF !== 'ALL' && emp !== empF) return;
+      for(let mi = mFrom; mi <= mTo; mi++) {
+        loadEntries(emp, MONTHS[mi], yr).forEach(e => {
+          if(custF !== 'ALL' && e.customer !== custF) return;
+          if(bpF   !== 'ALL' && e.bp !== bpF) return;
+          if(siteF !== 'ALL' && e.site !== siteF) return;
+          if(taskF !== 'ALL' && e.task !== taskF) return;
+          if(prodF !== 'ALL' && e.product !== prodF) return;
+          const tot = parseFloat(e.total)||0;
+          if(tot < hrsMin) return;
+          all.push({...e, _emp:emp, _month:MONTHS[mi], _monthIdx:mi, _year:yr, _state:rec.state});
+        });
+      }
+    });
+  });
+  return all;
+}
+
+function bldrPopulateFilters() {
+  const mfrom = document.getElementById('bldr-mfrom');
+  const mto   = document.getElementById('bldr-mto');
+  if(mfrom && !mfrom.children.length) {
+    MONTHS.forEach((m,i) => {
+      [mfrom,mto].forEach(sel => { const o=document.createElement('option'); o.value=i; o.textContent=m.slice(0,3); sel.appendChild(o); });
+    });
+    mto.value = new Date().getMonth();
+  }
+  const activeYrs = getActiveYears();
+  const registry = getTeamRegistry();
+  const emps = getEmployees();
+  const allData = [];
+  activeYrs.forEach(yr => {
+    emps.forEach(emp => {
+      const rec = registry.find(t => t.name === emp);
+      if(!rec) return;
+      if(bldrState !== 'ALL' && rec.state !== bldrState) return;
+      MONTHS.forEach((m) => loadEntries(emp,m,yr).forEach(e => allData.push({...e,_emp:emp})));
+    });
+  });
+  const seenC=new Set(), seenS=new Set(), seenT=new Set(), seenP=new Set();
+  allData.forEach(e => { if(e.customer)seenC.add(e.customer); if(e.site)seenS.add(e.site); if(e.task)seenT.add(e.task); if(e.product)seenP.add(e.product); });
+  const filtEmps = emps.filter(emp => { const rec=registry.find(t=>t.name===emp); return rec&&(bldrState==='ALL'||rec.state===bldrState); });
+  const fill = (id,vals,lbl) => { const sel=document.getElementById(id); if(!sel)return; const cur=sel.value; sel.innerHTML=`<option value="ALL">${lbl}</option>`+[...vals].sort().map(v=>`<option value="${v}">${v}</option>`).join(''); if([...vals].includes(cur))sel.value=cur; };
+  fill('bldr-emp', filtEmps, '👤 All employees');
+  fill('bldr-cust', seenC, '🏢 All customers');
+  fill('bldr-site', seenS, '📍 All sites');
+  fill('bldr-task', seenT, '📋 All tasks');
+  fill('bldr-product', seenP, '📦 All products');
+  const bpSel = document.getElementById('bldr-bp');
+  if(bpSel && !bpSel.children.length) bpSel.innerHTML='<option value="ALL">🎯 All purposes</option>'+BP.map(b=>`<option value="${b}">${BP_LABEL[b]}</option>`).join('');
+  const heatEmp = document.getElementById('bldr-heat-emp');
+  if(heatEmp) { const cur=heatEmp.value; heatEmp.innerHTML='<option value="ALL">All</option>'+filtEmps.map(e=>`<option value="${e}">${e.split(' ')[0]}</option>`).join(''); if(filtEmps.includes(cur))heatEmp.value=cur; }
+  bldrPopulatePivotSlicers(allData, filtEmps, seenC, seenT, seenS);
+  bldrPopulateWaterfallBillable();
+}
+
+function initBuilder() {
+  bldrInitDashPalette();
+  dashLoadLayout();
+  bldrPopulateFilters();
+  bldrRender();
+}
+
+function bldrSwitchMode(mode, el) {
+  bldrCurrentMode = mode;
+  document.querySelectorAll('.bldr-mode-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.bldr-mode-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('bldr-mode-'+mode)?.classList.add('active');
+  bldrRender();
+}
+
+function bldrSetState(s) {
+  bldrState = s;
+  ['all','nsw','qld'].forEach(x => { const b=document.getElementById('bpill-'+x); if(b)b.classList.toggle('active', x.toUpperCase()===s||(x==='all'&&s==='ALL')); });
+  bldrPopulateFilters();
+  bldrRender();
+}
+
+function bldrReset() {
+  bldrState='ALL';
+  ['all','nsw','qld'].forEach(x=>{const b=document.getElementById('bpill-'+x);if(b)b.classList.toggle('active',x==='all');});
+  const mfrom=document.getElementById('bldr-mfrom'); if(mfrom)mfrom.value=0;
+  const mto=document.getElementById('bldr-mto'); if(mto)mto.value=new Date().getMonth();
+  ['bldr-emp','bldr-cust','bldr-bp','bldr-site','bldr-task','bldr-product'].forEach(id=>{const s=document.getElementById(id);if(s)s.value='ALL';});
+  const sl=document.getElementById('bldr-hrs-min'); if(sl){sl.value=0;document.getElementById('bldr-hrs-min-val').textContent='0';}
+  bldrPopulateFilters();
+  bldrRender();
+}
+
+function bldrRender() {
+  const entries = bldrGetEntries();
+  const countEl = document.getElementById('bldr-entry-count');
+  if(countEl) countEl.textContent=`${entries.length} entries · ${getTH(entries).toFixed(0)}h`;
+  if(bldrCurrentMode==='overview') {
+    bldrRenderKPIs(entries);
+    bldrRenderTrend(entries);
+    bldrRenderBP(entries);
+    bldrRenderTasks(entries);
+    bldrRenderEmployees(entries);
+    bldrRenderCustomers(entries);
+    bldrRenderDOW(entries);
+    bldrRenderHeatmap();
+    bldrRenderProducts(entries);
+    bldrRenderEmpMonthly(entries);
+    bldrRenderTable(entries);
+  } else if(bldrCurrentMode==='dashboard') {
+    dashRenderAll(entries);
+  } else if(bldrCurrentMode==='waterfall') {
+    bldrRenderWaterfall(entries);
+  } else if(bldrCurrentMode==='pivot') {
+    bldrRenderPivot(entries);
+  }
+}
+
+// ── Mode toggle helpers ───────────────────────────────────────────
+function bldrSetTrendMode(m,el){bldrTrendMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderTrend(bldrGetEntries());}
+function bldrSetTaskMode(m,el){bldrTaskMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderTasks(bldrGetEntries());}
+function bldrSetEmpMode(m,el){bldrEmpMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderEmployees(bldrGetEntries());}
+function bldrBPMode(m,el){bldrBPChartMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderBP(bldrGetEntries());}
+function bldrProdMode(m,el){bldrProdChartMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderProducts(bldrGetEntries());}
+function bldrCustMode(m,el){bldrCustChartMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderCustomers(bldrGetEntries());}
+function bldrEmpMonthMode(m,el){bldrEmpMonthChartMode=m;el.closest('.bldr-card-controls').querySelectorAll('.bldr-ctrl').forEach(b=>b.classList.remove('active'));el.classList.add('active');bldrRenderEmpMonthly(bldrGetEntries());}
+
+// ── KPI Strip ─────────────────────────────────────────────────────
+function bldrRenderKPIs(entries) {
+  const total=getTH(entries);
+  const emps=new Set(entries.map(e=>e._emp));
+  const days=new Set(entries.flatMap(e=>(e.days||[]).map(d=>d.date)));
+  const tasks=new Set(entries.map(e=>e.task));
+  const custs=new Set(entries.map(e=>e.customer));
+  const byMonth={};entries.forEach(e=>{byMonth[e._month]=(byMonth[e._month]||0)+(parseFloat(e.total)||0);});
+  const topMonth=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
+  const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+  const topEmp=Object.entries(byEmp).sort((a,b)=>b[1]-a[1])[0];
+  const kpis=[
+    {label:'Total Hours',value:fmtK(total),sub:`${days.size} working days`,cls:'accent'},
+    {label:'Active People',value:emps.size,sub:`${tasks.size} distinct tasks`,cls:''},
+    {label:'Avg / Person',value:emps.size?(total/emps.size).toFixed(0)+'h':'—',sub:`${days.size?(total/days.size).toFixed(1):0}h avg/day`,cls:''},
+    {label:'Customers',value:custs.size,sub:`${entries.length} total entries`,cls:''},
+    {label:'Busiest Month',value:topMonth?topMonth[0].slice(0,3):'—',sub:topMonth?fmtK(topMonth[1])+'h':'',cls:'green'},
+    {label:'Top Contributor',value:topEmp?topEmp[0].split(' ')[0]:'—',sub:topEmp?fmtK(topEmp[1])+'h':'',cls:''},
+  ];
+  const el=document.getElementById('bldr-kpis'); if(!el)return;
+  el.innerHTML=kpis.map(k=>`<div class="bldr-kpi${k.cls?' '+k.cls:''}"><div class="bldr-kpi-label">${k.label}</div><div class="bldr-kpi-value">${k.value}</div><div class="bldr-kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+// ── Monthly Trend ─────────────────────────────────────────────────
+function bldrRenderTrend(entries) {
+  destroyChart('bldr-trend-chart');
+  const el=document.getElementById('bldr-trend-chart'); if(!el)return;
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);
+  const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const labels=MONTHS.slice(mFrom,mTo+1).map(m=>m.slice(0,3));
+  if(bldrTrendMode==='stacked') {
+    const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+    const top5=Object.entries(byEmp).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([e])=>e);
+    const datasets=top5.map((emp,i)=>({label:emp.split(' ')[0],data:MONTHS.slice(mFrom,mTo+1).map((_,mi)=>entries.filter(e=>e._emp===emp&&e._monthIdx===mi+mFrom).reduce((s,e)=>s+(parseFloat(e.total)||0),0)),backgroundColor:BLDR_PALETTE[i],borderRadius:2,borderSkipped:false}));
+    charts['bldr-trend-chart']=new Chart(el.getContext('2d'),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{boxWidth:8,font:{size:9}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{stacked:true,beginAtZero:true,ticks:{color:'#888',font:{size:9}}}}}});
+  } else {
+    const data=MONTHS.slice(mFrom,mTo+1).map((_,mi)=>entries.filter(e=>e._monthIdx===mi+mFrom).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
+    const isLine=bldrTrendMode==='line'||bldrTrendMode==='area';
+    charts['bldr-trend-chart']=new Chart(el.getContext('2d'),{type:isLine?'line':'bar',data:{labels,datasets:[{label:'Hours',data,backgroundColor:isLine?(bldrTrendMode==='area'?'rgba(0,48,135,0.2)':'rgba(0,48,135,0.15)'):'#003087',borderColor:'#003087',borderWidth:isLine?2:0,pointBackgroundColor:'#003087',pointRadius:isLine?3:0,fill:isLine,tension:0.35,borderRadius:isLine?0:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toFixed(0)}h`}}},scales:{x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{beginAtZero:true,ticks:{color:'#888',font:{size:9},callback:v=>fmtK(v)+'h'}}}}});
+  }
+}
+
+// ── BP Chart ──────────────────────────────────────────────────────
+function bldrRenderBP(entries) {
+  destroyChart('bldr-bp-chart');
+  const el=document.getElementById('bldr-bp-chart'); if(!el)return;
+  const byBP={};entries.forEach(e=>{byBP[e.bp]=(byBP[e.bp]||0)+(parseFloat(e.total)||0);});
+  const labels=Object.keys(byBP); const vals=labels.map(k=>byBP[k]);
+  const colors=labels.map((k,i)=>BP_COLORS_MAP[k]||BLDR_PALETTE[i]);
+  const total=vals.reduce((s,v)=>s+v,0);
+  charts['bldr-bp-chart']=new Chart(el.getContext('2d'),{type:bldrBPChartMode,data:{labels:labels.map(k=>BP_LABEL[k]||k),datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:bldrBPChartMode==='doughnut'?'65%':0,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed.toFixed(0)}h (${(ctx.parsed/total*100).toFixed(0)}%)`}}}}});
+  const leg=document.getElementById('bldr-bp-legend'); if(leg)leg.innerHTML=labels.map((k,i)=>`<div style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};flex-shrink:0;display:inline-block"></span><span style="color:var(--muted)">${BP_LABEL[k]||k}</span><span style="margin-left:auto;font-weight:700">${byBP[k].toFixed(0)}h</span></div>`).join('');
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────
+function bldrRenderTasks(entries) {
+  const byTask={};entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byTask).sort((a,b)=>b[1]-a[1]);
+  const total=sorted.reduce((s,[,v])=>s+v,0);
+  const wrap=document.getElementById('bldr-task-wrap'); if(!wrap)return;
+  if(bldrTaskMode==='treemap') {
+    const top20=sorted.slice(0,20); const tmax=top20[0]?.[1]||1;
+    wrap.innerHTML='<div class="bldr-treemap" style="min-height:220px">'+top20.map(([task,hrs],i)=>{const pct=hrs/tmax;const sz=Math.max(60,Math.round(pct*180));const h=Math.max(40,Math.round(sz*0.6));const c=BLDR_PALETTE[i%BLDR_PALETTE.length];return`<div class="bldr-treemap-cell" style="width:${sz}px;height:${h}px;background:${c}" title="${task}: ${hrs.toFixed(0)}h"><div class="bldr-treemap-label">${task.length>14?task.slice(0,13)+'…':task}</div><div class="bldr-treemap-val">${hrs.toFixed(0)}h</div></div>`;}).join('')+'</div>';
+  } else if(bldrTaskMode==='funnel') {
+    const top12=sorted.slice(0,12); const fmax=top12[0]?.[1]||1;
+    wrap.innerHTML=top12.map(([task,hrs],i)=>{const w=Math.max(30,Math.round(hrs/fmax*100));const c=BLDR_PALETTE[i%BLDR_PALETTE.length];return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;justify-content:center"><div style="width:${w}%;background:${c};border-radius:2px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;min-width:60px;transition:width 0.4s">${task.length>18?task.slice(0,17)+'…':task} · ${hrs.toFixed(0)}h</div></div>`;}).join('');
+  } else {
+    wrap.innerHTML=sorted.slice(0,20).map(([task,hrs],i)=>{const pct=total>0?hrs/total:0;const c=BLDR_PALETTE[i%BLDR_PALETTE.length];return`<div class="bldr-hbar"><div class="bldr-hbar-label" title="${task}">${task}</div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${c}"></div></div><div class="bldr-hbar-val">${hrs.toFixed(0)}h</div><div class="bldr-hbar-pct">${(pct*100).toFixed(0)}%</div></div>`;}).join('');
+  }
+}
+
+// ── Employees ─────────────────────────────────────────────────────
+function bldrRenderEmployees(entries) {
+  const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byEmp).sort((a,b)=>b[1]-a[1]);
+  const total=sorted.reduce((s,[,v])=>s+v,0);
+  const wrap=document.getElementById('bldr-emp-wrap');
+  const canvas=document.getElementById('bldr-emp-chart');
+  if(!wrap)return;
+  destroyChart('bldr-emp-chart');
+  canvas.style.display='none';
+  if(bldrEmpMode==='radar'&&sorted.length>=2) {
+    canvas.style.display='block'; wrap.querySelectorAll('.bldr-hbar').forEach(el=>el.remove());
+    const top8=sorted.slice(0,8).map(([e])=>e);
+    const allTasks=[...new Set(entries.map(e=>e.task))].slice(0,8);
+    charts['bldr-emp-chart']=new Chart(canvas.getContext('2d'),{type:'radar',data:{labels:allTasks.map(t=>t.length>10?t.slice(0,10)+'…':t),datasets:top8.map((emp,i)=>({label:emp.split(' ')[0],data:allTasks.map(t=>entries.filter(e=>e._emp===emp&&e.task===t).reduce((s,e)=>s+(parseFloat(e.total)||0),0)),borderColor:BLDR_PALETTE[i],backgroundColor:BLDR_PALETTE[i]+'33',pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}},scales:{r:{ticks:{font:{size:8},color:'#888'},grid:{color:'rgba(0,0,0,0.08)'},pointLabels:{font:{size:9},color:'#555'}}}}});
+  } else if(bldrEmpMode==='bubble') {
+    canvas.style.display='block';
+    const datasets=sorted.slice(0,12).map(([emp,hrs],i)=>{const ee=entries.filter(e=>e._emp===emp);const avg=ee.length?hrs/ee.length:0;return{label:emp.split(' ')[0],data:[{x:ee.length,y:hrs,r:Math.max(5,Math.min(25,avg*1.5))}],backgroundColor:BLDR_PALETTE[i]+'AA',borderColor:BLDR_PALETTE[i]};});
+    charts['bldr-emp-chart']=new Chart(canvas.getContext('2d'),{type:'bubble',data:{datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x} entries, ${ctx.parsed.y.toFixed(0)}h`}}},scales:{x:{title:{display:true,text:'Entries',font:{size:9}},ticks:{font:{size:9},color:'#888'}},y:{title:{display:true,text:'Hours',font:{size:9}},ticks:{font:{size:9},color:'#888',callback:v=>v+'h'}}}}});
+  } else if(bldrEmpMode==='scatter') {
+    canvas.style.display='block';
+    const datasets=sorted.slice(0,15).map(([emp,hrs],i)=>{const ee=entries.filter(e=>e._emp===emp);const months=new Set(ee.map(e=>e._monthIdx));return{label:emp.split(' ')[0],data:[{x:months.size,y:hrs}],backgroundColor:BLDR_PALETTE[i],borderColor:BLDR_PALETTE[i],pointRadius:8,pointHoverRadius:10};});
+    charts['bldr-emp-chart']=new Chart(canvas.getContext('2d'),{type:'scatter',data:{datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x} months, ${ctx.parsed.y.toFixed(0)}h`}}},scales:{x:{title:{display:true,text:'Active months',font:{size:9}},ticks:{stepSize:1,font:{size:9},color:'#888'}},y:{title:{display:true,text:'Hours',font:{size:9}},ticks:{font:{size:9},color:'#888'}}}}});
+  } else {
+    canvas.style.display='none';
+    wrap.innerHTML=sorted.map(([emp,hrs],i)=>{const pct=total>0?hrs/total:0;const c=BLDR_PALETTE[i%BLDR_PALETTE.length];const rank=i<3?['🥇','🥈','🥉'][i]:`${i+1}.`;return`<div class="bldr-hbar"><div class="bldr-hbar-label" style="display:flex;align-items:center;gap:4px"><span style="font-size:11px">${rank}</span><span title="${emp}">${emp.split(' ')[0]}</span></div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${c}"></div></div><div class="bldr-hbar-val">${hrs.toFixed(0)}h</div><div class="bldr-hbar-pct">${(pct*100).toFixed(0)}%</div></div>`;}).join('');
+  }
+}
+
+// ── Customers ─────────────────────────────────────────────────────
+function bldrRenderCustomers(entries) {
+  const byCust={},bySite={};
+  entries.forEach(e=>{byCust[e.customer]=(byCust[e.customer]||0)+(parseFloat(e.total)||0);if(e.site)bySite[e.site]=(bySite[e.site]||0)+(parseFloat(e.total)||0);});
+  const custSorted=Object.entries(byCust).sort((a,b)=>b[1]-a[1]);
+  const siteSorted=Object.entries(bySite).sort((a,b)=>b[1]-a[1]);
+  const total=getTH(entries);
+  const custBars=document.getElementById('bldr-cust-bars');
+  const custChart=document.getElementById('bldr-cust-chart');
+  if(bldrCustChartMode==='polar') {
+    if(custBars)custBars.style.display='none'; if(custChart)custChart.style.display='block';
+    destroyChart('bldr-cust-chart');
+    const top8=custSorted.slice(0,8);
+    charts['bldr-cust-chart']=new Chart(custChart.getContext('2d'),{type:'polarArea',data:{labels:top8.map(([k])=>k),datasets:[{data:top8.map(([,v])=>v),backgroundColor:top8.map((_,i)=>BLDR_PALETTE[i%BLDR_PALETTE.length]+'BB'),borderWidth:1,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}},scales:{r:{ticks:{display:false}}}}});
+  } else {
+    if(custChart)custChart.style.display='none'; if(custBars)custBars.style.display='';
+    const renderBars=(containerId,data,limit=12)=>{const el=document.getElementById(containerId);if(!el)return;el.innerHTML=data.slice(0,limit).map(([k,v],i)=>{const pct=total>0?v/total:0;return`<div class="bldr-hbar"><div class="bldr-hbar-label" title="${k}">${k}</div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${BLDR_PALETTE[i%BLDR_PALETTE.length]}"></div></div><div class="bldr-hbar-val">${v.toFixed(0)}h</div><div class="bldr-hbar-pct">${(pct*100).toFixed(0)}%</div></div>`;}).join('')||'<div style="color:var(--muted);font-size:12px">No data</div>';};
+    renderBars('bldr-cust-bars',custSorted,10);
+  }
+  const renderBars2=(containerId,data,limit=8)=>{const el=document.getElementById(containerId);if(!el)return;el.innerHTML=data.slice(0,limit).map(([k,v],i)=>{const pct=total>0?v/total:0;return`<div class="bldr-hbar"><div class="bldr-hbar-label" title="${k}">${k}</div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${BLDR_PALETTE[i%BLDR_PALETTE.length]}"></div></div><div class="bldr-hbar-val">${v.toFixed(0)}h</div><div class="bldr-hbar-pct">${(pct*100).toFixed(0)}%</div></div>`;}).join('')||'';};
+  renderBars2('bldr-site-bars',siteSorted,8);
+}
+
+// ── Day of Week ───────────────────────────────────────────────────
+function bldrRenderDOW(entries) {
+  destroyChart('bldr-dow-chart');
+  const el=document.getElementById('bldr-dow-chart'); if(!el)return;
+  const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const counts=[0,0,0,0,0,0,0];
+  entries.forEach(e=>(e.days||[]).forEach(d=>{if(!d.date)return;const dow=new Date(d.date).getDay();const idx=dow===0?6:dow-1;counts[idx]+=d.hrs||0;}));
+  charts['bldr-dow-chart']=new Chart(el.getContext('2d'),{type:'bar',data:{labels:DOW,datasets:[{data:counts,backgroundColor:counts.map((_,i)=>i>=5?'#d85a30':'#0072CE'),borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{beginAtZero:true,ticks:{color:'#888',font:{size:9}}}}}});
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────
+function bldrRenderHeatmap() {
+  const heatEmp=document.getElementById('bldr-heat-emp')?.value||'ALL';
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);
+  const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const activeYrs=getActiveYears(); const registry=getTeamRegistry(); const emps=getEmployees();
+  const dayTotals={};
+  activeYrs.forEach(yr=>{emps.forEach(emp=>{if(heatEmp!=='ALL'&&emp!==heatEmp)return;const rec=registry.find(t=>t.name===emp);if(!rec)return;if(bldrState!=='ALL'&&rec.state!==bldrState)return;for(let mi=mFrom;mi<=mTo;mi++)loadEntries(emp,MONTHS[mi],yr).forEach(e=>(e.days||[]).forEach(d=>{if(d.hrs>0)dayTotals[d.date]=(dayTotals[d.date]||0)+d.hrs;}));});});
+  const el=document.getElementById('bldr-heatmap'); if(!el)return;
+  if(!Object.keys(dayTotals).length){el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">No data</div>';return;}
+  const vals=Object.values(dayTotals); const maxV=Math.max(...vals);
+  const getCol=v=>{if(v<=0)return'#F0F4FA';const t=v/maxV;if(t<0.25)return'#D0E4F5';if(t<0.5)return'#7DC4F5';if(t<0.75)return'#0072CE';return'#003087';};
+  const yr=activeYrs[activeYrs.length-1]||2026;
+  const startDate=new Date(yr,mFrom,1); const endDate=new Date(yr,mTo+1,0);
+  while(startDate.getDay()!==1)startDate.setDate(startDate.getDate()-1);
+  const weeks=[]; const cur=new Date(startDate);
+  while(cur<=endDate){const week=[];for(let d=0;d<7;d++){week.push(new Date(cur));cur.setDate(cur.getDate()+1);}weeks.push(week);}
+  const DOW_LABELS=['M','T','W','T','F','S','S'];
+  let html='<div style="display:flex;gap:2px;align-items:flex-start">';
+  html+='<div style="display:flex;flex-direction:column;gap:2px;padding-top:16px">'+DOW_LABELS.map(d=>`<div class="bldr-heat-label" style="width:12px;height:16px;line-height:16px">${d}</div>`).join('')+'</div>';
+  weeks.forEach(week=>{html+='<div style="display:flex;flex-direction:column;gap:2px">';const fi=week.find(d=>d.getDate()===1);html+=`<div class="bldr-heat-label" style="height:14px;width:16px;overflow:hidden">${fi?fi.toLocaleDateString('en-AU',{month:'short'}).slice(0,1):''}</div>`;week.forEach(day=>{const ds=day.toISOString().slice(0,10);const v=dayTotals[ds]||0;const inRange=day>=new Date(yr,mFrom,1)&&day<=new Date(yr,mTo+1,0);const col=inRange?getCol(v):'#F8F9FC';html+=`<div class="bldr-heat-cell" style="background:${col}" title="${ds}: ${v.toFixed(1)}h"></div>`;});html+='</div>';});
+  html+='</div>'; el.innerHTML=html;
+}
+
+// ── Products ──────────────────────────────────────────────────────
+function bldrRenderProducts(entries) {
+  destroyChart('bldr-prod-chart');
+  const el=document.getElementById('bldr-prod-chart'); if(!el)return;
+  const byProd={};entries.forEach(e=>{if(e.product)byProd[e.product]=(byProd[e.product]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byProd).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const total=sorted.reduce((s,[,v])=>s+v,0);
+  if(!sorted.length){el.parentElement.innerHTML='<div style="color:var(--muted);font-size:12px;padding:40px;text-align:center">No product data</div>';return;}
+  const type=bldrProdChartMode==='bar'?'bar':bldrProdChartMode==='doughnut'?'doughnut':'polarArea';
+  const ds=type==='bar'?[{label:'Hours',data:sorted.map(([,v])=>v),backgroundColor:sorted.map((_,i)=>BLDR_PALETTE[i%BLDR_PALETTE.length]),borderRadius:3}]:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map((_,i)=>BLDR_PALETTE[i%BLDR_PALETTE.length]+'CC'),borderWidth:1,borderColor:'#fff'}];
+  charts['bldr-prod-chart']=new Chart(el.getContext('2d'),{type,data:{labels:sorted.map(([k])=>k),datasets:ds},options:{responsive:true,maintainAspectRatio:false,cutout:type==='doughnut'?'60%':0,plugins:{legend:{display:type!=='bar',position:'right',labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`${ctx.label||''}: ${(type==='bar'?ctx.parsed.y:ctx.parsed.r??ctx.parsed).toFixed(0)}h`}}},scales:type==='bar'?{x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{ticks:{color:'#888',font:{size:9}}}}:{r:{ticks:{display:false}}}}});
+  const leg=document.getElementById('bldr-prod-legend'); if(leg)leg.innerHTML=sorted.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${BLDR_PALETTE[i%BLDR_PALETTE.length]};flex-shrink:0;display:inline-block"></span><span style="color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k}</span><span style="margin-left:auto;font-weight:700">${v.toFixed(0)}h</span></div>`).join('');
+}
+
+// ── Emp × Month ───────────────────────────────────────────────────
+function bldrRenderEmpMonthly(entries) {
+  destroyChart('bldr-emp-monthly-chart');
+  const el=document.getElementById('bldr-emp-monthly-chart'); if(!el)return;
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);
+  const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+  const top8=Object.entries(byEmp).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([e])=>e);
+  const labels=MONTHS.slice(mFrom,mTo+1).map(m=>m.slice(0,3));
+  const isArea=bldrEmpMonthChartMode==='area';
+  const isBar=bldrEmpMonthChartMode==='bar';
+  const datasets=top8.map((emp,i)=>({label:emp.split(' ')[0],data:MONTHS.slice(mFrom,mTo+1).map((_,mi)=>entries.filter(e=>e._emp===emp&&e._monthIdx===mi+mFrom).reduce((s,e)=>s+(parseFloat(e.total)||0),0)),borderColor:BLDR_PALETTE[i],backgroundColor:isBar?BLDR_PALETTE[i]:isArea?BLDR_PALETTE[i]+'33':'transparent',fill:isArea,tension:0.3,borderWidth:isBar?0:2,borderRadius:isBar?3:0,pointRadius:isBar?0:3}));
+  charts['bldr-emp-monthly-chart']=new Chart(el.getContext('2d'),{type:isBar?'bar':'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}},scales:{x:{stacked:isBar,grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{stacked:isBar,beginAtZero:true,ticks:{color:'#888',font:{size:9},callback:v=>v+'h'}}}}});
+}
+
+// ── Raw Table ─────────────────────────────────────────────────────
+function bldrRenderTable(entries) {
+  if(!entries)entries=bldrGetEntries();
+  const groupBy=document.getElementById('bldr-tbl-group')?.value||'none';
+  const tbl=document.getElementById('bldr-table'); const footer=document.getElementById('bldr-table-footer');
+  if(!tbl)return;
+  const total=getTH(entries);
+  if(groupBy==='none'){
+    const rows=[];entries.forEach(e=>(e.days||[]).forEach(d=>{if(d.hrs>0)rows.push({emp:e._emp,month:e._month,date:d.date,task:e.task,customer:e.customer,site:e.site||'',product:e.product||'',bp:BP_LABEL[e.bp]||e.bp,hrs:d.hrs});}));
+    rows.sort((a,b)=>a.date.localeCompare(b.date));
+    tbl.innerHTML='<thead><tr><th>Date</th><th>Employee</th><th>Customer</th><th>Site</th><th>Task</th><th>Product</th><th>Purpose</th><th>Hours</th></tr></thead>';
+    const tbody=document.createElement('tbody');
+    rows.slice(0,200).forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${r.date}</td><td>${r.emp}</td><td>${r.customer}</td><td>${r.site||'—'}</td><td>${r.task}</td><td>${r.product||'—'}</td><td>${r.bp}</td><td style="font-weight:700">${r.hrs>0?r.hrs.toFixed(1)+'h':'—'}</td>`;tbody.appendChild(tr);});
+    tbl.appendChild(tbody);
+    if(footer)footer.textContent=`${Math.min(200,rows.length)} of ${rows.length} day-entries · ${total.toFixed(0)}h total`;
+  } else {
+    const groups={};entries.forEach(e=>{const key=groupBy==='employee'?e._emp:groupBy==='customer'?e.customer:groupBy==='task'?e.task:groupBy==='site'?(e.site||'No site'):groupBy==='product'?(e.product||'No product'):e._month;if(!groups[key])groups[key]={key,hrs:0,entries:0,emps:new Set(),tasks:new Set(),customers:new Set()};groups[key].hrs+=(parseFloat(e.total)||0);groups[key].entries++;groups[key].emps.add(e._emp);groups[key].tasks.add(e.task);groups[key].customers.add(e.customer);});
+    const sorted=Object.values(groups).sort((a,b)=>b.hrs-a.hrs);
+    const colLabel={employee:'Employee',customer:'Customer',task:'Task',month:'Month',site:'Site',product:'Product'}[groupBy];
+    tbl.innerHTML=`<thead><tr><th>${colLabel}</th><th>Hours</th><th>%</th><th>Entries</th><th>People</th><th>Tasks</th><th>Customers</th></tr></thead>`;
+    const tbody=document.createElement('tbody');
+    sorted.forEach(g=>{const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:600">${g.key}</td><td style="font-weight:700">${g.hrs.toFixed(0)}h</td><td style="color:var(--muted)">${total>0?(g.hrs/total*100).toFixed(0):0}%</td><td>${g.entries}</td><td>${g.emps.size}</td><td>${g.tasks.size}</td><td>${g.customers.size}</td>`;tbody.appendChild(tr);});
+    tbl.appendChild(tbody);
+    if(footer)footer.textContent=`${sorted.length} groups · ${total.toFixed(0)}h total`;
+  }
+}
+
+function bldrExportTable() {
+  const entries=bldrGetEntries();
+  const rows=[['Date','Employee','State','Month','Customer','Site','Task','Product','Business Purpose','Hours']];
+  entries.forEach(e=>(e.days||[]).forEach(d=>{if(d.hrs>0)rows.push([d.date,e._emp,e._state||'',e._month,e.customer,e.site||'',e.task,e.product||'',BP_LABEL[e.bp]||e.bp,d.hrs]);}));
+  const csv=rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=`ReportBuilder_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  toast('CSV exported','success');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// WATERFALL MODE
+// ════════════════════════════════════════════════════════════════════
+let bldrBillableData = {};
+
+function bldrPopulateWaterfallBillable() {
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);
+  const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const el=document.getElementById('wf-billable-inputs'); if(!el)return;
+  el.innerHTML=MONTHS.slice(mFrom,mTo+1).map(m=>`<label style="display:flex;align-items:center;gap:6px;font-size:11px">
+    <span style="min-width:30px;color:var(--muted)">${m.slice(0,3)}</span>
+    <input type="number" min="0" step="0.5" value="${bldrBillableData[m]||''}" placeholder="days" oninput="bldrBillableData['${m}']=parseFloat(this.value)||0;bldrRenderWaterfall()" style="width:70px;height:26px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:0 6px;background:var(--bg);color:var(--text);text-align:right">
+  </label>`).join('');
+}
+
+function bldrRenderWaterfall(entries) {
+  if(!entries)entries=bldrGetEntries();
+  const groupBy=document.getElementById('wf-groupby')?.value||'month';
+  const measure=document.getElementById('wf-measure')?.value||'hours';
+  const sortMode=document.getElementById('wf-sort')?.value||'natural';
+  const showTotal=document.getElementById('wf-total')?.value!=='no';
+  const el=document.getElementById('bldr-waterfall'); if(!el)return;
+  if(!entries.length){el.innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)"><i class="ti ti-chart-bar" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.3"></i>No data for current filters</div>';return;}
+
+  // Group entries
+  const groups={};
+  entries.forEach(e=>{
+    let key;
+    if(groupBy==='month')key=e._month;
+    else if(groupBy==='customer')key=e.customer||'Unknown';
+    else if(groupBy==='task')key=e.task||'Unknown';
+    else if(groupBy==='employee')key=e._emp;
+    else if(groupBy==='site')key=e.site||'No site';
+    else key=BP_LABEL[e.bp]||e.bp||'Unknown';
+    if(!groups[key])groups[key]={hrs:0,entries:0,emps:new Set(),days:new Set()};
+    groups[key].hrs+=(parseFloat(e.total)||0);
+    groups[key].entries++;
+    groups[key].emps.add(e._emp);
+    (e.days||[]).forEach(d=>{if(d.hrs>0)groups[key].days.add(d.date);});
+  });
+
+  let items=Object.entries(groups).map(([k,v])=>({
+    label:k,
+    value:measure==='hours'?v.hrs:measure==='entries'?v.entries:measure==='employees'?v.emps.size:v.days.size
+  }));
+
+  // Natural month order
+  if(groupBy==='month'&&sortMode==='natural') {
+    items.sort((a,b)=>MONTHS.indexOf(a.label)-MONTHS.indexOf(b.label));
+  } else if(sortMode==='desc') { items.sort((a,b)=>b.value-a.value); }
+  else if(sortMode==='asc')  { items.sort((a,b)=>a.value-b.value); }
+
+  const labels=items.map(i=>i.label);
+  const values=items.map(i=>i.value);
+  const total=values.reduce((s,v)=>s+v,0);
+
+  // Build waterfall: running cumulative with floating bars
+  const baseArr=[];
+  const valArr=[];
+  let running=0;
+  items.forEach(item=>{
+    baseArr.push(running);
+    valArr.push(item.value);
+    running+=item.value;
+  });
+  if(showTotal){labels.push('Total');baseArr.push(0);valArr.push(total);}
+
+  const colors=valArr.map((v,i)=>showTotal&&i===valArr.length-1?'#003087':v>=0?'#1D9E75':'#d85a30');
+
+  const measureLabel=measure==='hours'?'Hours':measure==='billable'?'Billable Days':measure==='entries'?'Entries':'People';
+  document.getElementById('wf-title').textContent=`${measureLabel} Waterfall — by ${groupBy.charAt(0).toUpperCase()+groupBy.slice(1)}`;
+
+  // Build billable overlay trace if billable days are entered
+  const billableTrace=[];
+  if(measure==='hours'||measure==='billable') {
+    labels.forEach((lbl,i)=>{
+      const bd=bldrBillableData[lbl];
+      if(bd) billableTrace.push({x:i,y:bd,label:lbl});
+    });
+  }
+
+  // Use Plotly for proper waterfall chart
+  if(typeof Plotly!=='undefined') {
+    const traces=[{
+      type:'waterfall',
+      orientation:'v',
+      x:labels,
+      y:valArr.map((v,i)=>showTotal&&i===valArr.length-1?total:v),
+      measure:valArr.map((_,i)=>showTotal&&i===valArr.length-1?'total':'relative'),
+      connector:{line:{color:'rgba(0,48,135,0.3)',width:1,dash:'dot'}},
+      increasing:{marker:{color:'#1D9E75'}},
+      decreasing:{marker:{color:'#d85a30'}},
+      totals:{marker:{color:'#003087'}},
+      text:valArr.map(v=>v.toFixed(v<10?1:0)),
+      textposition:'outside',
+      hovertemplate:'<b>%{x}</b><br>'+measureLabel+': %{y:.1f}<extra></extra>'
+    }];
+
+    // Add billable days as scatter overlay if data exists
+    if(billableTrace.length&&measure==='hours') {
+      traces.push({
+        type:'scatter',mode:'markers+text',
+        x:billableTrace.map(b=>b.label),
+        y:billableTrace.map(b=>b.y*8), // convert days to hours (8h/day)
+        text:billableTrace.map(b=>`${b.y}d`),
+        textposition:'top center',
+        textfont:{size:10,color:'#ba7517'},
+        marker:{symbol:'diamond',size:10,color:'#ba7517',line:{color:'#fff',width:1}},
+        name:'Billable days (×8h)',
+        hovertemplate:'<b>%{x}</b><br>Billable: %{text}<extra></extra>'
+      });
+    }
+
+    const layout={
+      height:390,
+      margin:{l:50,r:30,t:20,b:80},
+      font:{family:'system-ui,sans-serif',size:11},
+      xaxis:{tickfont:{size:10},tickangle:labels.length>8?-30:0},
+      yaxis:{tickfont:{size:10},title:{text:measureLabel,font:{size:10}}},
+      paper_bgcolor:'transparent',
+      plot_bgcolor:'transparent',
+      showlegend:billableTrace.length>0,
+      legend:{x:0,y:1.05,orientation:'h',font:{size:9}},
+    };
+    Plotly.newPlot(el,[...traces],layout,{responsive:true,displayModeBar:false});
+  } else {
+    el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Plotly not loaded — check network</div>';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// PIVOT MODE
+// ════════════════════════════════════════════════════════════════════
+let pvSlicerState = {};
+
+function bldrPopulatePivotSlicers(allData, filtEmps, seenC, seenT, seenS) {
+  const el=document.getElementById('pv-slicers'); if(!el)return;
+  const dims=[
+    {id:'pvs-emp',label:'Employee',vals:filtEmps},
+    {id:'pvs-cust',label:'Customer',vals:[...seenC].sort()},
+    {id:'pvs-task',label:'Task',vals:[...seenT].sort()},
+    {id:'pvs-site',label:'Site',vals:[...seenS].sort()},
+  ];
+  el.innerHTML=dims.map(d=>{
+    const opts=d.vals.slice(0,40);
+    return`<div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">${d.label}</label>
+        <button onclick="pvClearSlicer('${d.id}')" style="font-size:9px;border:none;background:none;color:var(--muted);cursor:pointer;padding:0">Clear</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px" id="${d.id}">
+        ${opts.map(v=>`<button class="pv-slicer-btn${pvSlicerState[d.id]&&pvSlicerState[d.id].has(v)?' active':''}" onclick="pvToggleSlicer('${d.id}','${v.replace(/'/g,"\\'")}')" title="${v}">${v.split(' ')[0].slice(0,14)}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function pvToggleSlicer(slicerId, val) {
+  if(!pvSlicerState[slicerId]) pvSlicerState[slicerId]=new Set();
+  if(pvSlicerState[slicerId].has(val)) pvSlicerState[slicerId].delete(val);
+  else pvSlicerState[slicerId].add(val);
+  document.querySelectorAll(`#${slicerId} .pv-slicer-btn`).forEach(b=>{b.classList.toggle('active',pvSlicerState[slicerId].has(b.title));});
+  bldrRenderPivot();
+}
+
+function pvClearSlicer(slicerId) {
+  pvSlicerState[slicerId]=new Set();
+  document.querySelectorAll(`#${slicerId} .pv-slicer-btn`).forEach(b=>b.classList.remove('active'));
+  bldrRenderPivot();
+}
+
+function bldrRenderPivot(entries) {
+  if(!entries)entries=bldrGetEntries();
+
+  // Apply slicer filters on top of base filters
+  const empSel=pvSlicerState['pvs-emp'];
+  const custSel=pvSlicerState['pvs-cust'];
+  const taskSel=pvSlicerState['pvs-task'];
+  const siteSel=pvSlicerState['pvs-site'];
+  entries=entries.filter(e=>{
+    if(empSel&&empSel.size&&!empSel.has(e._emp)) return false;
+    if(custSel&&custSel.size&&!custSel.has(e.customer)) return false;
+    if(taskSel&&taskSel.size&&!taskSel.has(e.task)) return false;
+    if(siteSel&&siteSel.size&&!siteSel.has(e.site)) return false;
+    return true;
+  });
+
+  const rowDim=document.getElementById('pv-rows')?.value||'employee';
+  const colDim=document.getElementById('pv-cols')?.value||'month';
+  const valMode=document.getElementById('pv-vals')?.value||'hours';
+  const chartType=document.getElementById('pv-chart')?.value||'table';
+  const topN=parseInt(document.getElementById('pv-topn')?.value||20);
+  const topCols=parseInt(document.getElementById('pv-topcols')?.value||12);
+
+  const getKey=(e,dim)=>{
+    if(dim==='employee')return e._emp;
+    if(dim==='customer')return e.customer||'Unknown';
+    if(dim==='task')return e.task||'Unknown';
+    if(dim==='month')return e._month;
+    if(dim==='site')return e.site||'No site';
+    if(dim==='bp')return BP_LABEL[e.bp]||e.bp||'Unknown';
+    if(dim==='product')return e.product||'No product';
+    return 'Unknown';
+  };
+
+  // Build pivot data structure
+  const cellData={}; // {rowKey: {colKey: [entries]}}
+  const rowTotals={};
+  entries.forEach(e=>{
+    const rk=getKey(e,rowDim); const ck=getKey(e,colDim);
+    if(!cellData[rk])cellData[rk]={};
+    if(!cellData[rk][ck])cellData[rk][ck]=[];
+    cellData[rk][ck].push(e);
+    rowTotals[rk]=(rowTotals[rk]||0)+(parseFloat(e.total)||0);
+  });
+
+  // Determine rows (top N by total)
+  let allRows=Object.keys(cellData);
+  if(rowDim==='month')allRows.sort((a,b)=>MONTHS.indexOf(a)-MONTHS.indexOf(b));
+  else allRows.sort((a,b)=>(rowTotals[b]||0)-(rowTotals[a]||0));
+  const rows=allRows.slice(0,topN);
+
+  // Determine cols (top N cols by total)
+  const colTotals={};
+  entries.forEach(e=>{const ck=getKey(e,colDim);colTotals[ck]=(colTotals[ck]||0)+(parseFloat(e.total)||0);});
+  let allCols=Object.keys(colTotals);
+  if(colDim==='month')allCols.sort((a,b)=>MONTHS.indexOf(a)-MONTHS.indexOf(b));
+  else allCols.sort((a,b)=>(colTotals[b]||0)-(colTotals[a]||0));
+  const cols=allCols.slice(0,topCols);
+
+  const getVal=(rowKey,colKey)=>{
+    const ee=(cellData[rowKey]||{})[colKey]||[];
+    if(!ee.length)return 0;
+    if(valMode==='hours')return ee.reduce((s,e)=>s+(parseFloat(e.total)||0),0);
+    if(valMode==='count')return ee.length;
+    if(valMode==='avg')return ee.reduce((s,e)=>s+(parseFloat(e.total)||0),0)/ee.length;
+    if(valMode==='pct'){const tot=getTH(entries);const h=ee.reduce((s,e)=>s+(parseFloat(e.total)||0),0);return tot>0?(h/tot*100):0;}
+    return 0;
+  };
+
+  const grandTotal=getTH(entries);
+  const valLabel={hours:'Hours',count:'Entries',avg:'Avg Hrs',pct:'%'}[valMode];
+
+  // Update titles
+  const dimLabel=d=>({employee:'Employee',customer:'Customer',task:'Task',month:'Month',site:'Site',bp:'Business Purpose',product:'Product'}[d]||d);
+  document.getElementById('pv-chart-title').textContent=`${dimLabel(rowDim)} × ${dimLabel(colDim)} — ${valLabel}`;
+  document.getElementById('pv-table-title').textContent=`Pivot: ${dimLabel(rowDim)} (rows) × ${dimLabel(colDim)} (cols)`;
+
+  // ── Pivot Table ──────────────────────────────────────────────
+  const tableWrap=document.getElementById('pv-table-wrap'); if(!tableWrap)return;
+  const maxVal=Math.max(...rows.flatMap(r=>cols.map(c=>getVal(r,c))));
+
+  let thtml=`<table class="dt pv-tbl"><thead><tr><th>${dimLabel(rowDim)}</th>${cols.map(c=>`<th>${c.length>12?c.slice(0,11)+'…':c}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const rowTotal=cols.reduce((s,c)=>s+getVal(r,c),0);
+    thtml+=`<tr><td style="font-weight:600;white-space:nowrap">${r}</td>`;
+    cols.forEach(c=>{
+      const v=getVal(r,c);
+      const pct=maxVal>0?v/maxVal:0;
+      const bg=v>0?`rgba(0,114,206,${0.08+pct*0.55})`:'';
+      const disp=valMode==='pct'?v.toFixed(1)+'%':valMode==='avg'?v.toFixed(1):v>0?v.toFixed(1):'—';
+      thtml+=`<td style="text-align:right;background:${bg};font-weight:${v>0?'600':'400'};color:${v>0?'var(--text)':'var(--muted)'}">${disp}</td>`;
+    });
+    const rtDisp=valMode==='pct'?rowTotal.toFixed(1)+'%':rowTotal.toFixed(valMode==='count'?0:1);
+    thtml+=`<td style="text-align:right;font-weight:700;border-left:2px solid var(--border-med)">${rtDisp}</td></tr>`;
+  });
+  // Column totals row
+  thtml+='<tr style="border-top:2px solid var(--border-med)"><td style="font-weight:700">Total</td>';
+  cols.forEach(c=>{const ct=rows.reduce((s,r)=>s+getVal(r,c),0);thtml+=`<td style="text-align:right;font-weight:700">${valMode==='pct'?ct.toFixed(1)+'%':ct.toFixed(valMode==='count'?0:1)}</td>`;});
+  const gt=valMode==='pct'?100:valMode==='hours'?grandTotal.toFixed(1):rows.reduce((s,r)=>s+cols.reduce((ss,c)=>ss+getVal(r,c),0),0).toFixed(valMode==='count'?0:1);
+  thtml+=`<td style="text-align:right;font-weight:700;border-left:2px solid var(--border-med)">${gt}</td></tr>`;
+  thtml+='</tbody></table>';
+  tableWrap.innerHTML=thtml;
+
+  // ── Pivot Chart ──────────────────────────────────────────────
+  const chartWrap=document.getElementById('pv-chart-wrap'); if(!chartWrap)return;
+  if(chartType==='table'){chartWrap.style.display='none';return;}
+  chartWrap.style.display='block';
+
+  // Destroy any existing Plotly chart
+  try{Plotly.purge(chartWrap);}catch(e){}
+  destroyChart('pv-chart-canvas');
+
+  if(chartType==='heatmap') {
+    if(typeof Plotly==='undefined'){chartWrap.innerHTML='<div style="padding:20px;color:var(--muted)">Plotly not loaded</div>';return;}
+    const z=rows.map(r=>cols.map(c=>getVal(r,c)));
+    Plotly.newPlot(chartWrap,[{type:'heatmap',z,x:cols,y:rows,colorscale:[[0,'#F0F4FA'],[0.25,'#7DC4F5'],[0.6,'#0072CE'],[1,'#003087']],hovertemplate:'%{y} × %{x}: %{z:.1f}<extra></extra>'}],{height:320,margin:{l:120,r:20,t:20,b:80},xaxis:{tickangle:-30,tickfont:{size:9}},yaxis:{tickfont:{size:9}},paper_bgcolor:'transparent',plot_bgcolor:'transparent'},{responsive:true,displayModeBar:false});
+  } else {
+    // Chart.js chart
+    let canvas=chartWrap.querySelector('canvas#pv-chart-canvas');
+    if(!canvas){canvas=document.createElement('canvas');canvas.id='pv-chart-canvas';canvas.style.height='300px';chartWrap.innerHTML='';chartWrap.appendChild(canvas);}
+    destroyChart('pv-chart-canvas');
+    const top6rows=rows.slice(0,6);
+    const isStacked=chartType==='stackedbar'||chartType==='area';
+    const isLine=chartType==='line'||chartType==='area';
+    const datasets=top6rows.map((r,i)=>({label:r.length>16?r.slice(0,15)+'…':r,data:cols.map(c=>getVal(r,c)),borderColor:BLDR_PALETTE[i],backgroundColor:isLine?(chartType==='area'?BLDR_PALETTE[i]+'44':BLDR_PALETTE[i]):BLDR_PALETTE[i],fill:chartType==='area',tension:0.3,borderWidth:isLine?2:0,borderRadius:isLine?0:3,pointRadius:isLine?3:0}));
+    charts['pv-chart-canvas']=new Chart(canvas.getContext('2d'),{type:isLine?'line':'bar',data:{labels:cols.map(c=>c.length>12?c.slice(0,11)+'…':c),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{boxWidth:8,font:{size:9}}}},scales:{x:{stacked:isStacked,grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{stacked:isStacked,beginAtZero:true,ticks:{color:'#888',font:{size:9},callback:v=>valMode==='pct'?v+'%':v}}}}});
+  }
+}
+
+function bldrExportPivot() {
+  const entries=bldrGetEntries();
+  const rowDim=document.getElementById('pv-rows')?.value||'employee';
+  const colDim=document.getElementById('pv-cols')?.value||'month';
+  const valMode=document.getElementById('pv-vals')?.value||'hours';
+  const getKey=(e,dim)=>{if(dim==='employee')return e._emp;if(dim==='customer')return e.customer||'Unknown';if(dim==='task')return e.task;if(dim==='month')return e._month;if(dim==='site')return e.site||'No site';if(dim==='bp')return BP_LABEL[e.bp]||e.bp;return'Unknown';};
+  const cellData={};entries.forEach(e=>{const rk=getKey(e,rowDim);const ck=getKey(e,colDim);if(!cellData[rk])cellData[rk]={};if(!cellData[rk][ck])cellData[rk][ck]=[];cellData[rk][ck].push(e);});
+  const rows=Object.keys(cellData).sort();const cols=[...new Set(entries.map(e=>getKey(e,colDim)))].sort();
+  const getVal=(rk,ck)=>{const ee=(cellData[rk]||{})[ck]||[];if(!ee.length)return 0;if(valMode==='hours')return ee.reduce((s,e)=>s+(parseFloat(e.total)||0),0);if(valMode==='count')return ee.length;if(valMode==='avg'){const h=ee.reduce((s,e)=>s+(parseFloat(e.total)||0),0);return ee.length?h/ee.length:0;}return 0;};
+  const csv=[[rowDim,...cols,'Total'],...rows.map(r=>[r,...cols.map(c=>getVal(r,c).toFixed(1)),cols.reduce((s,c)=>s+getVal(r,c),0).toFixed(1)])].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`Pivot_${rowDim}x${colDim}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast('Pivot CSV exported','success');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DASHBOARD MODE — add-your-own widgets
+// ════════════════════════════════════════════════════════════════════
+function bldrInitDashPalette() {
+  const pal=document.getElementById('dash-widget-palette'); if(!pal)return;
+  pal.innerHTML=DASH_WIDGETS.map(w=>`<button class="dash-pal-btn" onclick="dashAddWidget('${w.id}')" title="${w.label}"><i class="ti ${w.icon}"></i> ${w.label}</button>`).join('');
+}
+
+function dashAddWidget(defId, config={}) {
+  const def=DASH_WIDGETS.find(w=>w.id===defId); if(!def)return;
+  const iid=`dashw_${++dashIdSeq}`;
+  const inst={defId,iid,span:def.span,config};
+  dashInstances.push(inst);
+  document.getElementById('dash-empty')?.remove();
+  const canvas=document.getElementById('dash-canvas');
+  const card=document.createElement('div');
+  card.className='bldr-card dash-widget';
+  card.id=iid;
+  card.style.gridColumn=`span ${inst.span}`;
+  card.dataset.defid=defId;
+  card.innerHTML=`<div class="bldr-card-hdr">
+    <span><i class="ti ${def.icon}"></i> ${def.label}</span>
+    <div class="bldr-card-controls">
+      <select class="bldr-ctrl" style="height:22px;font-size:10px;padding:0 4px;min-width:60px;border:1px solid var(--border)" onchange="dashChangeSpan('${iid}',this.value)">
+        ${[3,4,5,6,8,12].map(s=>`<option value="${s}"${s===inst.span?' selected':''}>${s}/12</option>`).join('')}
+      </select>
+      <button class="bldr-ctrl" title="Chart type" onclick="dashCycleChartType('${iid}')"><i class="ti ti-chart-bar"></i></button>
+      <button class="bldr-ctrl" title="Copy" onclick="bldrCopyCard('${iid}-body')"><i class="ti ti-copy"></i></button>
+      <button class="bldr-ctrl" title="Download" onclick="bldrExportCard('${iid}-body','${def.label.replace(/ /g,'_')}')"><i class="ti ti-download"></i></button>
+      <button class="bldr-ctrl" title="Remove" onclick="dashRemoveWidget('${iid}')" style="color:#d85a30"><i class="ti ti-x"></i></button>
+    </div>
+  </div>
+  <div id="${iid}-body" style="min-height:220px;position:relative"></div>`;
+  canvas.appendChild(card);
+  dashRenderWidget(inst, bldrGetEntries());
+}
+
+function dashRemoveWidget(iid) {
+  dashInstances=dashInstances.filter(w=>w.iid!==iid);
+  const el=document.getElementById(iid); if(el)el.remove();
+  const canvas=document.getElementById('dash-canvas');
+  if(!canvas.children.length||canvas.querySelectorAll('.dash-widget').length===0) {
+    canvas.innerHTML=`<div id="dash-empty" style="grid-column:span 12;text-align:center;padding:60px 20px;color:var(--muted)"><i class="ti ti-plus-circle" style="font-size:36px;display:block;margin-bottom:10px;opacity:0.4"></i><div style="font-size:13px;font-weight:600;margin-bottom:4px">Click a widget above to add it to your dashboard</div><div style="font-size:11px">Mix and match chart types, resize with the handle, remove with ×</div></div>`;
+  }
+}
+
+function dashChangeSpan(iid, span) {
+  const inst=dashInstances.find(w=>w.iid===iid); if(!inst)return;
+  inst.span=parseInt(span);
+  const el=document.getElementById(iid); if(el)el.style.gridColumn=`span ${inst.span}`;
+  dashRenderWidget(inst, bldrGetEntries());
+}
+
+function dashCycleChartType(iid) {
+  const inst=dashInstances.find(w=>w.iid===iid); if(!inst)return;
+  const types=['bar','line','doughnut','polar','radar','scatter','bubble','area'];
+  inst.config.chartType=types[(types.indexOf(inst.config.chartType||'bar')+1)%types.length];
+  toast(`Chart type: ${inst.config.chartType}`,'info');
+  dashRenderWidget(inst, bldrGetEntries());
+}
+
+function dashRenderAll(entries) {
+  dashInstances.forEach(inst=>dashRenderWidget(inst, entries));
+}
+
+function dashSaveLayout() {
+  try{localStorage.setItem('dash_layout',JSON.stringify(dashInstances.map(w=>({defId:w.defId,span:w.span,config:w.config}))));toast('Dashboard layout saved','success');}catch(e){toast('Save failed','error');}
+}
+
+function dashLoadLayout() {
+  try{
+    const saved=localStorage.getItem('dash_layout');
+    if(!saved)return;
+    const layout=JSON.parse(saved);
+    layout.forEach(({defId,span,config})=>{
+      const def=DASH_WIDGETS.find(w=>w.id===defId);
+      if(def)dashAddWidget(defId,{...config,_span:span});
+    });
+    // Fix spans after add
+    dashInstances.forEach((inst,i)=>{
+      const layout2=JSON.parse(saved);
+      if(layout2[i])inst.span=layout2[i].span;
+      const el=document.getElementById(inst.iid);if(el)el.style.gridColumn=`span ${inst.span}`;
+    });
+  }catch(e){}
+}
+
+function dashClearLayout() {
+  dashInstances.forEach(w=>{const el=document.getElementById(w.iid);if(el)el.remove();});
+  dashInstances=[];
+  localStorage.removeItem('dash_layout');
+  const canvas=document.getElementById('dash-canvas');
+  canvas.innerHTML=`<div id="dash-empty" style="grid-column:span 12;text-align:center;padding:60px 20px;color:var(--muted)"><i class="ti ti-plus-circle" style="font-size:36px;display:block;margin-bottom:10px;opacity:0.4"></i><div style="font-size:13px;font-weight:600;margin-bottom:4px">Click a widget above to add it to your dashboard</div></div>`;
+}
+
+function dashRenderWidget(inst, entries) {
+  const body=document.getElementById(inst.iid+'-body'); if(!body)return;
+  const fn=window[DASH_WIDGETS.find(w=>w.id===inst.defId)?.render]; if(fn)fn(body, entries, inst);
+}
+
+// Widget render functions
+function dashWidgetKPI(body, entries) {
+  const total=getTH(entries);const emps=new Set(entries.map(e=>e._emp));const custs=new Set(entries.map(e=>e.customer));
+  const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+  const topEmp=Object.entries(byEmp).sort((a,b)=>b[1]-a[1])[0];
+  body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;padding:4px">
+    ${[{l:'Total Hours',v:fmtK(total)+'h',s:'',c:'accent'},{l:'Employees',v:emps.size,s:''},{l:'Customers',v:custs.size,s:''},{l:'Entries',v:entries.length,s:''},{l:'Top Person',v:topEmp?topEmp[0].split(' ')[0]:'—',s:topEmp?fmtK(topEmp[1])+'h':'',c:'green'}].map(k=>`<div class="bldr-kpi${k.c?' '+k.c:''}"><div class="bldr-kpi-label">${k.l}</div><div class="bldr-kpi-value" style="font-size:20px">${k.v}</div><div class="bldr-kpi-sub">${k.s}</div></div>`).join('')}
+  </div>`;
+}
+
+function dashWidgetTrend(body, entries, inst) {
+  body.style.height='220px';body.style.position='relative';
+  let canvas=body.querySelector('canvas'); if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+  const cid=inst.iid+'_trend'; canvas.id=cid; destroyChart(cid);
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const labels=MONTHS.slice(mFrom,mTo+1).map(m=>m.slice(0,3));
+  const data=MONTHS.slice(mFrom,mTo+1).map((_,mi)=>entries.filter(e=>e._monthIdx===mi+mFrom).reduce((s,e)=>s+(parseFloat(e.total)||0),0));
+  const ct=inst.config.chartType||'bar';const isLine=ct==='line'||ct==='area';
+  charts[cid]=new Chart(canvas.getContext('2d'),{type:isLine?'line':'bar',data:{labels,datasets:[{label:'Hours',data,backgroundColor:isLine?'rgba(0,48,135,0.15)':'#003087',borderColor:'#003087',borderWidth:isLine?2:0,fill:isLine,tension:0.35,borderRadius:3,pointRadius:isLine?3:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{beginAtZero:true,ticks:{color:'#888',font:{size:9}}}}}});
+}
+
+function dashWidgetBP(body, entries, inst) {
+  body.style.height='200px';body.style.position='relative';
+  let canvas=body.querySelector('canvas');if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+  const cid=inst.iid+'_bp';canvas.id=cid;destroyChart(cid);
+  const byBP={};entries.forEach(e=>{byBP[e.bp]=(byBP[e.bp]||0)+(parseFloat(e.total)||0);});
+  const labels=Object.keys(byBP);const vals=labels.map(k=>byBP[k]);const colors=labels.map((k,i)=>BP_COLORS_MAP[k]||BLDR_PALETTE[i]);
+  const ct=inst.config.chartType||'doughnut';
+  charts[cid]=new Chart(canvas.getContext('2d'),{type:ct==='pie'?'pie':'doughnut',data:{labels:labels.map(k=>BP_LABEL[k]||k),datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:ct==='doughnut'?'60%':0,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}}}});
+}
+
+function dashWidgetTask(body, entries) {
+  const byTask={};entries.forEach(e=>{byTask[e.task]=(byTask[e.task]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byTask).sort((a,b)=>b[1]-a[1]).slice(0,12);const total=sorted.reduce((s,[,v])=>s+v,0);
+  body.innerHTML='<div style="overflow-y:auto;max-height:240px">'+sorted.map(([task,hrs],i)=>{const pct=total>0?hrs/total:0;return`<div class="bldr-hbar"><div class="bldr-hbar-label" title="${task}">${task}</div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${BLDR_PALETTE[i%BLDR_PALETTE.length]}"></div></div><div class="bldr-hbar-val">${hrs.toFixed(0)}h</div></div>`;}).join('')+'</div>';
+}
+
+function dashWidgetEmp(body, entries, inst) {
+  const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byEmp).sort((a,b)=>b[1]-a[1]).slice(0,10);const total=sorted.reduce((s,[,v])=>s+v,0);
+  const ct=inst.config.chartType||'bar';
+  if(ct==='bar'||ct==='area') {
+    body.innerHTML='<div style="overflow-y:auto;max-height:240px">'+sorted.map(([emp,hrs],i)=>{const pct=total>0?hrs/total:0;const rank=i<3?['🥇','🥈','🥉'][i]:`${i+1}.`;return`<div class="bldr-hbar"><div class="bldr-hbar-label"><span style="font-size:10px">${rank}</span> ${emp.split(' ')[0]}</div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${BLDR_PALETTE[i%BLDR_PALETTE.length]}"></div></div><div class="bldr-hbar-val">${hrs.toFixed(0)}h</div></div>`;}).join('')+'</div>';
+  } else {
+    body.style.height='220px';body.style.position='relative';
+    let canvas=body.querySelector('canvas');if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+    const cid=inst.iid+'_emp';canvas.id=cid;destroyChart(cid);
+    charts[cid]=new Chart(canvas.getContext('2d'),{type:ct==='radar'?'radar':ct==='bubble'?'bubble':'pie',data:{labels:sorted.map(([e])=>e.split(' ')[0]),datasets:[{data:sorted.map(([,h])=>h),backgroundColor:sorted.map((_,i)=>BLDR_PALETTE[i%BLDR_PALETTE.length]),borderWidth:1,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}}}});
+  }
+}
+
+function dashWidgetCust(body,entries){
+  const byCust={};entries.forEach(e=>{byCust[e.customer]=(byCust[e.customer]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byCust).sort((a,b)=>b[1]-a[1]).slice(0,10);const total=sorted.reduce((s,[,v])=>s+v,0);
+  body.innerHTML='<div style="overflow-y:auto;max-height:240px">'+sorted.map(([c,h],i)=>{const pct=total>0?h/total:0;return`<div class="bldr-hbar"><div class="bldr-hbar-label" title="${c}">${c}</div><div class="bldr-hbar-track"><div class="bldr-hbar-fill" style="width:${(pct*100).toFixed(1)}%;background:${BLDR_PALETTE[i%BLDR_PALETTE.length]}"></div></div><div class="bldr-hbar-val">${h.toFixed(0)}h</div></div>`;}).join('')+'</div>';
+}
+
+function dashWidgetDOW(body,entries,inst){
+  body.style.height='200px';body.style.position='relative';
+  let canvas=body.querySelector('canvas');if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+  const cid=inst.iid+'_dow';canvas.id=cid;destroyChart(cid);
+  const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=[0,0,0,0,0,0,0];
+  entries.forEach(e=>(e.days||[]).forEach(d=>{if(!d.date)return;const dow=new Date(d.date).getDay();const idx=dow===0?6:dow-1;counts[idx]+=d.hrs||0;}));
+  charts[cid]=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels:DOW,datasets:[{data:counts,backgroundColor:counts.map((_,i)=>i>=5?'#d85a30':'#0072CE'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{beginAtZero:true,ticks:{color:'#888',font:{size:9}}}}}});
+}
+
+function dashWidgetHeat(body){body.style.overflow='auto';bldrRenderHeatmap();const heat=document.getElementById('bldr-heatmap');if(heat)body.innerHTML=heat.innerHTML;}
+
+function dashWidgetProd(body,entries,inst){
+  body.style.height='200px';body.style.position='relative';
+  let canvas=body.querySelector('canvas');if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+  const cid=inst.iid+'_prod';canvas.id=cid;destroyChart(cid);
+  const byProd={};entries.forEach(e=>{if(e.product)byProd[e.product]=(byProd[e.product]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byProd).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(!sorted.length){body.innerHTML='<div style="color:var(--muted);font-size:12px;padding:40px;text-align:center">No product data</div>';return;}
+  const ct=inst.config.chartType||'doughnut';
+  charts[cid]=new Chart(canvas.getContext('2d'),{type:ct==='bar'?'bar':ct==='polar'?'polarArea':'doughnut',data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map((_,i)=>BLDR_PALETTE[i%BLDR_PALETTE.length]+'CC'),borderWidth:1,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:ct==='doughnut'?'55%':0,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}}}});
+}
+
+function dashWidgetEmpM(body,entries,inst){
+  body.style.height='200px';body.style.position='relative';
+  let canvas=body.querySelector('canvas');if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+  const cid=inst.iid+'_empm';canvas.id=cid;destroyChart(cid);
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const byEmp={};entries.forEach(e=>{byEmp[e._emp]=(byEmp[e._emp]||0)+(parseFloat(e.total)||0);});
+  const top5=Object.entries(byEmp).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([e])=>e);
+  const labels=MONTHS.slice(mFrom,mTo+1).map(m=>m.slice(0,3));
+  const ct=inst.config.chartType||'line';
+  const datasets=top5.map((emp,i)=>({label:emp.split(' ')[0],data:MONTHS.slice(mFrom,mTo+1).map((_,mi)=>entries.filter(e=>e._emp===emp&&e._monthIdx===mi+mFrom).reduce((s,e)=>s+(parseFloat(e.total)||0),0)),borderColor:BLDR_PALETTE[i],backgroundColor:ct==='bar'?BLDR_PALETTE[i]:'transparent',fill:false,tension:0.3,borderWidth:ct==='bar'?0:2,pointRadius:ct==='bar'?0:3}));
+  charts[cid]=new Chart(canvas.getContext('2d'),{type:ct==='bar'?'bar':'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}}},scales:{x:{grid:{display:false},ticks:{color:'#888',font:{size:9}}},y:{beginAtZero:true,ticks:{color:'#888',font:{size:9}}}}}});
+}
+
+function dashWidgetScatter(body,entries,inst){
+  body.style.height='220px';body.style.position='relative';
+  let canvas=body.querySelector('canvas');if(!canvas){canvas=document.createElement('canvas');body.innerHTML='';body.appendChild(canvas);}
+  const cid=inst.iid+'_scatter';canvas.id=cid;destroyChart(cid);
+  const byEmp={};entries.forEach(e=>{if(!byEmp[e._emp])byEmp[e._emp]={hrs:0,entries:0,months:new Set()};byEmp[e._emp].hrs+=(parseFloat(e.total)||0);byEmp[e._emp].entries++;byEmp[e._emp].months.add(e._monthIdx);});
+  const datasets=Object.entries(byEmp).map(([emp,d],i)=>({label:emp.split(' ')[0],data:[{x:d.months.size,y:d.hrs,r:Math.max(4,Math.min(20,d.hrs/80))}],backgroundColor:BLDR_PALETTE[i%BLDR_PALETTE.length]+'99',borderColor:BLDR_PALETTE[i%BLDR_PALETTE.length]}));
+  charts[cid]=new Chart(canvas.getContext('2d'),{type:'bubble',data:{datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x}mo, ${ctx.parsed.y.toFixed(0)}h`}}},scales:{x:{title:{display:true,text:'Active months',font:{size:9}},ticks:{stepSize:1,font:{size:9},color:'#888'}},y:{beginAtZero:true,ticks:{font:{size:9},color:'#888',callback:v=>v+'h'}}}}});
+}
+
+function dashWidgetBox(body,entries,inst){
+  if(typeof Plotly==='undefined'){body.innerHTML='<div style="padding:20px;color:var(--muted);font-size:12px">Plotly required for box plot</div>';return;}
+  body.style.height='260px';
+  const byEmp={};entries.forEach(e=>{if(!byEmp[e._emp])byEmp[e._emp]=[];byEmp[e._emp].push(parseFloat(e.total)||0);});
+  const sorted=Object.entries(byEmp).sort((a,b)=>b[1].reduce((s,v)=>s+v,0)-a[1].reduce((s,v)=>s+v,0)).slice(0,10);
+  const traces=sorted.map(([emp,vals],i)=>({type:'box',y:vals,name:emp.split(' ')[0],marker:{color:BLDR_PALETTE[i%BLDR_PALETTE.length]},boxmean:true}));
+  Plotly.newPlot(body,traces,{height:250,margin:{l:40,r:10,t:10,b:60},xaxis:{tickfont:{size:9}},yaxis:{tickfont:{size:9},title:{text:'Hours/entry',font:{size:9}}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',showlegend:false},{responsive:true,displayModeBar:false});
+}
+
+function dashWidgetSankey(body,entries,inst){
+  if(typeof Plotly==='undefined'){body.innerHTML='<div style="padding:20px;color:var(--muted);font-size:12px">Plotly required for Sankey</div>';return;}
+  body.style.height='280px';
+  const nodeMap={};let ni=0;
+  const getNode=label=>{if(!(label in nodeMap))nodeMap[label]=ni++;return nodeMap[label];};
+  const linkMap={};
+  entries.slice(0,500).forEach(e=>{
+    const s=getNode(e._emp.split(' ')[0]);
+    const t=getNode(e.customer||'Unknown');
+    const k=`${s}_${t}`;
+    linkMap[k]=(linkMap[k]||{source:s,target:t,value:0});
+    linkMap[k].value+=(parseFloat(e.total)||0);
+  });
+  const links=Object.values(linkMap);
+  const nodeLabels=Object.keys(nodeMap).sort((a,b)=>nodeMap[a]-nodeMap[b]);
+  Plotly.newPlot(body,[{type:'sankey',orientation:'h',node:{pad:8,thickness:16,line:{color:'#fff',width:0.5},label:nodeLabels,color:nodeLabels.map((_,i)=>BLDR_PALETTE[i%BLDR_PALETTE.length])},link:{source:links.map(l=>l.source),target:links.map(l=>l.target),value:links.map(l=>l.value),color:links.map(l=>BLDR_PALETTE[l.source%BLDR_PALETTE.length]+'66')}}],[{height:260,margin:{l:10,r:10,t:10,b:10},paper_bgcolor:'transparent',font:{size:9}}],{responsive:true,displayModeBar:false});
+}
+
+function dashWidgetWF(body,entries,inst){
+  if(typeof Plotly==='undefined'){body.innerHTML='<div style="padding:20px;color:var(--muted);font-size:12px">Plotly required for Waterfall</div>';return;}
+  body.style.height='300px';
+  const byMonth={};entries.forEach(e=>{byMonth[e._month]=(byMonth[e._month]||0)+(parseFloat(e.total)||0);});
+  const mFrom=parseInt(document.getElementById('bldr-mfrom')?.value??0);const mTo=parseInt(document.getElementById('bldr-mto')?.value??11);
+  const labels=MONTHS.slice(mFrom,mTo+1).filter(m=>byMonth[m]);
+  const values=labels.map(m=>byMonth[m]||0);
+  Plotly.newPlot(body,[{type:'waterfall',x:labels,y:values,measure:values.map((_,i)=>i===values.length-1?'total':'relative'),connector:{line:{color:'rgba(0,48,135,0.3)',width:1,dash:'dot'}},increasing:{marker:{color:'#1D9E75'}},decreasing:{marker:{color:'#d85a30'}},totals:{marker:{color:'#003087'}},text:values.map(v=>v.toFixed(0)),textposition:'outside'}],[{height:280,margin:{l:50,r:20,t:20,b:60},xaxis:{tickfont:{size:9}},yaxis:{tickfont:{size:9}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',showlegend:false}],{responsive:true,displayModeBar:false});
+}
+
+function dashWidgetTable(body,entries){
+  const grouped={};entries.forEach(e=>{grouped[e._emp]=(grouped[e._emp]||0)+(parseFloat(e.total)||0);});
+  const sorted=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
+  const total=sorted.reduce((s,[,v])=>s+v,0);
+  body.innerHTML=`<div style="overflow-y:auto;max-height:320px"><table class="dt" style="font-size:11px;width:100%"><thead><tr><th>Employee</th><th>Hours</th><th>%</th><th>Entries</th></tr></thead><tbody>${sorted.map(([emp,hrs])=>{const ec=entries.filter(e=>e._emp===emp).length;const pct=total>0?hrs/total*100:0;return`<tr><td style="font-weight:600">${emp}</td><td style="font-weight:700">${hrs.toFixed(0)}h</td><td style="color:var(--muted)">${pct.toFixed(0)}%</td><td>${ec}</td></tr>`;}).join('')}</tbody></table></div>`;
+}
+
+// ── Copy / Export ─────────────────────────────────────────────────
+function bldrCardToCanvas(id) {
+  const el=document.getElementById(id); if(!el)return null;
+  if(el.tagName==='CANVAS'){
+    const dpr=window.devicePixelRatio||1;const w=el.offsetWidth||600;const h=el.offsetHeight||300;
+    const out=document.createElement('canvas');out.width=w*dpr;out.height=h*dpr;
+    const ctx=out.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(el,0,0,out.width,out.height);return out;
+  }
+  const childCanvas=el.querySelector('canvas');
+  if(childCanvas)return bldrCardToCanvas(childCanvas.id||'');
+  return null;
+}
+
+async function bldrCopyCard(id) {
+  const canvas=bldrCardToCanvas(id);
+  if(!canvas){toast('Nothing to copy — try a chart tab first','error');return;}
+  canvas.toBlob(async blob=>{
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);toast('Copied to clipboard ✓','success');}
+    catch(e){bldrExportCard(id,'chart');toast('Clipboard blocked — downloaded instead','info');}
+  },'image/png');
+}
+
+function bldrExportCard(id, label) {
+  const canvas=bldrCardToCanvas(id);
+  if(!canvas){toast('Nothing to export','error');return;}
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=`${label||'chart'}_${new Date().toISOString().slice(0,10)}.png`;a.click();
+  toast(`Downloaded ${a.download}`,'success');
+}
+
+async function bldrExportAll() {
+  bldrExportTable();
+  const ids=[['bldr-trend-chart','Monthly_Trend'],['bldr-bp-chart','BP_Mix'],['bldr-dow-chart','Day_of_Week'],['bldr-prod-chart','Product_Mix'],['bldr-emp-monthly-chart','Emp_Monthly']];
+  ids.forEach(([id,label],i)=>setTimeout(()=>bldrExportCard(id,label),i*400));
+  toast(`Exporting ${ids.length} charts + CSV…`,'success');
+}
+
 
 function switchEditTab(name, el) {
   document.querySelectorAll('[id^=epanel-]').forEach(p=>p.classList.remove('active'));
@@ -7044,6 +8468,7 @@ function doLogin() {
   if(currentUser.role==='admin'){
     document.getElementById('nav-admin-tab').style.display='block';
     document.getElementById('nav-edit-tab').style.display='block';
+      document.getElementById('nav-builder-tab').style.display='block';
     document.getElementById('sync-btn').style.display='inline-flex';
   }
   refreshEmployees();
@@ -7074,6 +8499,7 @@ function doLogout() {
   document.getElementById('login-btn').disabled=true;
   document.getElementById('nav-admin-tab').style.display='none';
   document.getElementById('nav-edit-tab').style.display='none';
+  document.getElementById('nav-builder-tab').style.display='none';
   document.getElementById('sync-btn').style.display='none';
   document.getElementById('nav-user-chip').innerHTML='';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
